@@ -7,22 +7,28 @@ import { computeRank, XP_REWARDS } from './xpUtils';
 // a rank-up after completing the quiz lesson.
 // ---------------------------------------------------------------------------
 let _xp = 575;
+let _displayName = 'Dev Guildmate';
+let _bio: string | undefined = undefined;
 const _completedLessons = new Set<string>();
 const _achievements = new Set<string>(['first-lesson', 'seven-day-streak']);
 
 const BASE_USER = {
   id: 'dev-user-001',
   email: 'dev@studyguild.local',
-  displayName: 'Dev Guildmate',
   role: 'learner' as const,
   streak: 7,
   lastLoginDate: new Date().toISOString().split('T')[0],
   createdAt: '2025-01-01T00:00:00.000Z',
-  achievements: ['first-lesson', 'seven-day-streak'],
 };
 
 export function getMockUser(): UserProfile {
-  return { ...BASE_USER, xp: _xp, rank: computeRank(_xp), achievements: [..._achievements] };
+  return { ...BASE_USER, displayName: _displayName, bio: _bio, xp: _xp, rank: computeRank(_xp), achievements: [..._achievements] };
+}
+
+export function patchMockUser(updates: { displayName?: string; bio?: string }): UserProfile {
+  if (updates.displayName !== undefined) _displayName = updates.displayName;
+  if (updates.bio !== undefined) _bio = updates.bio;
+  return getMockUser();
 }
 
 export interface LessonCompleteResult {

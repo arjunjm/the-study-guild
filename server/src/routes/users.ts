@@ -56,7 +56,7 @@ router.patch('/me', authenticate, async (req: AuthenticatedRequest, res) => {
   }
 
   const user = resources[0];
-  const allowed = ['displayName', 'role', 'avatarUrl'] as const;
+  const allowed = ['displayName', 'role', 'avatarUrl', 'bio'] as const;
   for (const key of allowed) {
     if (req.body[key] !== undefined) (user as unknown as Record<string, unknown>)[key] = req.body[key];
   }

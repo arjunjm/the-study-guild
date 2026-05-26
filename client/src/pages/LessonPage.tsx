@@ -111,9 +111,7 @@ export default function LessonPage() {
     },
   });
 
-  if (!lesson) return (
-    <div className="flex items-center justify-center py-20 text-slate-500 text-sm">Loading lesson…</div>
-  );
+  if (!lesson) return <LessonSkeleton />;
 
   const alreadyComplete = progress?.completedLessonIds.includes(lessonId!) ?? false;
   const completedCount = progress?.completedLessonIds.length ?? 0;
@@ -301,4 +299,39 @@ function buildClientBreakdown(quizScore: number | undefined, lesson: Lesson | un
     }
   }
   return breakdown;
+}
+
+function LessonSkeleton() {
+  return (
+    <div className="min-h-full animate-pulse">
+      {/* Top bar */}
+      <div className="sticky top-0 z-10 border-b border-slate-800/60 bg-slate-950/80 px-4 py-3 lg:px-10">
+        <div className="flex items-center justify-between max-w-3xl mx-auto gap-4">
+          <div className="h-3 w-24 rounded-lg bg-slate-800" />
+          <div className="flex-1 max-w-xs mx-auto h-1.5 rounded-full bg-slate-800" />
+          <div className="h-3 w-16 rounded-lg bg-slate-800" />
+        </div>
+      </div>
+      {/* Content */}
+      <div className="mx-auto max-w-3xl px-4 py-8 lg:px-10 lg:py-10">
+        <div className="mb-8 h-8 w-2/3 rounded-xl bg-slate-800" />
+        <div className="space-y-3 mb-8">
+          {[100, 90, 95, 70, 85].map((w, i) => (
+            <div key={i} className="h-4 rounded-lg bg-slate-800/70" style={{ width: `${w}%` }} />
+          ))}
+        </div>
+        <div className="mb-4 h-4 w-1/3 rounded-lg bg-slate-800" />
+        <div className="space-y-3 mb-10">
+          {[85, 80, 90].map((w, i) => (
+            <div key={i} className="h-4 rounded-lg bg-slate-800/70" style={{ width: `${w}%` }} />
+          ))}
+        </div>
+        <div className="h-px bg-slate-800 mb-6" />
+        <div className="flex justify-between">
+          <div className="h-14 w-40 rounded-xl bg-slate-800/70" />
+          <div className="h-14 w-40 rounded-xl bg-slate-800/70" />
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -180,6 +180,60 @@ export default function CoursesPage() {
         )}
       </div>
 
+      {/* In-progress resume strip */}
+      {!hasFilters && isAuthenticated && (() => {
+        const inProgress = (allCourses ?? [])
+          .filter(c => {
+            const p = progressMap.get(c.id);
+            if (!p || p.completed === 0) return false;
+            return p.completed < c.totalLessons;
+          })
+          .sort((a, b) => {
+            const pa = progressMap.get(a.id)!;
+            const pb = progressMap.get(b.id)!;
+            return new Date(pb.lastAccessed).getTime() - new Date(pa.lastAccessed).getTime();
+          })
+          .slice(0, 5);
+        if (inProgress.length === 0) return null;
+        return (
+          <div className="mb-8">
+            <h2 className="mb-3 text-sm font-semibold text-slate-400">Continue learning</h2>
+            <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 snap-x">
+              {inProgress.map(c => {
+                const p = progressMap.get(c.id)!;
+                const pct = Math.round((p.completed / c.totalLessons) * 100);
+                const nextId = c.lessonIds.find(id => !p.completedIds.has(id));
+                const cat = TAXONOMY.find(t => t.l1 === c.taxonomy.l1);
+                return (
+                  <Link
+                    key={c.id}
+                    to={nextId ? `/courses/${c.id}/lessons/${nextId}` : `/courses/${c.id}`}
+                    className="group snap-start shrink-0 w-56 rounded-2xl border border-slate-800/60 bg-slate-900/50 p-4 transition-all hover:border-violet-500/30 hover:bg-slate-900/80 hover:-translate-y-0.5"
+                  >
+                    {cat && (
+                      <span className={cn('mb-2 inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium', cat.bgColor, cat.color)}>
+                        <cat.icon className="h-2.5 w-2.5" />
+                        {c.taxonomy.l1}
+                      </span>
+                    )}
+                    <p className="mb-3 text-sm font-semibold text-slate-200 group-hover:text-white transition leading-snug line-clamp-2">{c.title}</p>
+                    <div className="mb-1 h-1 w-full rounded-full bg-slate-800 overflow-hidden">
+                      <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-violet-400 transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-slate-500">
+                      <span>{pct}% done</span>
+                      <span className="flex items-center gap-0.5 text-violet-400 group-hover:text-violet-300 transition font-medium">
+                        Resume <ChevronRight className="h-3 w-3" />
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Category overview — shown only when no filters are active */}
       {!hasFilters && !isLoading && (
         <div className="mb-8">

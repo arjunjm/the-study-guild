@@ -24,6 +24,7 @@ export interface UserProfile {
   email: string;
   displayName: string;
   avatarUrl?: string;
+  bio?: string;
   role: UserRole;
   xp: number;
   rank: GuildRank;

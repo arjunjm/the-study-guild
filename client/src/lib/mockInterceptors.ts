@@ -1,7 +1,7 @@
 import type { AxiosInstance } from 'axios';
 import {
   getMockUser, getMockProgress, completeMockLesson, getMockCourseProgress, getMockLeaderboard,
-  MOCK_COURSES, MOCK_LESSONS, MOCK_TAXONOMIES,
+  patchMockUser, MOCK_COURSES, MOCK_LESSONS, MOCK_TAXONOMIES,
 } from './mockData';
 
 export function installMockInterceptors(client: AxiosInstance) {
@@ -33,7 +33,7 @@ function resolveMock(url: string, method: string, body?: string) {
   if (url.endsWith('/users/me/progress') && method === 'get') return ok(getMockCourseProgress());
   if (url.endsWith('/users/me/courses') && method === 'get') return ok(MOCK_COURSES.filter(c => c.authorId === 'teacher-001'));
   if (url.endsWith('/users/me') && method === 'get') return ok(getMockUser());
-  if (url.endsWith('/users/me') && method === 'patch') return ok({ ...getMockUser(), ...parsed });
+  if (url.endsWith('/users/me') && method === 'patch') return ok(patchMockUser(parsed));
   if (url.match(/\/users\/.+\/profile/)) return ok(getMockUser());
 
   // Courses

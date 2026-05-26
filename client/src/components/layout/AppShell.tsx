@@ -368,7 +368,9 @@ function ProfileDropdown({ user }: { user: UserProfile }) {
 
 function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate: (path: string) => void }) {
   const [query, setQuery] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const { data: courses } = useQuery<Course[]>({
     queryKey: ['courses', '', '', '', ''],
     queryFn: async () => (await apiClient.get<{ data: Course[] }>('/courses')).data.data,
@@ -387,9 +389,31 @@ function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate:
         c.tags.some(t => t.toLowerCase().includes(query.toLowerCase()))
       ).slice(0, 8);
 
+  useEffect(() => {
+    setSelectedIndex(-1);
+  }, [filtered.length, query]);
+
   const handleKey = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
-  }, [onClose]);
+    if (e.key === 'Escape') { onClose(); return; }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(i => {
+        const next = i < filtered.length - 1 ? i + 1 : 0;
+        itemRefs.current[next]?.scrollIntoView({ block: 'nearest' });
+        return next;
+      });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(i => {
+        const next = i > 0 ? i - 1 : filtered.length - 1;
+        itemRefs.current[next]?.scrollIntoView({ block: 'nearest' });
+        return next;
+      });
+    } else if (e.key === 'Enter' && selectedIndex >= 0 && filtered[selectedIndex]) {
+      e.preventDefault();
+      onNavigate(`/courses/${filtered[selectedIndex].id}`);
+    }
+  }, [onClose, onNavigate, filtered, selectedIndex]);
 
   return (
     <div
@@ -422,13 +446,18 @@ function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate:
           {filtered.length === 0 && query.trim() && (
             <div className="py-8 text-center text-sm text-slate-500">No courses found for "{query}"</div>
           )}
-          {filtered.map(course => {
+          {filtered.map((course, idx) => {
             const cat = TAXONOMY.find(c => c.l1 === course.taxonomy.l1);
+            const isSelected = idx === selectedIndex;
             return (
               <button
                 key={course.id}
+                ref={el => { itemRefs.current[idx] = el; }}
                 onClick={() => onNavigate(`/courses/${course.id}`)}
-                className="group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-slate-800/60"
+                className={cn(
+                  'group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition',
+                  isSelected ? 'bg-violet-500/15 ring-1 ring-inset ring-violet-500/30' : 'hover:bg-slate-800/60'
+                )}
               >
                 {cat ? (
                   <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', cat.bgColor)}>
@@ -440,7 +469,7 @@ function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate:
                   </span>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-slate-200 group-hover:text-white">{course.title}</p>
+                  <p className={cn('truncate text-sm font-medium transition', isSelected ? 'text-white' : 'text-slate-200 group-hover:text-white')}>{course.title}</p>
                   <p className="text-xs text-slate-500">{course.taxonomy.l1} · {course.taxonomy.l2}</p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">

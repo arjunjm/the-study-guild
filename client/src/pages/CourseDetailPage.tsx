@@ -45,9 +45,7 @@ export default function CourseDetailPage() {
     },
   });
 
-  if (!course) return (
-    <div className="flex items-center justify-center py-20 text-slate-500">Loading course…</div>
-  );
+  if (!course) return <CourseDetailSkeleton />;
 
   const completed = progress?.completedLessonIds.length ?? 0;
   const total = lessons?.length ?? 0;
@@ -297,6 +295,55 @@ export default function CourseDetailPage() {
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function Bone({ className }: { className?: string }) {
+  return <div className={cn('rounded-lg bg-slate-800/70 animate-pulse', className)} />;
+}
+
+function CourseDetailSkeleton() {
+  return (
+    <div className="min-h-full">
+      {/* Hero skeleton */}
+      <div className="border-b border-slate-800/60 px-4 py-10 lg:px-10 lg:py-12">
+        <div className="max-w-3xl">
+          <Bone className="mb-4 h-3 w-24" />
+          <div className="mb-3 flex gap-2">
+            <Bone className="h-6 w-20 rounded-lg" />
+            <Bone className="h-6 w-16 rounded-lg" />
+            <Bone className="h-6 w-24 rounded-full" />
+          </div>
+          <Bone className="mb-3 h-8 w-3/4" />
+          <Bone className="mb-2 h-4 w-full" />
+          <Bone className="mb-6 h-4 w-2/3" />
+          <div className="flex gap-4 mb-6">
+            {[1,2,3,4].map(i => <Bone key={i} className="h-12 w-24 rounded-xl" />)}
+          </div>
+          <Bone className="h-10 w-40 rounded-xl" />
+        </div>
+      </div>
+
+      {/* Body skeleton */}
+      <div className="mx-auto max-w-3xl px-4 py-8 lg:px-10 lg:py-10 flex gap-8">
+        <div className="flex-1 min-w-0">
+          <Bone className="mb-6 h-5 w-32" />
+          {[1,2,3,4,5].map(i => (
+            <div key={i} className="mb-3 flex items-center gap-3 rounded-xl border border-slate-800/50 p-4">
+              <Bone className="h-7 w-7 rounded-full shrink-0" />
+              <div className="flex-1">
+                <Bone className="mb-1.5 h-3.5 w-3/5" />
+                <Bone className="h-3 w-1/4" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="hidden lg:block w-64 shrink-0">
+          <Bone className="mb-4 h-36 rounded-2xl" />
+          <Bone className="mb-3 h-28 rounded-2xl" />
+        </div>
       </div>
     </div>
   );
