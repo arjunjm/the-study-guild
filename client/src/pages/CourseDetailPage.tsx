@@ -5,11 +5,13 @@ import { Share2, Star, Clock, CheckCircle, Circle, ChevronLeft, BookOpen, ArrowR
 import { apiClient } from '../lib/apiClient';
 import { TAXONOMY } from '../data/taxonomy';
 import { cn } from '../lib/utils';
+import { useToast } from '../contexts/ToastContext';
 import type { Course, Lesson, UserCourseProgress } from '@study-guild/shared';
 
 export default function CourseDetailPage() {
   const { courseId } = useParams<{ courseId: string }>();
   const qc = useQueryClient();
+  const toast = useToast();
   const [hoveredRating, setHoveredRating] = useState(0);
   const [submittedRating, setSubmittedRating] = useState(0);
 
@@ -39,6 +41,7 @@ export default function CourseDetailPage() {
     onSuccess: (_data, rating) => {
       setSubmittedRating(rating);
       qc.invalidateQueries({ queryKey: ['course', courseId] });
+      toast.success('Rating saved!', `You rated this course ${rating} star${rating !== 1 ? 's' : ''}`);
     },
   });
 
@@ -131,7 +134,7 @@ export default function CourseDetailPage() {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => navigator.clipboard.writeText(window.location.href)}
+                  onClick={() => navigator.clipboard.writeText(window.location.href).then(() => toast.success('Link copied!', 'Share this course with a friend'))}
                   className="flex items-center gap-1.5 rounded-lg border border-slate-700/60 px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 hover:border-slate-600 transition"
                 >
                   <Share2 className="h-3.5 w-3.5" /> Share

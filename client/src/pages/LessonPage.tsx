@@ -6,6 +6,7 @@ import { apiClient } from '../lib/apiClient';
 import LessonRenderer from '../components/lesson/LessonRenderer';
 import XPRewardOverlay from '../components/XPRewardOverlay';
 import { computeRank, XP_REWARDS } from '../lib/xpUtils';
+import { useToast } from '../contexts/ToastContext';
 import type { Lesson, UserCourseProgress, Course } from '@study-guild/shared';
 import type { GuildRank } from '@study-guild/shared';
 
@@ -29,10 +30,18 @@ interface RewardState {
   newAchievements?: string[];
 }
 
+const ACHIEVEMENT_LABELS: Record<string, string> = {
+  'first-lesson': 'First Step', 'ten-lessons': 'Dedicated Learner', 'fifty-lessons': 'Knowledge Seeker',
+  'first-course': 'Course Complete', 'five-courses': 'Guild Scholar', 'quiz-perfect': 'Perfect Score',
+  'quiz-master': 'Quiz Master', 'rank-apprentice': 'Apprentice', 'rank-scholar': 'Scholar',
+  'rank-expert': 'Expert', 'streak-3': '3-Day Streak', 'streak-7': 'Week Warrior', 'streak-30': 'Monthly Champion',
+};
+
 export default function LessonPage() {
   const { courseId, lessonId } = useParams<{ courseId: string; lessonId: string }>();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const toast = useToast();
   const [reward, setReward] = useState<RewardState | null>(null);
   const quizScoreRef = useRef<number | undefined>(undefined);
 
@@ -92,6 +101,11 @@ export default function LessonPage() {
           })();
 
       setReward({ xpGained: totalXP, breakdown, newXP, courseComplete: courseNowComplete, rankUp, newAchievements: data.newAchievements });
+      if (data.newAchievements?.length) {
+        data.newAchievements.forEach(id => {
+          toast.success(`Achievement unlocked!`, ACHIEVEMENT_LABELS[id] ?? id);
+        });
+      }
       qc.invalidateQueries({ queryKey: ['progress', courseId] });
       qc.invalidateQueries({ queryKey: ['me'] });
     },

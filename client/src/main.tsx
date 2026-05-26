@@ -7,6 +7,7 @@ import { msalConfig } from './lib/msalConfig';
 import { apiClient, setupTokenInterceptor } from './lib/apiClient';
 import { installMockInterceptors } from './lib/mockInterceptors';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 import App from './App';
 import './index.css';
 
@@ -33,7 +34,9 @@ createRoot(document.getElementById('root')!).render(
     <MsalProvider instance={msalInstance}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <App />
+          <ToastProvider>
+            <App />
+          </ToastProvider>
         </AuthProvider>
       </QueryClientProvider>
     </MsalProvider>

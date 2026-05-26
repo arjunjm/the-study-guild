@@ -5,6 +5,7 @@ import { BookOpen, Zap, Flame, Trophy, ArrowRight, Clock, Star, ChevronRight, Gi
 import { apiClient } from '../lib/apiClient';
 import { TAXONOMY } from '../data/taxonomy';
 import { cn } from '../lib/utils';
+import { useToast } from '../contexts/ToastContext';
 import type { UserProfile, Course } from '@study-guild/shared';
 import { RANK_XP_THRESHOLDS } from '@study-guild/shared';
 import type { LeaderboardEntry } from '@study-guild/shared';
@@ -25,6 +26,7 @@ interface DailyLoginResult {
 
 export default function HomePage() {
   const qc = useQueryClient();
+  const toast = useToast();
   const [loginClaimed, setLoginClaimed] = useState<DailyLoginResult | null>(null);
 
   const dailyLoginMutation = useMutation({
@@ -32,7 +34,12 @@ export default function HomePage() {
     onSuccess: (res) => {
       const data = res.data.data;
       setLoginClaimed(data);
-      if (!data.alreadyClaimed) qc.invalidateQueries({ queryKey: ['me'] });
+      if (!data.alreadyClaimed) {
+        qc.invalidateQueries({ queryKey: ['me'] });
+        toast.success(`+${data.xpAwarded} XP claimed!`, `🔥 ${data.streak}-day streak — keep it going`);
+      } else {
+        toast.info('Already claimed today', 'Come back tomorrow for more XP');
+      }
     },
   });
 
