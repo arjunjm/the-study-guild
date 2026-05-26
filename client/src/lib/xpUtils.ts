@@ -6,6 +6,9 @@ export const XP_REWARDS = {
   quiz_passed: 20,
   quiz_perfect: 40,
   course_completed: 50,
+  achievement_unlocked: 25,
+  daily_login: 5,
+  course_rated: 2,
 } as const;
 
 const RANK_ORDER = Object.keys(RANK_XP_THRESHOLDS) as GuildRank[];

@@ -8,6 +8,7 @@ import { computeRank, XP_REWARDS } from './xpUtils';
 // ---------------------------------------------------------------------------
 let _xp = 575;
 const _completedLessons = new Set<string>();
+const _achievements = new Set<string>(['first-lesson', 'seven-day-streak']);
 
 const BASE_USER = {
   id: 'dev-user-001',
@@ -21,7 +22,7 @@ const BASE_USER = {
 };
 
 export function getMockUser(): UserProfile {
-  return { ...BASE_USER, xp: _xp, rank: computeRank(_xp) };
+  return { ...BASE_USER, xp: _xp, rank: computeRank(_xp), achievements: [..._achievements] };
 }
 
 export interface LessonCompleteResult {
@@ -31,6 +32,7 @@ export interface LessonCompleteResult {
   prevRank: ReturnType<typeof computeRank>;
   newRank: ReturnType<typeof computeRank>;
   alreadyCompleted: boolean;
+  newAchievements: string[];
 }
 
 export function completeMockLesson(lessonId: string, quizScore?: number, passingScore = 60): LessonCompleteResult {
@@ -55,9 +57,34 @@ export function completeMockLesson(lessonId: string, quizScore?: number, passing
   }
 
   const newRank = computeRank(_xp);
+  const totalLessons = _completedLessons.size;
+
+  // Evaluate achievements
+  const newAchievements: string[] = [];
+  if (!alreadyCompleted) {
+    const rankList = ['Apprentice','Scholar','Adept','Expert','Master','Grandmaster'];
+    const checks: Array<{ id: string; check: () => boolean; label: string }> = [
+      { id: 'ten-lessons',     label: 'Dedicated Learner', check: () => totalLessons >= 10 },
+      { id: 'fifty-lessons',   label: 'Knowledge Seeker',  check: () => totalLessons >= 50 },
+      { id: 'quiz-perfect',    label: 'Perfect Score',     check: () => quizScore === 100 },
+      { id: 'quiz-master',     label: 'Quiz Master',       check: () => false },
+      { id: 'rank-apprentice', label: 'Apprentice',        check: () => rankList.includes(newRank) },
+      { id: 'rank-scholar',    label: 'Scholar',           check: () => ['Scholar','Adept','Expert','Master','Grandmaster'].includes(newRank) },
+      { id: 'rank-expert',     label: 'Expert',            check: () => ['Expert','Master','Grandmaster'].includes(newRank) },
+    ];
+    for (const ach of checks) {
+      if (!_achievements.has(ach.id) && ach.check()) {
+        _achievements.add(ach.id);
+        newAchievements.push(ach.id);
+        _xp += XP_REWARDS.achievement_unlocked;
+        breakdown.push({ label: `Achievement: ${ach.label}`, amount: XP_REWARDS.achievement_unlocked });
+      }
+    }
+  }
+
   const xpGained = breakdown.reduce((sum, b) => sum + b.amount, 0);
 
-  return { xpGained, breakdown, rankChanged: newRank !== prevRank, prevRank, newRank, alreadyCompleted };
+  return { xpGained, breakdown, rankChanged: newRank !== prevRank, prevRank, newRank: computeRank(_xp), alreadyCompleted, newAchievements };
 }
 
 export function getMockProgress(courseId: string): UserCourseProgress {

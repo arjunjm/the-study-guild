@@ -125,6 +125,11 @@ export default function ProfilePage() {
         ))}
       </div>
 
+      {/* Streak calendar */}
+      {!userId && (user as UserProfile).streak > 0 && (
+        <StreakCalendar streak={(user as UserProfile).streak} lastLoginDate={(user as UserProfile).lastLoginDate} />
+      )}
+
       {/* Achievements */}
       {user.achievements && user.achievements.length > 0 && (
         <div className="mb-8">
@@ -254,6 +259,96 @@ export default function ProfilePage() {
           })}
         </div>
       </div>
+    </div>
+  );
+}
+
+function StreakCalendar({ streak, lastLoginDate }: { streak: number; lastLoginDate?: string }) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Build a set of active date strings (YYYY-MM-DD) based on streak count
+  const activeDays = new Set<string>();
+  const lastDate = lastLoginDate ? new Date(lastLoginDate + 'T00:00:00') : today;
+  for (let i = 0; i < streak; i++) {
+    const d = new Date(lastDate);
+    d.setDate(d.getDate() - i);
+    activeDays.add(d.toISOString().split('T')[0]);
+  }
+
+  // Show 4 weeks (28 days) ending today, padded to start on Monday
+  const days: Date[] = [];
+  for (let i = 27; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    days.push(d);
+  }
+
+  // Pad to start on Monday (day 1)
+  const firstDay = days[0].getDay(); // 0=Sun, 1=Mon...
+  const padStart = firstDay === 0 ? 6 : firstDay - 1;
+  const paddedDays: (Date | null)[] = [
+    ...Array(padStart).fill(null),
+    ...days,
+  ];
+
+  const totalDays = paddedDays.length;
+  const weeks = Math.ceil(totalDays / 7);
+  const grid: (Date | null)[][] = [];
+  for (let w = 0; w < weeks; w++) {
+    grid.push(paddedDays.slice(w * 7, w * 7 + 7));
+  }
+
+  const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  const todayStr = today.toISOString().split('T')[0];
+
+  return (
+    <div className="mb-8 rounded-xl border border-slate-800 bg-slate-900 p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="font-semibold text-white flex items-center gap-2">
+          <Flame className="h-4 w-4 text-orange-400" />
+          Activity — last 4 weeks
+        </h2>
+        <span className="text-xs text-slate-500">{streak}-day streak</span>
+      </div>
+      <div className="overflow-x-auto">
+        <div className="min-w-max">
+          {/* Day labels */}
+          <div className="mb-1 flex gap-1 pl-0">
+            {dayLabels.map((l, i) => (
+              <div key={i} className="h-5 w-5 text-center text-[10px] font-medium text-slate-600">{l}</div>
+            ))}
+          </div>
+          {/* Weeks (rows) */}
+          {grid.map((week, wi) => (
+            <div key={wi} className="mb-1 flex gap-1">
+              {week.map((day, di) => {
+                if (!day) return <div key={di} className="h-5 w-5" />;
+                const str = day.toISOString().split('T')[0];
+                const isActive = activeDays.has(str);
+                const isToday = str === todayStr;
+                return (
+                  <div
+                    key={di}
+                    title={str}
+                    className={cn(
+                      'h-5 w-5 rounded-sm transition-colors',
+                      isToday
+                        ? isActive
+                          ? 'bg-orange-400 ring-2 ring-orange-400/40 ring-offset-1 ring-offset-slate-900'
+                          : 'bg-slate-700 ring-2 ring-slate-500/40 ring-offset-1 ring-offset-slate-900'
+                        : isActive
+                        ? 'bg-orange-500/70 hover:bg-orange-400/90'
+                        : 'bg-slate-800 hover:bg-slate-700'
+                    )}
+                  />
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+      <p className="mt-2 text-xs text-slate-600">Each cell is one day. Orange = active day.</p>
     </div>
   );
 }
