@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
+import { useState } from 'react';
 import { Share2, Star, Clock, CheckCircle, Circle, ChevronLeft, BookOpen, ArrowRight, Zap, Code2, HelpCircle, GitFork, Award } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { TAXONOMY } from '../data/taxonomy';
@@ -9,6 +10,8 @@ import type { Course, Lesson, UserCourseProgress } from '@study-guild/shared';
 export default function CourseDetailPage() {
   const { courseId } = useParams<{ courseId: string }>();
   const qc = useQueryClient();
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [submittedRating, setSubmittedRating] = useState(0);
 
   const { data: course } = useQuery<Course>({
     queryKey: ['course', courseId],
@@ -33,7 +36,10 @@ export default function CourseDetailPage() {
   });
   const rateMutation = useMutation({
     mutationFn: (rating: number) => apiClient.post(`/courses/${courseId}/rate`, { rating }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['course', courseId] }),
+    onSuccess: (_data, rating) => {
+      setSubmittedRating(rating);
+      qc.invalidateQueries({ queryKey: ['course', courseId] });
+    },
   });
 
   if (!course) return (
@@ -225,16 +231,30 @@ export default function CourseDetailPage() {
         <div className="mb-8 rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5">
           <h3 className="mb-1 text-sm font-semibold text-white">Rate this course</h3>
           <p className="mb-4 text-xs text-slate-500">Your feedback helps other learners find great content.</p>
-          <div className="flex items-center gap-2">
-            {[1, 2, 3, 4, 5].map(n => (
-              <button
-                key={n}
-                onClick={() => rateMutation.mutate(n)}
-                className="group rounded-lg border border-slate-700/60 p-2 transition hover:border-amber-500/40 hover:bg-amber-500/10"
-              >
-                <Star className={`h-5 w-5 transition ${course.ratingAverage >= n ? 'fill-amber-400 text-amber-400' : 'text-slate-600 group-hover:text-amber-400/60'}`} />
-              </button>
-            ))}
+          <div className="flex items-center gap-2" onMouseLeave={() => setHoveredRating(0)}>
+            {[1, 2, 3, 4, 5].map(n => {
+              const filled = hoveredRating ? n <= hoveredRating : n <= submittedRating;
+              return (
+                <button
+                  key={n}
+                  onClick={() => rateMutation.mutate(n)}
+                  onMouseEnter={() => setHoveredRating(n)}
+                  disabled={rateMutation.isPending}
+                  className={cn(
+                    'rounded-lg border p-2 transition',
+                    filled
+                      ? 'border-amber-500/40 bg-amber-500/10'
+                      : 'border-slate-700/60 hover:border-amber-500/30 hover:bg-amber-500/5',
+                    rateMutation.isPending && 'opacity-50 cursor-not-allowed',
+                  )}
+                >
+                  <Star className={cn('h-5 w-5 transition', filled ? 'fill-amber-400 text-amber-400' : 'text-slate-600')} />
+                </button>
+              );
+            })}
+            {submittedRating > 0 && !rateMutation.isPending && (
+              <span className="ml-2 text-xs text-emerald-400">Rating saved!</span>
+            )}
           </div>
         </div>
 

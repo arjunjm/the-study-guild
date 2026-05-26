@@ -14,7 +14,13 @@ import leaderboardRouter from './routes/leaderboard';
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: env.isDev ? 'http://localhost:5173' : process.env.CLIENT_ORIGIN }));
+const allowedOrigins = env.isDev
+  ? ['http://localhost:5173', 'http://localhost:5174']
+  : (process.env.CLIENT_ORIGIN ?? '').split(',').map(s => s.trim()).filter(Boolean);
+app.use(cors({
+  origin: allowedOrigins.length ? allowedOrigins : true,
+  credentials: true,
+}));
 app.use(morgan(env.isDev ? 'dev' : 'combined'));
 app.use(express.json({ limit: '2mb' }));
 

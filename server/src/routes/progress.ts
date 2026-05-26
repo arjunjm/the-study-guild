@@ -184,6 +184,18 @@ router.post('/lesson-complete', authenticate, async (req: AuthenticatedRequest, 
   });
 });
 
+// GET /api/progress (all progress for current user)
+router.get('/', authenticate, async (req: AuthenticatedRequest, res) => {
+  const container = await getContainer(CONTAINERS.PROGRESS);
+  const { resources } = await container.items
+    .query<UserCourseProgress>({
+      query: 'SELECT * FROM c WHERE c.userId = @userId',
+      parameters: [{ name: '@userId', value: req.user!.oid }],
+    })
+    .fetchAll();
+  res.json({ data: resources });
+});
+
 // GET /api/progress/:courseId
 router.get('/:courseId', authenticate, async (req: AuthenticatedRequest, res) => {
   const container = await getContainer(CONTAINERS.PROGRESS);

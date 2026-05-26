@@ -5,7 +5,8 @@ import { Search, Star, Clock, X, BookOpen } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { cn } from '../lib/utils';
 import { TAXONOMY } from '../data/taxonomy';
-import type { Course } from '@study-guild/shared';
+import { useAuth } from '../contexts/AuthContext';
+import type { Course, UserCourseProgress } from '@study-guild/shared';
 
 const DIFFICULTY_STYLES = {
   beginner:     { label: 'Beginner',     classes: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/30' },
@@ -17,6 +18,7 @@ const DIFFICULTIES = ['beginner', 'intermediate', 'advanced'] as const;
 
 export default function CoursesPage() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const filterL1 = searchParams.get('l1') ?? '';
   const filterL2 = searchParams.get('l2') ?? '';
@@ -81,6 +83,16 @@ export default function CoursesPage() {
     queryKey: ['courses', '', '', '', ''],
     queryFn: async () => (await apiClient.get<{ data: Course[] }>('/courses')).data.data,
   });
+
+  const { data: allProgress } = useQuery<UserCourseProgress[]>({
+    queryKey: ['all-progress'],
+    queryFn: async () => (await apiClient.get<{ data: UserCourseProgress[] }>('/progress')).data.data,
+    enabled: isAuthenticated,
+  });
+
+  const progressMap = allProgress
+    ? new Map(allProgress.map(p => [p.courseId, p.completedLessonIds.length]))
+    : new Map<string, number>();
 
   const categoryCounts = allCourses
     ? TAXONOMY.reduce((acc, cat) => {
@@ -272,14 +284,39 @@ export default function CoursesPage() {
       {/* Course grid */}
       {!isLoading && courses && courses.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {courses.map(course => <CourseCard key={course.id} course={course} />)}
+          {courses.map(course => {
+            const completed = progressMap.get(course.id) ?? 0;
+            const pct = course.totalLessons > 0 ? Math.round((completed / course.totalLessons) * 100) : 0;
+            return <CourseCard key={course.id} course={course} progressPct={pct} />;
+          })}
         </div>
       )}
     </div>
   );
 }
 
-function CourseCard({ course }: { course: Course }) {
+function ProgressRing({ pct }: { pct: number }) {
+  const r = 11;
+  const circ = 2 * Math.PI * r;
+  const offset = circ * (1 - pct / 100);
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" className="shrink-0" aria-hidden>
+      <circle cx="14" cy="14" r={r} fill="none" stroke="rgb(30,41,59)" strokeWidth="2.5" />
+      <circle
+        cx="14" cy="14" r={r} fill="none"
+        stroke={pct === 100 ? '#10b981' : '#7c3aed'}
+        strokeWidth="2.5"
+        strokeDasharray={circ}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        transform="rotate(-90 14 14)"
+        style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+      />
+    </svg>
+  );
+}
+
+function CourseCard({ course, progressPct }: { course: Course; progressPct?: number }) {
   const diff = DIFFICULTY_STYLES[course.difficulty];
   const cat = TAXONOMY.find(c => c.l1 === course.taxonomy.l1);
   const isNew = course.publishedAt
@@ -348,6 +385,9 @@ function CourseCard({ course }: { course: Course }) {
               <Clock className="h-3 w-3" />
               {course.estimatedMinutes}m
             </span>
+            {progressPct !== undefined && progressPct > 0 && (
+              <ProgressRing pct={progressPct} />
+            )}
           </div>
         </div>
       </div>
