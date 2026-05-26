@@ -10,6 +10,7 @@ import ProfilePage from './pages/ProfilePage';
 import TeacherDashboard from './pages/TeacherDashboard';
 import CourseEditorPage from './pages/CourseEditorPage';
 import LeaderboardPage from './pages/LeaderboardPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="teach" element={<TeacherDashboard />} />
           <Route path="teach/courses/:courseId/edit" element={<CourseEditorPage />} />
           <Route path="leaderboard" element={<LeaderboardPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

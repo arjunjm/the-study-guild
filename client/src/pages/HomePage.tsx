@@ -66,6 +66,26 @@ export default function HomePage() {
   });
 
   const inProgress = courseProgress?.filter(c => c.completedCount > 0 && c.completedCount < c.totalLessons) ?? [];
+  const startedCourseIds = new Set(courseProgress?.map(p => p.course.id) ?? []);
+
+  // Categories the user is actively learning in (from in-progress courses)
+  const activeTaxonomies = new Set(inProgress.map(p => p.course.taxonomy.l1));
+
+  // Recommended: courses in the user's active taxonomies they haven't started, up to 3
+  const recommended = courses && activeTaxonomies.size > 0
+    ? courses
+        .filter(c => activeTaxonomies.has(c.taxonomy.l1) && !startedCourseIds.has(c.id))
+        .slice(0, 3)
+    : [];
+
+  // Per-category: how many courses has the user started?
+  const startedPerCategory = courseProgress
+    ? courseProgress.reduce((acc, p) => {
+        const l1 = p.course.taxonomy.l1;
+        acc[l1] = (acc[l1] ?? 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
+    : {};
 
   // Pick one course per taxonomy category for diversity, up to 6
   const featured = courses
@@ -122,7 +142,7 @@ export default function HomePage() {
           <StatCard icon={Trophy} color="amber" label="Guild Rank" value={user?.rank ?? '—'} />
           <StatCard icon={Zap} color="violet" label="Total XP" value={(user?.xp ?? 0).toLocaleString()} />
           <StatCard icon={Flame} color="orange" label="Day Streak" value={`${user?.streak ?? 0} days`} />
-          <StatCard icon={Star} color="emerald" label="Achievements" value={`${user?.achievements?.length ?? 0} earned`} />
+          <StatCard icon={BookOpen} color="emerald" label="Courses started" value={Object.values(startedPerCategory).reduce((a, b) => a + b, 0)} />
         </section>
 
         {/* Daily login XP */}
@@ -231,6 +251,26 @@ export default function HomePage() {
                   </Link>
                 );
               })}
+            </div>
+          </section>
+        )}
+
+        {/* Recommended for you — courses in your active taxonomies not yet started */}
+        {recommended.length > 0 && (
+          <section>
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Recommended for you</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Based on what you're learning</p>
+              </div>
+              <Link to="/courses" className="flex items-center gap-1 text-sm text-violet-400 hover:text-violet-300 transition">
+                Browse all <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {recommended.map(course => (
+                <CourseCard key={course.id} course={course} />
+              ))}
             </div>
           </section>
         )}
