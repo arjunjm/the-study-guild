@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Search, Star, Clock, X, BookOpen } from 'lucide-react';
+import { Search, Star, Clock, X, BookOpen, ChevronRight } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { cn } from '../lib/utils';
 import { TAXONOMY } from '../data/taxonomy';
@@ -105,8 +105,11 @@ export default function CoursesPage() {
   });
 
   const progressMap = allProgress
-    ? new Map(allProgress.map(p => [p.courseId, { completed: p.completedLessonIds.length, lastAccessed: p.lastAccessedAt }]))
-    : new Map<string, { completed: number; lastAccessed: string }>();
+    ? new Map(allProgress.map(p => [
+        p.courseId,
+        { completed: p.completedLessonIds.length, lastAccessed: p.lastAccessedAt, completedIds: new Set(p.completedLessonIds) },
+      ]))
+    : new Map<string, { completed: number; lastAccessed: string; completedIds: Set<string> }>();
 
   const categoryCounts = allCourses
     ? TAXONOMY.reduce((acc, cat) => {
@@ -302,7 +305,18 @@ export default function CoursesPage() {
           {courses.map(course => {
             const p = progressMap.get(course.id);
             const pct = p && course.totalLessons > 0 ? Math.round((p.completed / course.totalLessons) * 100) : 0;
-            return <CourseCard key={course.id} course={course} progressPct={pct} lastAccessedAt={p?.lastAccessed} />;
+            const nextLessonId = p && pct > 0 && pct < 100
+              ? course.lessonIds.find(id => !p.completedIds.has(id))
+              : undefined;
+            return (
+              <CourseCard
+                key={course.id}
+                course={course}
+                progressPct={pct}
+                lastAccessedAt={p?.lastAccessed}
+                nextLessonId={nextLessonId}
+              />
+            );
           })}
         </div>
       )}
@@ -353,7 +367,12 @@ function relativeTime(iso: string): string {
   return `${Math.floor(days / 30)}mo ago`;
 }
 
-function CourseCard({ course, progressPct, lastAccessedAt }: { course: Course; progressPct?: number; lastAccessedAt?: string }) {
+function CourseCard({ course, progressPct, lastAccessedAt, nextLessonId }: {
+  course: Course;
+  progressPct?: number;
+  lastAccessedAt?: string;
+  nextLessonId?: string;
+}) {
   const diff = DIFFICULTY_STYLES[course.difficulty];
   const cat = TAXONOMY.find(c => c.l1 === course.taxonomy.l1);
   const isNew = course.publishedAt
@@ -361,11 +380,12 @@ function CourseCard({ course, progressPct, lastAccessedAt }: { course: Course; p
     : false;
 
   return (
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-900/40 transition-all duration-300 hover:border-violet-500/30 hover:bg-slate-900/70 hover:-translate-y-1 hover:shadow-2xl hover:shadow-violet-500/5">
     <Link
       to={`/courses/${course.id}`}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5 transition-all duration-300 hover:border-violet-500/30 hover:bg-slate-900/70 hover:-translate-y-1 hover:shadow-2xl hover:shadow-violet-500/5"
+      className="relative flex flex-col p-5"
     >
-      <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-gradient-to-br from-violet-500/5 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-gradient-to-br from-violet-500/5 to-transparent" />
 
       {isNew && (
         <div className="absolute right-3 top-3 rounded-full bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
@@ -434,5 +454,16 @@ function CourseCard({ course, progressPct, lastAccessedAt }: { course: Course; p
         </div>
       </div>
     </Link>
+    {nextLessonId && (
+      <Link
+        to={`/courses/${course.id}/lessons/${nextLessonId}`}
+        onClick={e => e.stopPropagation()}
+        className="flex items-center justify-between border-t border-violet-500/20 bg-violet-500/8 px-5 py-2.5 text-xs font-semibold text-violet-300 transition hover:bg-violet-500/12 hover:text-violet-200"
+      >
+        <span>Resume where you left off</span>
+        <ChevronRight className="h-3.5 w-3.5" />
+      </Link>
+    )}
+    </div>
   );
 }

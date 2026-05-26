@@ -213,6 +213,7 @@ function LessonPageContent({
             content={lesson.content}
             onComplete={onComplete}
             completing={completing}
+            alreadyComplete={alreadyComplete}
           />
 
           {/* Prev / Next navigation */}

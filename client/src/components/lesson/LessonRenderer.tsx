@@ -10,9 +10,10 @@ interface Props {
   content: LessonContent;
   onComplete: (quizScore?: number) => void;
   completing?: boolean;
+  alreadyComplete?: boolean;
 }
 
-export default function LessonRenderer({ content, onComplete, completing = false }: Props) {
+export default function LessonRenderer({ content, onComplete, completing = false, alreadyComplete = false }: Props) {
   const [quizScore, setQuizScore] = useState<number | undefined>(undefined);
   const hasQuiz = content.sections.some(s => s.type === 'quiz');
 
@@ -27,25 +28,32 @@ export default function LessonRenderer({ content, onComplete, completing = false
       ))}
 
       <div className="pt-4 border-t border-slate-800/60 space-y-3">
-        {quizBonusHint && (
+        {quizBonusHint && !alreadyComplete && (
           <p className="flex items-center gap-1.5 text-xs text-slate-500">
             <Zap className="h-3.5 w-3.5 text-violet-400" />
             Complete the quiz above for up to <span className="text-violet-400 font-medium">+40 bonus XP</span>
           </p>
         )}
-        <button
-          onClick={() => !completing && onComplete(quizScore)}
-          disabled={completing}
-          className={cn(
-            'group flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200',
-            completing
-              ? 'bg-violet-600/50 cursor-not-allowed opacity-60'
-              : 'bg-gradient-to-r from-violet-600 to-violet-500 shadow-violet-500/20 hover:from-violet-500 hover:to-violet-400'
-          )}
-        >
-          <CheckCircle className="h-4 w-4 shrink-0" />
-          {completing ? 'Saving…' : 'Mark lesson complete'}
-        </button>
+        {alreadyComplete ? (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/8 px-5 py-3 text-sm font-medium text-emerald-400">
+            <CheckCircle className="h-4 w-4 shrink-0" />
+            Lesson already complete — use the navigation below to continue
+          </div>
+        ) : (
+          <button
+            onClick={() => !completing && onComplete(quizScore)}
+            disabled={completing}
+            className={cn(
+              'group flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200',
+              completing
+                ? 'bg-violet-600/50 cursor-not-allowed opacity-60'
+                : 'bg-gradient-to-r from-violet-600 to-violet-500 shadow-violet-500/20 hover:from-violet-500 hover:to-violet-400'
+            )}
+          >
+            <CheckCircle className="h-4 w-4 shrink-0" />
+            {completing ? 'Saving…' : 'Mark lesson complete'}
+          </button>
+        )}
       </div>
     </div>
   );
