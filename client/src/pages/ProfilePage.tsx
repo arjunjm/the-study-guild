@@ -10,10 +10,22 @@ import { RANK_XP_THRESHOLDS } from '@study-guild/shared';
 const RANK_ORDER = Object.keys(RANK_XP_THRESHOLDS) as (keyof typeof RANK_XP_THRESHOLDS)[];
 
 const ACHIEVEMENT_CONFIG: Record<string, { label: string; icon: string }> = {
-  'first-lesson': { label: 'First Lesson', icon: '📚' },
-  'seven-day-streak': { label: '7-Day Streak', icon: '🔥' },
-  'course-complete': { label: 'Course Complete', icon: '🎓' },
-  'quiz-perfect': { label: 'Perfect Quiz', icon: '⭐' },
+  'first-lesson':    { label: 'First Step',        icon: '📚' },
+  'ten-lessons':     { label: 'Dedicated Learner',  icon: '📖' },
+  'fifty-lessons':   { label: 'Knowledge Seeker',   icon: '🎯' },
+  'first-course':    { label: 'Course Complete',    icon: '🎓' },
+  'five-courses':    { label: 'Guild Scholar',      icon: '🏫' },
+  'quiz-perfect':    { label: 'Perfect Score',      icon: '⭐' },
+  'quiz-master':     { label: 'Quiz Master',        icon: '🧠' },
+  'rank-apprentice': { label: 'Apprentice',         icon: '🟢' },
+  'rank-scholar':    { label: 'Scholar',            icon: '🔵' },
+  'rank-expert':     { label: 'Expert',             icon: '🟡' },
+  'streak-3':        { label: '3-Day Streak',       icon: '🔥' },
+  'streak-7':        { label: 'Week Warrior',       icon: '🔥' },
+  'streak-30':       { label: 'Monthly Champion',   icon: '👑' },
+  // legacy IDs (kept for backward compat)
+  'seven-day-streak': { label: '7-Day Streak',      icon: '🔥' },
+  'course-complete':  { label: 'Course Complete',   icon: '🎓' },
 };
 
 const RANK_ICONS = ['⚪', '🟢', '🔵', '🟣', '🟡', '🟠', '🔴'];

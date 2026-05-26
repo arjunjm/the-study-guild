@@ -9,18 +9,35 @@ interface XPBreakdownItem {
   amount: number;
 }
 
+const ACHIEVEMENT_LABELS: Record<string, { label: string; icon: string }> = {
+  'first-lesson':    { label: 'First Step',        icon: '📚' },
+  'ten-lessons':     { label: 'Dedicated Learner',  icon: '📖' },
+  'fifty-lessons':   { label: 'Knowledge Seeker',   icon: '🎯' },
+  'first-course':    { label: 'Course Complete',    icon: '🎓' },
+  'five-courses':    { label: 'Guild Scholar',      icon: '🏫' },
+  'quiz-perfect':    { label: 'Perfect Score',      icon: '⭐' },
+  'quiz-master':     { label: 'Quiz Master',        icon: '🧠' },
+  'rank-apprentice': { label: 'Apprentice',         icon: '🟢' },
+  'rank-scholar':    { label: 'Scholar',            icon: '🔵' },
+  'rank-expert':     { label: 'Expert',             icon: '🟡' },
+  'streak-3':        { label: '3-Day Streak',       icon: '🔥' },
+  'streak-7':        { label: 'Week Warrior',       icon: '🔥' },
+  'streak-30':       { label: 'Monthly Champion',   icon: '👑' },
+};
+
 interface Props {
   xpGained: number;
   breakdown: XPBreakdownItem[];
   newXP: number;
   courseComplete?: boolean;
   rankUp?: { from: GuildRank; to: GuildRank };
+  newAchievements?: string[];
   onDismiss: () => void;
 }
 
 const AUTO_DISMISS_SECONDS = 6;
 
-export default function XPRewardOverlay({ xpGained, breakdown, newXP, courseComplete, rankUp, onDismiss }: Props) {
+export default function XPRewardOverlay({ xpGained, breakdown, newXP, courseComplete, rankUp, newAchievements, onDismiss }: Props) {
   const [displayXP, setDisplayXP] = useState(0);
   const [xpPopped, setXpPopped] = useState(false);
   const [countdown, setCountdown] = useState(AUTO_DISMISS_SECONDS);
@@ -159,6 +176,24 @@ export default function XPRewardOverlay({ xpGained, breakdown, newXP, courseComp
                 <span className="font-medium text-slate-300">+{item.amount} XP</span>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* New achievements */}
+        {newAchievements && newAchievements.length > 0 && (
+          <div className="mb-4 rounded-xl border border-amber-500/25 bg-amber-500/8 px-4 py-3">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-amber-500/70">Achievement{newAchievements.length > 1 ? 's' : ''} Unlocked</p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {newAchievements.map(id => {
+                const cfg = ACHIEVEMENT_LABELS[id] ?? { label: id, icon: '🏅' };
+                return (
+                  <div key={id} className="flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 px-2.5 py-1.5">
+                    <span className="text-base leading-none">{cfg.icon}</span>
+                    <span className="text-xs font-medium text-amber-200">{cfg.label}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 

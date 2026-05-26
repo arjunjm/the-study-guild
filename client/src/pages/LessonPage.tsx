@@ -17,6 +17,7 @@ interface CompleteResponse {
   prevRank: GuildRank;
   newRank: GuildRank;
   alreadyCompleted: boolean;
+  newAchievements?: string[];
 }
 
 interface RewardState {
@@ -25,6 +26,7 @@ interface RewardState {
   newXP: number;
   courseComplete: boolean;
   rankUp?: { from: GuildRank; to: GuildRank };
+  newAchievements?: string[];
 }
 
 export default function LessonPage() {
@@ -89,7 +91,7 @@ export default function LessonPage() {
             return prevRank !== newRank ? { from: prevRank as GuildRank, to: newRank } : undefined;
           })();
 
-      setReward({ xpGained: totalXP, breakdown, newXP, courseComplete: courseNowComplete, rankUp });
+      setReward({ xpGained: totalXP, breakdown, newXP, courseComplete: courseNowComplete, rankUp, newAchievements: data.newAchievements });
       qc.invalidateQueries({ queryKey: ['progress', courseId] });
       qc.invalidateQueries({ queryKey: ['me'] });
     },
