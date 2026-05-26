@@ -162,14 +162,61 @@ router.post('/lesson-complete', authenticate, async (req: AuthenticatedRequest, 
   progress.lastAccessedAt = new Date().toISOString();
   await progressContainer.items.upsert(progress);
 
-  // Fetch updated rank after all XP awards
+  // Fetch updated user (rank + achievements) after all XP awards
   const { resources: updatedArr } = await usersContainer.items
-    .query<UserProfile>({
-      query: 'SELECT c.rank FROM c WHERE c.id = @id',
+    .query<UserProfile & { id: string; azureOid: string; achievements: string[] }>({
+      query: 'SELECT * FROM c WHERE c.id = @id',
       parameters: [{ name: '@id', value: user.id }],
     })
     .fetchAll();
-  const newRank = updatedArr[0]?.rank ?? prevRank;
+  const updatedUser = updatedArr[0];
+  const newRank = updatedUser?.rank ?? prevRank;
+
+  // Achievement evaluation — evaluate after XP updates so rank is current
+  const newAchievements: string[] = [];
+  if (updatedUser && !alreadyCompleted) {
+    const earned = new Set(updatedUser.achievements ?? []);
+
+    // Count total completed lessons across all progress records for this user
+    const { resources: allUserProgress } = await progressContainer.items
+      .query<UserCourseProgress>({
+        query: 'SELECT * FROM c WHERE c.userId = @uid',
+        parameters: [{ name: '@uid', value: req.user!.oid }],
+      })
+      .fetchAll();
+
+    const totalLessonsCompleted = allUserProgress.reduce((sum, p) => sum + p.completedLessonIds.length, 0);
+    const totalCoursesCompleted = allUserProgress.filter(p => !!p.completedAt).length;
+    const totalPerfectQuizzes = Object.values(Object.assign({}, ...allUserProgress.map(p => p.quizScores))).filter((s) => s === 100).length;
+
+    const ACHIEVEMENTS: Array<{ id: string; label: string; check: () => boolean }> = [
+      { id: 'first-lesson',   label: 'First Step',      check: () => totalLessonsCompleted >= 1 },
+      { id: 'ten-lessons',    label: 'Dedicated Learner', check: () => totalLessonsCompleted >= 10 },
+      { id: 'fifty-lessons',  label: 'Knowledge Seeker', check: () => totalLessonsCompleted >= 50 },
+      { id: 'first-course',   label: 'Course Complete',  check: () => totalCoursesCompleted >= 1 },
+      { id: 'five-courses',   label: 'Guild Scholar',    check: () => totalCoursesCompleted >= 5 },
+      { id: 'quiz-perfect',   label: 'Perfect Score',    check: () => totalPerfectQuizzes >= 1 },
+      { id: 'quiz-master',    label: 'Quiz Master',      check: () => totalPerfectQuizzes >= 5 },
+      { id: 'rank-apprentice',label: 'Apprentice',       check: () => ['Apprentice','Scholar','Adept','Expert','Master','Grandmaster'].includes(newRank) },
+      { id: 'rank-scholar',   label: 'Scholar',          check: () => ['Scholar','Adept','Expert','Master','Grandmaster'].includes(newRank) },
+      { id: 'rank-expert',    label: 'Expert',           check: () => ['Expert','Master','Grandmaster'].includes(newRank) },
+    ];
+
+    for (const ach of ACHIEVEMENTS) {
+      if (!earned.has(ach.id) && ach.check()) {
+        earned.add(ach.id);
+        newAchievements.push(ach.id);
+        await awardXP(user.id, 'achievement_unlocked', ach.id);
+        xpGained += XP_REWARDS.achievement_unlocked;
+        breakdown.push({ label: `Achievement: ${ach.label}`, amount: XP_REWARDS.achievement_unlocked });
+      }
+    }
+
+    if (newAchievements.length > 0) {
+      updatedUser.achievements = [...earned];
+      await usersContainer.item(user.id, user.id).replace(updatedUser);
+    }
+  }
 
   res.json({
     data: {
@@ -180,6 +227,7 @@ router.post('/lesson-complete', authenticate, async (req: AuthenticatedRequest, 
       prevRank,
       newRank,
       alreadyCompleted,
+      newAchievements,
     },
   });
 });
@@ -234,10 +282,27 @@ router.post('/daily-login', authenticate, async (req: AuthenticatedRequest, res)
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
   user.streak = user.lastLoginDate === yesterday ? user.streak + 1 : 1;
   user.lastLoginDate = today;
+
+  // Streak achievements
+  const earned = new Set(user.achievements ?? []);
+  const streakAchs = [
+    { id: 'streak-3',  days: 3,  label: '3-Day Streak' },
+    { id: 'streak-7',  days: 7,  label: 'Week Warrior' },
+    { id: 'streak-30', days: 30, label: 'Monthly Champion' },
+  ];
+  let bonusXP = 0;
+  for (const s of streakAchs) {
+    if (!earned.has(s.id) && user.streak >= s.days) {
+      earned.add(s.id);
+      await awardXP(user.id, 'achievement_unlocked', s.id);
+      bonusXP += XP_REWARDS.achievement_unlocked;
+    }
+  }
+  user.achievements = [...earned];
   await usersContainer.item(user.id, user.id).replace(user);
 
   const event = await awardXP(user.id, 'daily_login');
-  res.json({ data: { alreadyClaimed: false, xpAwarded: event.amount, streak: user.streak } });
+  res.json({ data: { alreadyClaimed: false, xpAwarded: event.amount + bonusXP, streak: user.streak } });
 });
 
 export default router;
