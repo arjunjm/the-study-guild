@@ -1,0 +1,26 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+*.tsbuildinfo
+
+# Azure
+.azure/
+local.settings.json
+
+# Deployment artifacts
+deploy-tmp/
+deploy.zip
+server/scripts/mock-seed-data.json
+
+# Claude Code
+.claude/scheduled_tasks.lock
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
