@@ -1,4 +1,4 @@
-import type { UserProfile, Course, Lesson, UserCourseProgress } from '@study-guild/shared';
+﻿import type { UserProfile, Course, Lesson, UserCourseProgress } from '@study-guild/shared';
 import { computeRank, XP_REWARDS } from './xpUtils';
 
 // ---------------------------------------------------------------------------
@@ -5349,7 +5349,7 @@ const resolvers = {
         },
         {
           type: 'callout',
-          calloutType: 'warning',
+          variant: 'warning',
           title: 'Subscriptions vs polling — choose carefully',
           content: 'Subscriptions keep a WebSocket open per client — thousands of concurrent users means thousands of persistent connections. For updates that happen every few seconds, polling (refetchInterval in TanStack Query) is simpler and often more scalable. Subscriptions shine for truly real-time data: collaborative editing, live notifications, live scores.',
         },
@@ -5870,7 +5870,7 @@ const user = events.reduce(applyEvent, initialState);
         },
         {
           type: 'callout',
-          calloutType: 'warning',
+          variant: 'warning',
           title: 'CQRS ≠ Event Sourcing',
           content: 'These patterns are often mentioned together but are independent. You can use CQRS with a traditional mutable database. You can use Event Sourcing without CQRS. They complement each other well — events are natural commands/notifications — but the decision to adopt each should be made separately based on your requirements.',
         },
@@ -7061,7 +7061,7 @@ chmod -R 644 ./static  # recursively set all files to 644
         },
         {
           type: 'callout',
-          calloutType: 'warning',
+          variant: 'warning',
           title: 'chmod 777 is almost always wrong',
           content: '`chmod 777` gives everyone read, write, AND execute access. For web servers this is a security hole — malicious users or other processes can overwrite your files. Use the minimum permissions needed: `644` for files (owner writes, everyone reads), `755` for directories and executables.',
         },
@@ -7573,7 +7573,7 @@ The **learning rate** is a critical hyperparameter: too high and training diverg
         },
         {
           type: 'callout',
-          calloutType: 'tip',
+          variant: 'tip',
           title: 'Why "deep" learning?',
           content: 'Depth (many layers) lets networks learn **hierarchical representations**. In image recognition: layer 1 detects edges, layer 2 combines edges into shapes, layer 3 combines shapes into parts, layer 4 recognizes objects. This automatic feature hierarchy is what makes deep learning so powerful — you don\'t handcraft features.',
         },
@@ -10137,6 +10137,8 @@ const repo = new LoggingUserRepository(
     order: 0,
     title: 'AWS Global Infrastructure & Core Services',
     estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -10187,6 +10189,8 @@ const repo = new LoggingUserRepository(
     order: 1,
     title: 'IAM, VPC & Least-Privilege Access',
     estimatedMinutes: 16,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -10239,6 +10243,8 @@ const repo = new LoggingUserRepository(
     order: 2,
     title: 'Lambda, API Gateway & Serverless Patterns',
     estimatedMinutes: 15,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -10259,11 +10265,11 @@ const repo = new LoggingUserRepository(
         {
           type: 'flowDiagram',
           nodes: [
-            { id: 'client', position: { x: 0, y: 80 }, data: { label: 'Client' }, type: 'default' },
-            { id: 'apigw', position: { x: 180, y: 80 }, data: { label: 'API Gateway' }, type: 'default' },
-            { id: 'lambda', position: { x: 380, y: 80 }, data: { label: 'Lambda Function' }, type: 'default' },
-            { id: 'dynamo', position: { x: 580, y: 30 }, data: { label: 'DynamoDB' }, type: 'default' },
-            { id: 's3', position: { x: 580, y: 130 }, data: { label: 'S3 Bucket' }, type: 'default' },
+            { id: 'client', position: { x: 0, y: 80 }, label: 'Client', type: 'default' },
+            { id: 'apigw', position: { x: 180, y: 80 }, label: 'API Gateway', type: 'default' },
+            { id: 'lambda', position: { x: 380, y: 80 }, label: 'Lambda Function', type: 'default' },
+            { id: 'dynamo', position: { x: 580, y: 30 }, label: 'DynamoDB', type: 'default' },
+            { id: 's3', position: { x: 580, y: 130 }, label: 'S3 Bucket', type: 'default' },
           ],
           edges: [
             { id: 'e1', source: 'client', target: 'apigw', label: 'HTTPS request' },
@@ -10303,6 +10309,8 @@ const repo = new LoggingUserRepository(
     order: 0,
     title: 'Data Wrangling with pandas',
     estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -10351,6 +10359,8 @@ const repo = new LoggingUserRepository(
     order: 1,
     title: 'Visualisation & Exploratory Analysis',
     estimatedMinutes: 13,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -10399,6 +10409,8 @@ const repo = new LoggingUserRepository(
     order: 2,
     title: 'Your First Predictive Model with scikit-learn',
     estimatedMinutes: 15,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -10449,6 +10461,8 @@ const repo = new LoggingUserRepository(
     order: 0,
     title: 'Flutter & Dart Fundamentals',
     estimatedMinutes: 13,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -10495,6 +10509,8 @@ const repo = new LoggingUserRepository(
     order: 1,
     title: 'Layouts, Navigation & State Management',
     estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -10541,6 +10557,8 @@ const repo = new LoggingUserRepository(
     order: 2,
     title: 'HTTP, Platform Channels & Publishing',
     estimatedMinutes: 13,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -10589,6 +10607,8 @@ const repo = new LoggingUserRepository(
     order: 0,
     title: 'The OSI Model & TCP/IP',
     estimatedMinutes: 13,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -10635,6 +10655,8 @@ const repo = new LoggingUserRepository(
     order: 1,
     title: 'DNS, HTTP/2 & TLS Deep Dive',
     estimatedMinutes: 13,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -10681,6 +10703,8 @@ const repo = new LoggingUserRepository(
     order: 2,
     title: 'Subnetting, Firewalls & Network Debugging',
     estimatedMinutes: 12,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -10729,6 +10753,8 @@ const repo = new LoggingUserRepository(
     order: 0,
     title: 'RBAC — Role-Based Access Control',
     estimatedMinutes: 12,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -10777,6 +10803,8 @@ const repo = new LoggingUserRepository(
     order: 1,
     title: 'OAuth 2.0 Scopes & JWT Claims',
     estimatedMinutes: 12,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -10823,6 +10851,8 @@ const repo = new LoggingUserRepository(
     order: 2,
     title: 'ABAC, Least Privilege & Practical Patterns',
     estimatedMinutes: 12,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -10871,6 +10901,8 @@ const repo = new LoggingUserRepository(
     order: 0,
     title: 'How Indexes Work',
     estimatedMinutes: 15,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -10919,6 +10951,8 @@ const repo = new LoggingUserRepository(
     order: 1,
     title: 'Query Optimisation & N+1 Problems',
     estimatedMinutes: 15,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -10967,6 +11001,8 @@ const repo = new LoggingUserRepository(
     order: 2,
     title: 'Connection Pooling, Caching & Scaling Strategies',
     estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -11015,6 +11051,8 @@ const repo = new LoggingUserRepository(
     order: 0,
     title: 'Swift & SwiftUI Fundamentals',
     estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -11061,6 +11099,8 @@ const repo = new LoggingUserRepository(
     order: 1,
     title: 'Networking, Async/Await & Data Persistence',
     estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -11107,6 +11147,8 @@ const repo = new LoggingUserRepository(
     order: 2,
     title: 'Architecture Patterns & App Store Submission',
     estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -11155,6 +11197,8 @@ const repo = new LoggingUserRepository(
     order: 0,
     title: 'Kotlin & Jetpack Compose Basics',
     estimatedMinutes: 15,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -11201,6 +11245,8 @@ const repo = new LoggingUserRepository(
     order: 1,
     title: 'ViewModel, Room & Coroutines',
     estimatedMinutes: 15,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -11247,6 +11293,8 @@ const repo = new LoggingUserRepository(
     order: 2,
     title: 'Navigation, Dependency Injection & Publishing',
     estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -11295,6 +11343,8 @@ const repo = new LoggingUserRepository(
     order: 0,
     title: 'Images as Data & Convolutional Networks',
     estimatedMinutes: 15,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -11341,6 +11391,8 @@ const repo = new LoggingUserRepository(
     order: 1,
     title: 'Transfer Learning & Object Detection',
     estimatedMinutes: 16,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -11387,6 +11439,8 @@ const repo = new LoggingUserRepository(
     order: 2,
     title: 'Image Segmentation, OpenCV & Deployment',
     estimatedMinutes: 15,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -11437,6 +11491,8 @@ const repo = new LoggingUserRepository(
     order: 0,
     title: 'The Performance Investigation Mindset',
     estimatedMinutes: 16,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -11483,6 +11539,8 @@ const repo = new LoggingUserRepository(
     order: 1,
     title: 'CPU, Memory & I/O Deep Dive',
     estimatedMinutes: 16,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -11529,6 +11587,8 @@ const repo = new LoggingUserRepository(
     order: 2,
     title: 'Distributed Tracing & Performance in Production',
     estimatedMinutes: 16,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
@@ -11539,11 +11599,11 @@ const repo = new LoggingUserRepository(
         {
           type: 'flowDiagram',
           nodes: [
-            { id: 'browser', position: { x: 0, y: 80 }, data: { label: 'Browser' }, type: 'default' },
-            { id: 'api', position: { x: 180, y: 80 }, data: { label: 'API Gateway\n12ms' }, type: 'default' },
-            { id: 'course', position: { x: 380, y: 30 }, data: { label: 'Course Service\n8ms' }, type: 'default' },
-            { id: 'user', position: { x: 380, y: 130 }, data: { label: 'User Service\n180ms ⚠️' }, type: 'default' },
-            { id: 'db', position: { x: 580, y: 130 }, data: { label: 'PostgreSQL\n170ms' }, type: 'default' },
+            { id: 'browser', position: { x: 0, y: 80 }, label: 'Browser', type: 'default' },
+            { id: 'api', position: { x: 180, y: 80 }, label: 'API Gateway\n12ms', type: 'default' },
+            { id: 'course', position: { x: 380, y: 30 }, label: 'Course Service\n8ms', type: 'default' },
+            { id: 'user', position: { x: 380, y: 130 }, label: 'User Service\n180ms', type: 'default' },
+            { id: 'db', position: { x: 580, y: 130 }, label: 'PostgreSQL\n170ms', type: 'default' },
           ],
           edges: [
             { id: 'e1', source: 'browser', target: 'api', label: 'GET /home' },

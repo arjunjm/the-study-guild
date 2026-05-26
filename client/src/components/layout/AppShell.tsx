@@ -466,8 +466,6 @@ function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate:
 }
 
 function MobileNav() {
-  const location = useLocation();
-
   const items = [
     { to: '/',            label: 'Home',        icon: Home,          end: true },
     { to: '/courses',     label: 'Browse',      icon: BookOpen },
@@ -479,7 +477,6 @@ function MobileNav() {
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 flex items-stretch border-t border-slate-800/80 bg-slate-950/90 backdrop-blur-xl">
       {items.map(({ to, label, icon: Icon, end }) => {
-        const isActive = end ? location.pathname === to : location.pathname.startsWith(to);
         return (
           <NavLink
             key={to}

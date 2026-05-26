@@ -106,18 +106,14 @@ export default function LessonPage() {
   const currentIdx = sortedLessons.findIndex(l => l.id === lessonId);
   const prevLesson = currentIdx > 0 ? sortedLessons[currentIdx - 1] : null;
   const nextLesson = currentIdx >= 0 && currentIdx < sortedLessons.length - 1 ? sortedLessons[currentIdx + 1] : null;
-  const lessonNum = currentIdx >= 0 ? currentIdx + 1 : null;
-
   return (
     <LessonPageContent
       lesson={lesson}
       courseId={courseId!}
-      lessonId={lessonId!}
       alreadyComplete={alreadyComplete}
       completedCount={completedCount}
       prevLesson={prevLesson}
       nextLesson={nextLesson}
-      lessonNum={lessonNum}
       totalLessons={sortedLessons.length}
       reward={reward}
       completing={completeMutation.isPending}
@@ -135,17 +131,15 @@ export default function LessonPage() {
 }
 
 function LessonPageContent({
-  lesson, courseId, lessonId, alreadyComplete, completedCount, prevLesson, nextLesson,
-  lessonNum, totalLessons, reward, completing, onComplete, onDismissReward,
+  lesson, courseId, alreadyComplete, completedCount, prevLesson, nextLesson,
+  totalLessons, reward, completing, onComplete, onDismissReward,
 }: {
   lesson: Lesson;
   courseId: string;
-  lessonId: string;
   alreadyComplete: boolean;
   completedCount: number;
   prevLesson: Lesson | null;
   nextLesson: Lesson | null;
-  lessonNum: number | null;
   totalLessons: number;
   reward: RewardState | null;
   completing: boolean;

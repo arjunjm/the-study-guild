@@ -29,7 +29,6 @@ export default function LeaderboardPage() {
 
   const currentUser = entries?.find(e => e.isCurrentUser);
   const top3 = entries?.slice(0, 3) ?? [];
-  const rest = entries?.slice(3) ?? [];
 
   return (
     <div className="min-h-full px-4 py-8 lg:px-10 lg:py-10 max-w-3xl">
