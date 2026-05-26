@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Search, Star, Clock, X, BookOpen } from 'lucide-react';
@@ -26,6 +26,20 @@ export default function CoursesPage() {
 
   // Local search state with debounced URL sync
   const [search, setSearch] = useState(searchParams.get('search') ?? '');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Press '/' anywhere to focus search (skip when typing in another input)
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== '/') return;
+      const tag = (e.target as HTMLElement).tagName.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      e.preventDefault();
+      searchInputRef.current?.focus();
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -91,8 +105,8 @@ export default function CoursesPage() {
   });
 
   const progressMap = allProgress
-    ? new Map(allProgress.map(p => [p.courseId, p.completedLessonIds.length]))
-    : new Map<string, number>();
+    ? new Map(allProgress.map(p => [p.courseId, { completed: p.completedLessonIds.length, lastAccessed: p.lastAccessedAt }]))
+    : new Map<string, { completed: number; lastAccessed: string }>();
 
   const categoryCounts = allCourses
     ? TAXONOMY.reduce((acc, cat) => {
@@ -115,8 +129,9 @@ export default function CoursesPage() {
       <div className="mb-4 relative max-w-2xl">
         <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 pointer-events-none" />
         <input
+          ref={searchInputRef}
           type="search"
-          placeholder="Search courses by title, topic, or keyword…"
+          placeholder="Search courses… (press / to focus)"
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="w-full rounded-2xl border border-slate-700/60 bg-slate-900/60 py-3 pl-11 pr-4 text-sm text-white placeholder-slate-500 outline-none transition focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500/30"
@@ -285,9 +300,9 @@ export default function CoursesPage() {
       {!isLoading && courses && courses.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {courses.map(course => {
-            const completed = progressMap.get(course.id) ?? 0;
-            const pct = course.totalLessons > 0 ? Math.round((completed / course.totalLessons) * 100) : 0;
-            return <CourseCard key={course.id} course={course} progressPct={pct} />;
+            const p = progressMap.get(course.id);
+            const pct = p && course.totalLessons > 0 ? Math.round((p.completed / course.totalLessons) * 100) : 0;
+            return <CourseCard key={course.id} course={course} progressPct={pct} lastAccessedAt={p?.lastAccessed} />;
           })}
         </div>
       )}
@@ -312,11 +327,33 @@ function ProgressRing({ pct }: { pct: number }) {
         transform="rotate(-90 14 14)"
         style={{ transition: 'stroke-dashoffset 0.5s ease' }}
       />
+      {pct === 100 && (
+        <polyline
+          points="8,14 12,18 20,10"
+          fill="none"
+          stroke="#10b981"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )}
     </svg>
   );
 }
 
-function CourseCard({ course, progressPct }: { course: Course; progressPct?: number }) {
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
+  return `${Math.floor(days / 30)}mo ago`;
+}
+
+function CourseCard({ course, progressPct, lastAccessedAt }: { course: Course; progressPct?: number; lastAccessedAt?: string }) {
   const diff = DIFFICULTY_STYLES[course.difficulty];
   const cat = TAXONOMY.find(c => c.l1 === course.taxonomy.l1);
   const isNew = course.publishedAt
@@ -359,13 +396,18 @@ function CourseCard({ course, progressPct }: { course: Course; progressPct?: num
         {/* Description */}
         <p className="mb-4 flex-1 text-xs text-slate-500 line-clamp-2 leading-relaxed">{course.description}</p>
 
-        {/* Author + lesson count */}
+        {/* Author + lesson count + last studied */}
         <div className="mb-3 flex items-center justify-between text-xs text-slate-600">
           <span>by {course.authorName}</span>
-          <span className="flex items-center gap-1">
-            <BookOpen className="h-3 w-3" />
-            {course.totalLessons} lesson{course.totalLessons !== 1 ? 's' : ''}
-          </span>
+          <div className="flex items-center gap-2">
+            {lastAccessedAt && progressPct !== undefined && progressPct > 0 && (
+              <span className="text-slate-600 italic">studied {relativeTime(lastAccessedAt)}</span>
+            )}
+            <span className="flex items-center gap-1">
+              <BookOpen className="h-3 w-3" />
+              {course.totalLessons} lesson{course.totalLessons !== 1 ? 's' : ''}
+            </span>
+          </div>
         </div>
 
         {/* Footer */}

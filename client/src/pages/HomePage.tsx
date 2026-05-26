@@ -7,7 +7,7 @@ import { TAXONOMY } from '../data/taxonomy';
 import { cn } from '../lib/utils';
 import type { UserProfile, Course } from '@study-guild/shared';
 import { RANK_XP_THRESHOLDS } from '@study-guild/shared';
-import type { LeaderboardEntry } from '../lib/mockData';
+import type { LeaderboardEntry } from '@study-guild/shared';
 
 const RANK_ORDER = Object.keys(RANK_XP_THRESHOLDS) as (keyof typeof RANK_XP_THRESHOLDS)[];
 

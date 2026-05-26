@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Trophy, Zap, Flame, Medal } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { cn } from '../lib/utils';
-import type { LeaderboardEntry } from '../lib/mockData';
+import type { LeaderboardEntry } from '@study-guild/shared';
 
 const RANK_COLORS: Record<string, string> = {
   Grandmaster: 'text-amber-300',

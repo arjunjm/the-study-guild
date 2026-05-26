@@ -67,3 +67,14 @@ export type XPReason =
   | 'daily_login'
   | 'course_rated'
   | 'achievement_unlocked';
+
+export interface LeaderboardEntry {
+  position: number;
+  userId: string;
+  displayName: string;
+  xp: number;
+  guildRank: GuildRank;
+  streak: number;
+  completedCourses: number;
+  isCurrentUser: boolean;
+}
