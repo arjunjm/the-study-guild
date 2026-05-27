@@ -1047,6 +1047,48 @@ Host: login.microsoftonline.com`,
           title: 'Why the two-step code exchange?',
           content: 'The authorization code is returned in the browser redirect URL — visible in address bars, browser history, and server logs. Exchanging it for a token happens **server-to-server over HTTPS** (the back-channel), so the actual access token never touches the browser URL bar. A two-line interception that grabs the code gives the attacker nothing useful — they still need the client secret (or PKCE verifier) to complete the exchange.',
         },
+        {
+          type: 'quiz',
+          passingScore: 60,
+          questions: [
+            {
+              id: 'oauth1-q1',
+              question: 'What problem does OAuth2 solve that wasn\'t well-addressed before it?',
+              options: [
+                'It encrypts passwords at rest in the database',
+                'It lets users grant third-party apps limited access to their resources without sharing their password',
+                'It replaces HTTPS for secure communication',
+                'It eliminates the need for user accounts on third-party apps',
+              ],
+              correctIndex: 1,
+              explanation: 'OAuth2\'s core value: instead of giving an app your password (which gives it full access forever), you grant it a scoped, revocable access token. The app never sees your password. This is "delegated authorization" — you authorize a specific set of actions without sharing credentials.',
+            },
+            {
+              id: 'oauth1-q2',
+              question: 'In the Authorization Code Flow, why is the code sent to the browser but the token exchanged via a back-channel (server-to-server) request?',
+              options: [
+                'Because the token is too large for a URL parameter',
+                'Because server-to-server is faster',
+                'To prevent the token from appearing in browser history, logs, or referrer headers — the code alone is useless without the client secret',
+                'OAuth2 requires three separate HTTP connections',
+              ],
+              correctIndex: 2,
+              explanation: 'The authorization code is short-lived (seconds) and single-use. Even if an attacker intercepts it from the URL bar or logs, they cannot exchange it for a token without the client secret (or PKCE verifier for public clients). The actual token only travels over a direct server-to-server HTTPS call and never appears in any browser-accessible location.',
+            },
+            {
+              id: 'oauth1-q3',
+              question: 'Which of the four OAuth2 roles is responsible for issuing access tokens?',
+              options: [
+                'Resource Owner (the user)',
+                'Client (the application)',
+                'Authorization Server (e.g. Google, Azure AD)',
+                'Resource Server (the API)',
+              ],
+              correctIndex: 2,
+              explanation: 'The Authorization Server is the trust anchor of OAuth2. It authenticates the user, checks consent, and issues access tokens. The Resource Server only validates tokens it receives. The Client requests tokens. The Resource Owner grants (or denies) consent.',
+            },
+          ],
+        },
       ],
     },
   },
@@ -1146,6 +1188,34 @@ Each part is base64url-encoded. The **header** declares the algorithm. The **pay
           variant: 'info',
           title: 'Refresh token rotation',
           content: 'Modern authorization servers rotate refresh tokens on every use — each refresh returns a new refresh token and invalidates the old one. This means a leaked refresh token is detected as soon as the legitimate user next refreshes (the old token is already used). Azure AD and Auth0 both enable rotation by default.',
+        },
+        {
+          type: 'codeBlock',
+          language: 'javascript',
+          caption: 'Decoding a JWT in the browser (inspection only — not validation)',
+          code: `// A JWT is three base64url-encoded JSON blobs separated by dots
+// NEVER use this for security — this is inspection, not verification
+function decodeJwt(token) {
+  const [headerB64, payloadB64] = token.split('.');
+  const decode = (b64) => JSON.parse(atob(b64.replace(/-/g, '+').replace(/_/g, '/')));
+  return { header: decode(headerB64), payload: decode(payloadB64) };
+}
+
+const token = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyIsIm5hbWUiOiJBbGljZSIsInJvbGUiOiJsZWFybmVyIiwiaWF0IjoxNzMwMDAwMDAwLCJleHAiOjE3MzAwMDkwMDB9.signature';
+const { header, payload } = decodeJwt(token);
+// header: { alg: 'RS256', typ: 'JWT' }
+// payload: { sub: 'user-123', name: 'Alice', role: 'learner', iat: 1730000000, exp: 1730009000 }
+
+// Server-side validation (Node.js) — the REAL security check
+import jwt from 'jsonwebtoken';
+import jwksClient from 'jwks-rsa';
+
+const client = jwksClient({ jwksUri: 'https://auth.example.com/.well-known/jwks.json' });
+const key = await new Promise((res, rej) =>
+  client.getSigningKey(header.kid, (err, k) => err ? rej(err) : res(k.getPublicKey()))
+);
+const verified = jwt.verify(token, key, { algorithms: ['RS256'], audience: 'my-api' });
+// verified.sub, verified.role etc. are now trustworthy`,
         },
         {
           type: 'quiz',
@@ -1499,6 +1569,32 @@ const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
 
 // 3. Store verifier for later — challenge goes in the auth URL
 sessionStorage.setItem('pkce_verifier', codeVerifier);`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'javascript',
+          caption: 'Step 2 — exchange the code for tokens using the verifier',
+          code: `// After the redirect back to your app with ?code=...
+const params = new URLSearchParams(window.location.search);
+const code = params.get('code');
+const codeVerifier = sessionStorage.getItem('pkce_verifier'); // retrieved from storage
+
+// Exchange: send the verifier (plain text) so the server can hash and compare
+const tokenResponse = await fetch('https://auth.example.com/oauth/token', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body: new URLSearchParams({
+    grant_type: 'authorization_code',
+    code,
+    redirect_uri: 'https://app.example.com/callback',
+    client_id: 'my-spa-client-id',
+    code_verifier: codeVerifier,  // ← the plain verifier, NOT the hash
+  }),
+});
+
+const { access_token, refresh_token, expires_in } = await tokenResponse.json();
+// Store tokens — never in localStorage for long-lived sensitive data
+sessionStorage.setItem('access_token', access_token);`,
         },
         {
           type: 'callout',
@@ -2038,6 +2134,29 @@ The Implicit flow returned tokens directly in the redirect URL fragment (\`#acce
           variant: 'danger',
           title: 'Resource Owner Password Credentials (ROPC) — also avoid',
           content: "ROPC lets the client collect the user's username and password directly and POST them to the token endpoint. This completely defeats the purpose of OAuth2 — the client handles credentials. The only exception is for migrating legacy apps where you literally cannot do a redirect. Even then, treat it as a temporary measure.",
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Grant type decision tree: which flow for which scenario?',
+          nodes: [
+            { id: 'q', position: { x: 0, y: 140 }, label: 'Who is your client?', type: 'input' },
+            { id: 'user', position: { x: 240, y: 80 }, label: 'App acting\non behalf of a user', type: 'decision' },
+            { id: 'machine', position: { x: 240, y: 200 }, label: 'Machine-to-machine\n(no user involved)', type: 'decision' },
+            { id: 'spa', position: { x: 480, y: 40 }, label: 'SPA / Mobile\n(public client)', type: 'default' },
+            { id: 'server', position: { x: 480, y: 140 }, label: 'Server-side app\n(confidential client)', type: 'default' },
+            { id: 'authcode_pkce', position: { x: 720, y: 40 }, label: 'Authorization Code\n+ PKCE\n(no secret needed)', type: 'output' },
+            { id: 'authcode', position: { x: 720, y: 140 }, label: 'Authorization Code\n+ client_secret\n(+ PKCE for defense)', type: 'output' },
+            { id: 'ccred', position: { x: 720, y: 240 }, label: 'Client Credentials\n(service accounts,\ncron jobs, APIs)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'q', target: 'user' },
+            { id: 'e2', source: 'q', target: 'machine' },
+            { id: 'e3', source: 'user', target: 'spa', label: 'JS / native app' },
+            { id: 'e4', source: 'user', target: 'server', label: 'backend renders' },
+            { id: 'e5', source: 'spa', target: 'authcode_pkce', animated: true },
+            { id: 'e6', source: 'server', target: 'authcode', animated: true },
+            { id: 'e7', source: 'machine', target: 'ccred', animated: true },
+          ],
         },
         {
           type: 'quiz',
