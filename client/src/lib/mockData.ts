@@ -10070,6 +10070,27 @@ WantedBy=multi-user.target
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Linux file access check: user → group → other permissions',
+          nodes: [
+            { id: 'proc',  position: { x: 0,   y: 140 }, label: 'Process tries\nto open file', type: 'input' },
+            { id: 'owner', position: { x: 220, y: 60  }, label: 'UID == file owner?\ncheck user bits (rwx)', type: 'decision' },
+            { id: 'group', position: { x: 220, y: 180 }, label: 'GID in file group?\ncheck group bits (rwx)', type: 'decision' },
+            { id: 'other', position: { x: 220, y: 300 }, label: 'Check other bits\n(rwx for everyone else)', type: 'decision' },
+            { id: 'allow', position: { x: 460, y: 140 }, label: 'Access granted ✓', type: 'output' },
+            { id: 'deny',  position: { x: 460, y: 300 }, label: 'EACCES denied ✗', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'proc',  target: 'owner', label: 'check' },
+            { id: 'e2', source: 'owner', target: 'allow', label: 'yes → permit', animated: true },
+            { id: 'e3', source: 'owner', target: 'group', label: 'no' },
+            { id: 'e4', source: 'group', target: 'allow', label: 'yes → permit', animated: true },
+            { id: 'e5', source: 'group', target: 'other', label: 'no' },
+            { id: 'e6', source: 'other', target: 'allow', label: 'bit set → permit', animated: true },
+            { id: 'e7', source: 'other', target: 'deny',  label: 'bit clear' },
+          ],
+        },
+        {
           type: 'text',
           content: `## The Linux permission model
 
@@ -11861,6 +11882,23 @@ When your browser connects to a site, it validates the chain: leaf cert → inte
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'React Native architecture: JS thread → bridge → native UI',
+          nodes: [
+            { id: 'js',      position: { x: 0,   y: 140 }, label: 'JS Thread\nReact component logic', type: 'input' },
+            { id: 'bridge',  position: { x: 220, y: 140 }, label: 'Bridge\n(async JSON messages)', type: 'default' },
+            { id: 'native',  position: { x: 440, y: 140 }, label: 'Native Thread\n(Obj-C / Java / Kotlin)', type: 'default' },
+            { id: 'ios',     position: { x: 660, y: 80  }, label: 'UIKit / SwiftUI\n(iOS)', type: 'output' },
+            { id: 'android', position: { x: 660, y: 220 }, label: 'Android Views\n(Jetpack Compose)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'js',     target: 'bridge', label: 'setState calls', animated: true },
+            { id: 'e2', source: 'bridge', target: 'native', label: 'JSON payload', animated: true },
+            { id: 'e3', source: 'native', target: 'ios',    label: 'UIKit commands' },
+            { id: 'e4', source: 'native', target: 'android',label: 'View commands' },
+          ],
+        },
+        {
           type: 'text',
           content: `## React Native is not a web browser
 
@@ -12705,6 +12743,25 @@ The biggest schema decision in MongoDB: should related data be **embedded** or *
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'MongoDB aggregation pipeline: documents flow through stages',
+          nodes: [
+            { id: 'coll',    position: { x: 0,   y: 140 }, label: 'Collection\n(all documents)', type: 'input' },
+            { id: 'match',   position: { x: 180, y: 140 }, label: '$match\n{ status: "active" }', type: 'default' },
+            { id: 'group',   position: { x: 360, y: 140 }, label: '$group\n{ _id: "$country", count: $sum: 1 }', type: 'default' },
+            { id: 'sort',    position: { x: 540, y: 140 }, label: '$sort\n{ count: -1 }', type: 'default' },
+            { id: 'limit',   position: { x: 720, y: 140 }, label: '$limit 10', type: 'default' },
+            { id: 'result',  position: { x: 900, y: 140 }, label: 'Result\n10 top countries', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'coll',  target: 'match',  label: 'filter', animated: true },
+            { id: 'e2', source: 'match', target: 'group',  label: 'reduce' },
+            { id: 'e3', source: 'group', target: 'sort',   label: 'sort' },
+            { id: 'e4', source: 'sort',  target: 'limit',  label: 'paginate' },
+            { id: 'e5', source: 'limit', target: 'result', label: 'output', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: `## Basic CRUD with the MongoDB driver
 
@@ -12808,6 +12865,21 @@ Common stages:
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Index lookup vs collection scan: O(log n) vs O(n)',
+          nodes: [
+            { id: 'query',  position: { x: 0,   y: 140 }, label: 'db.users.find\n({ email: "alice@..." })', type: 'input' },
+            { id: 'hasidx', position: { x: 220, y: 140 }, label: 'Index on email?\n(check query planner)', type: 'decision' },
+            { id: 'btree',  position: { x: 440, y: 60  }, label: 'B-tree index scan\nO(log n) — fast ✓', type: 'output' },
+            { id: 'colscan',position: { x: 440, y: 240 }, label: 'Collection scan\nO(n) — slow on large data ✗', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'query',  target: 'hasidx',  label: 'executes' },
+            { id: 'e2', source: 'hasidx', target: 'btree',   label: 'index found', animated: true },
+            { id: 'e3', source: 'hasidx', target: 'colscan', label: 'no index → COLLSCAN' },
+          ],
+        },
         {
           type: 'text',
           content: `## Why indexes matter
@@ -14566,6 +14638,23 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'SwiftUI data flow: @State change triggers view re-render',
+          nodes: [
+            { id: 'state',   position: { x: 0,   y: 140 }, label: '@State var count = 0', type: 'input' },
+            { id: 'event',   position: { x: 0,   y: 280 }, label: 'User taps button\ncount += 1', type: 'default' },
+            { id: 'diff',    position: { x: 260, y: 140 }, label: 'SwiftUI diffing\n(what changed?)', type: 'default' },
+            { id: 'body',    position: { x: 260, y: 280 }, label: 'body recomputed\n(pure function of state)', type: 'default' },
+            { id: 'render',  position: { x: 520, y: 200 }, label: 'UIKit renders\nupdated view tree', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'event', target: 'state', label: 'mutates' },
+            { id: 'e2', source: 'state', target: 'diff',  label: 'triggers', animated: true },
+            { id: 'e3', source: 'diff',  target: 'body',  label: 'invalidates' },
+            { id: 'e4', source: 'body',  target: 'render',label: 'new tree', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: '## Swift — A Modern Systems Language\n\nSwift is Apple\'s language for iOS, macOS, watchOS, and tvOS. It is statically typed, compiled, and has first-class support for value types, protocol-oriented programming, and concurrency.\n\n```swift\n// Variables and constants\nlet name = "Alice"          // immutable (let)\nvar score = 0               // mutable (var)\n\n// Optionals — Swift\'s null safety\nvar email: String? = nil     // may be nil\nif let e = email {\n    print("Email: \\(e)")    // safely unwrapped\n}\nlet displayEmail = email ?? "not set"  // nil coalescing\n\n// Structs (value types — copied on assignment)\nstruct Course {\n    let id: UUID\n    var title: String\n    var lessonCount: Int\n}\n\n// Enums with associated values\nenum NetworkResult<T> {\n    case success(T)\n    case failure(Error)\n}\n```',
         },
@@ -14711,6 +14800,24 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Jetpack Compose composition model: state → UI → events',
+          nodes: [
+            { id: 'state',    position: { x: 0,   y: 140 }, label: 'State\n(ViewModel / rememberState)', type: 'input' },
+            { id: 'compose',  position: { x: 240, y: 140 }, label: 'Composition\n(@Composable functions)', type: 'default' },
+            { id: 'render',   position: { x: 480, y: 140 }, label: 'Rendered UI\n(draw commands → GPU)', type: 'default' },
+            { id: 'events',   position: { x: 480, y: 280 }, label: 'User events\n(click, scroll, input)', type: 'default' },
+            { id: 'vm',       position: { x: 240, y: 280 }, label: 'Intent → ViewModel\nupdates state', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'state',   target: 'compose', label: 'drives', animated: true },
+            { id: 'e2', source: 'compose', target: 'render',  label: 'produces' },
+            { id: 'e3', source: 'render',  target: 'events',  label: 'captures' },
+            { id: 'e4', source: 'events',  target: 'vm',      label: 'triggers' },
+            { id: 'e5', source: 'vm',      target: 'state',   label: 'updates', animated: true },
+          ],
+        },
         {
           type: 'text',
           content: '## Kotlin — Concise, Safe, Expressive\n\nKotlin is the preferred language for Android development. It compiles to JVM bytecode and is 100% interoperable with Java:\n\n```kotlin\n// Null safety\nvar name: String = "Alice"   // non-null\nvar nickname: String? = null  // nullable\nprintln(nickname?.length)     // safe call — null if nickname is null\nval display = nickname ?: "Anonymous"  // Elvis operator\n\n// Data classes (auto-generates equals, hashCode, toString, copy)\ndata class Course(\n    val id: String,\n    val title: String,\n    val difficulty: String,\n)\n\n// Extension functions\nfun String.toSlug() = lowercase().replace(" ", "-").replace(Regex("[^a-z0-9-]"), "")\n\n// Coroutines\nsuspend fun fetchCourses(): List<Course> {\n    return withContext(Dispatchers.IO) {\n        api.getCourses()\n    }\n}\n```',
@@ -15074,6 +15181,25 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Memory hierarchy: latency increases as you move away from CPU',
+          nodes: [
+            { id: 'reg',   position: { x: 0,   y: 160 }, label: 'CPU Registers\n~0.3 ns', type: 'input' },
+            { id: 'l1',    position: { x: 180, y: 160 }, label: 'L1 Cache\n~1 ns (32KB)', type: 'default' },
+            { id: 'l2',    position: { x: 360, y: 160 }, label: 'L2 Cache\n~4 ns (256KB)', type: 'default' },
+            { id: 'l3',    position: { x: 540, y: 160 }, label: 'L3 Cache\n~10 ns (8MB)', type: 'default' },
+            { id: 'ram',   position: { x: 720, y: 160 }, label: 'RAM\n~100 ns (GBs)', type: 'default' },
+            { id: 'disk',  position: { x: 900, y: 160 }, label: 'NVMe SSD\n~100 µs (TBs)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'reg', target: 'l1',   label: 'miss' },
+            { id: 'e2', source: 'l1',  target: 'l2',   label: 'miss', animated: true },
+            { id: 'e3', source: 'l2',  target: 'l3',   label: 'miss', animated: true },
+            { id: 'e4', source: 'l3',  target: 'ram',  label: 'miss', animated: true },
+            { id: 'e5', source: 'ram', target: 'disk', label: 'page fault' },
+          ],
+        },
         {
           type: 'text',
           content: '## CPU: Context Switches & Cache Effects\n\nA **context switch** occurs when the OS preempts one thread to run another. Excessive context switches (>100K/s on a busy server) indicate too many threads fighting for CPU time.\n\n**CPU cache hierarchy** (fastest to slowest):\n- L1: ~1ns, 32–64KB per core\n- L2: ~4ns, 256KB–1MB per core\n- L3: ~15ns, 4–32MB shared\n- DRAM: ~60ns\n\nCode that causes cache misses is dramatically slower. Access arrays sequentially (cache-friendly) rather than randomly:\n\n```c\n// Cache-friendly: sequential access\nfor (int i = 0; i < N; i++) sum += arr[i];\n\n// Cache-unfriendly: random access → cache miss every read\nfor (int i = 0; i < N; i++) sum += arr[rand_index[i]];\n// Can be 10–50× slower on large arrays\n```',
