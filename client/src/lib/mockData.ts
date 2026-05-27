@@ -266,6 +266,25 @@ export const MOCK_COURSES: Course[] = [
     updatedAt: '2025-05-10T00:00:00.000Z',
   },
   {
+    id: 'course-sql-advanced',
+    title: 'Advanced SQL — CTEs, Window Functions & Query Analysis',
+    description: 'Level up your SQL with common table expressions, recursive queries, window functions (ROW_NUMBER, RANK, LAG/LEAD), and deep-dive query tuning with EXPLAIN ANALYZE.',
+    taxonomy: { l1: 'Databases', l2: 'SQL' },
+    difficulty: 'intermediate',
+    authorId: 'teacher-001',
+    authorName: 'The Guild',
+    published: true,
+    publishedAt: '2025-06-01T00:00:00.000Z',
+    tags: ['sql', 'cte', 'window-functions', 'postgresql', 'query-optimization'],
+    lessonIds: ['lesson-sql-adv-1', 'lesson-sql-adv-2', 'lesson-sql-adv-3'],
+    totalLessons: 3,
+    estimatedMinutes: 45,
+    ratingAverage: 4.7,
+    ratingCount: 19,
+    createdAt: '2025-06-01T00:00:00.000Z',
+    updatedAt: '2025-06-01T00:00:00.000Z',
+  },
+  {
     id: 'course-rest-api',
     title: 'REST APIs with Express & TypeScript',
     description: 'Build production-quality REST APIs using Express and TypeScript. Learn resource design, routing, middleware, validation, error handling, and authentication.',
@@ -570,6 +589,25 @@ export const MOCK_COURSES: Course[] = [
     updatedAt: '2025-05-26T00:00:00.000Z',
   },
   {
+    id: 'course-python',
+    title: 'Python Fundamentals',
+    description: 'Learn Python from first principles — data types, control flow, functions, and object-oriented programming. Build real scripts and understand the idioms that make Python code readable and productive.',
+    taxonomy: { l1: 'Engineering', l2: 'Python' },
+    difficulty: 'beginner',
+    authorId: 'teacher-001',
+    authorName: 'The Guild',
+    published: true,
+    publishedAt: '2025-05-27T00:00:00.000Z',
+    tags: ['python', 'programming', 'beginner', 'scripting', 'oop'],
+    lessonIds: ['lesson-py-1', 'lesson-py-2', 'lesson-py-3', 'lesson-py-4'],
+    totalLessons: 4,
+    estimatedMinutes: 55,
+    ratingAverage: 4.9,
+    ratingCount: 12,
+    createdAt: '2025-05-27T00:00:00.000Z',
+    updatedAt: '2025-05-27T00:00:00.000Z',
+  },
+  {
     id: 'course-git',
     title: 'Git Internals & Workflows',
     description: 'Understand how Git actually stores data, why merge and rebase behave the way they do, and how to choose a branching strategy for your team.',
@@ -782,16 +820,16 @@ export const MOCK_COURSES: Course[] = [
     id: 'course-docker',
     title: 'Docker Fundamentals',
     description: 'Understand containers from the ground up — how images are built in layers, how containers are isolated from the host, how networking works, and how Docker Compose orchestrates multi-container apps.',
-    taxonomy: { l1: 'Cloud', l2: 'Kubernetes' },
+    taxonomy: { l1: 'Cloud', l2: 'Docker' },
     difficulty: 'beginner',
     authorId: 'teacher-001',
     authorName: 'The Guild',
     published: true,
     publishedAt: '2025-05-26T00:00:00.000Z',
     tags: ['docker', 'containers', 'devops', 'kubernetes', 'cloud'],
-    lessonIds: ['lesson-docker-1', 'lesson-docker-2', 'lesson-docker-3'],
-    totalLessons: 3,
-    estimatedMinutes: 42,
+    lessonIds: ['lesson-docker-1', 'lesson-docker-2', 'lesson-docker-3', 'lesson-docker-4', 'lesson-docker-5'],
+    totalLessons: 5,
+    estimatedMinutes: 70,
     ratingAverage: 4.8,
     ratingCount: 52,
     createdAt: '2025-05-26T00:00:00.000Z',
@@ -2227,6 +2265,27 @@ Three Base64url-encoded segments separated by dots: **Header.Payload.Signature**
 }`,
         },
         {
+          type: 'flowDiagram',
+          title: 'JWT anatomy: three dot-separated Base64url segments',
+          nodes: [
+            { id: 'token', position: { x: 0, y: 100 }, label: 'Raw JWT string\nxxxxxx.yyyyyy.zzzzzz', type: 'input' },
+            { id: 'header', position: { x: 260, y: 20 }, label: 'Header\n{ alg, typ }', type: 'default' },
+            { id: 'payload', position: { x: 260, y: 100 }, label: 'Payload\n{ sub, exp, roles, … }', type: 'default' },
+            { id: 'sig', position: { x: 260, y: 180 }, label: 'Signature\nHMAC or RSA of\nheader + payload', type: 'default' },
+            { id: 'verify', position: { x: 520, y: 100 }, label: 'Verify signature\nwith secret / public key', type: 'default' },
+            { id: 'claims', position: { x: 760, y: 100 }, label: 'Trust claims\nsub, roles, exp', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'token', target: 'header', label: 'split on "."' },
+            { id: 'e2', source: 'token', target: 'payload' },
+            { id: 'e3', source: 'token', target: 'sig' },
+            { id: 'e4', source: 'header', target: 'verify', label: 'declares alg' },
+            { id: 'e5', source: 'payload', target: 'verify' },
+            { id: 'e6', source: 'sig', target: 'verify', label: 'must match' },
+            { id: 'e7', source: 'verify', target: 'claims', label: 'valid ✓' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'warning',
           title: 'JWTs are encoded, not encrypted',
@@ -2274,6 +2333,25 @@ The resource server **verifies** the signature using the corresponding public ke
           content: `## Symmetric vs asymmetric signing
 
 JWT supports two families of signing algorithms with very different trust models.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'HMAC (symmetric) vs RSA (asymmetric) trust models',
+          nodes: [
+            { id: 'idp', position: { x: 0, y: 100 }, label: 'Identity Provider\n(issues tokens)', type: 'input' },
+            { id: 'hmac_key', position: { x: 220, y: 40 }, label: 'Shared secret\n(HMAC)', type: 'default' },
+            { id: 'rsa_priv', position: { x: 220, y: 160 }, label: 'Private key\n(RSA / ECDSA)', type: 'default' },
+            { id: 'api1', position: { x: 440, y: 40 }, label: 'API Server A\n(must know secret)', type: 'default' },
+            { id: 'api2', position: { x: 440, y: 140 }, label: 'API Server B\n(verify via JWKS)', type: 'default' },
+            { id: 'jwks', position: { x: 440, y: 220 }, label: 'JWKS endpoint\n(public keys only)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'idp', target: 'hmac_key', label: 'signs with' },
+            { id: 'e2', source: 'idp', target: 'rsa_priv', label: 'signs with' },
+            { id: 'e3', source: 'hmac_key', target: 'api1', label: 'shared secret\n(sensitive!)' },
+            { id: 'e4', source: 'rsa_priv', target: 'jwks', label: 'public key published' },
+            { id: 'e5', source: 'jwks', target: 'api2', label: 'fetches public key\n(safe to expose)' },
+          ],
         },
         {
           type: 'callout',
@@ -2716,6 +2794,27 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 Before hooks (React 16.8), stateful logic lived in class components. Sharing it between components meant render props or HOCs — patterns that created deeply nested "wrapper hell." Hooks let you **extract stateful logic into reusable functions** without restructuring your component tree.`,
         },
         {
+          type: 'flowDiagram',
+          title: 'React render cycle: state change triggers re-render',
+          nodes: [
+            { id: 'event', position: { x: 0, y: 100 }, label: 'User event\n(click, input, …)', type: 'input' },
+            { id: 'handler', position: { x: 200, y: 100 }, label: 'Event handler\ncalls setState()', type: 'default' },
+            { id: 'queue', position: { x: 400, y: 100 }, label: 'React state\nupdate queue', type: 'default' },
+            { id: 'render', position: { x: 600, y: 100 }, label: 'Component\nre-renders', type: 'default' },
+            { id: 'vdom', position: { x: 800, y: 100 }, label: 'Virtual DOM\ndiff (reconcile)', type: 'default' },
+            { id: 'dom', position: { x: 1000, y: 100 }, label: 'Real DOM\nminimal patch', type: 'output' },
+            { id: 'effect', position: { x: 600, y: 220 }, label: 'useEffect runs\n(after paint)', type: 'default' },
+          ],
+          edges: [
+            { id: 'e1', source: 'event', target: 'handler' },
+            { id: 'e2', source: 'handler', target: 'queue', label: 'batched' },
+            { id: 'e3', source: 'queue', target: 'render', label: 'flush batch' },
+            { id: 'e4', source: 'render', target: 'vdom' },
+            { id: 'e5', source: 'vdom', target: 'dom', label: 'commit' },
+            { id: 'e6', source: 'dom', target: 'effect', label: 'after paint' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'useState in a nutshell',
@@ -2827,6 +2926,25 @@ useEffect runs **after** the component renders. The second argument controls whe
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'When to apply useMemo / useCallback',
+          nodes: [
+            { id: 'render', position: { x: 0, y: 100 }, label: 'Parent re-renders', type: 'input' },
+            { id: 'q1', position: { x: 220, y: 100 }, label: 'Is value/fn\npassed to memo child\nor in effect deps?', type: 'decision' },
+            { id: 'q2', position: { x: 440, y: 40 }, label: 'Is computation\nmeasurably expensive?', type: 'decision' },
+            { id: 'skip', position: { x: 440, y: 180 }, label: 'Skip memoization\n(overhead > gain)', type: 'output' },
+            { id: 'memo', position: { x: 660, y: 40 }, label: 'useMemo /\nuseCallback', type: 'output' },
+            { id: 'plain', position: { x: 660, y: 160 }, label: 'Plain value / fn\n(no memo needed)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'render', target: 'q1' },
+            { id: 'e2', source: 'q1', target: 'q2', label: 'yes' },
+            { id: 'e3', source: 'q1', target: 'skip', label: 'no' },
+            { id: 'e4', source: 'q2', target: 'memo', label: 'yes (measured)' },
+            { id: 'e5', source: 'q2', target: 'plain', label: 'no' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'warning',
           title: 'Memoization is an optimisation, not a default',
@@ -2931,6 +3049,26 @@ clearTimeout(timerRef.current);
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Custom hook: shared logic extracted from two components',
+          nodes: [
+            { id: 'compA', position: { x: 0, y: 40 }, label: 'ComponentA\n(needs fetched data)', type: 'input' },
+            { id: 'compB', position: { x: 0, y: 160 }, label: 'ComponentB\n(needs same data)', type: 'input' },
+            { id: 'hook', position: { x: 280, y: 100 }, label: 'useFetchUser(id)\ncustom hook', type: 'default' },
+            { id: 'state', position: { x: 500, y: 60 }, label: 'useState\n(data, loading, error)', type: 'default' },
+            { id: 'effect', position: { x: 500, y: 160 }, label: 'useEffect\n(fetch on id change)', type: 'default' },
+            { id: 'api', position: { x: 720, y: 100 }, label: 'GET /api/users/:id', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'compA', target: 'hook', label: 'calls' },
+            { id: 'e2', source: 'compB', target: 'hook', label: 'calls' },
+            { id: 'e3', source: 'hook', target: 'state' },
+            { id: 'e4', source: 'hook', target: 'effect' },
+            { id: 'e5', source: 'effect', target: 'api', label: 'fetch' },
+            { id: 'e6', source: 'api', target: 'state', label: 'setData()', animated: true },
+          ],
+        },
         {
           type: 'text',
           content: `## What is a custom hook?
@@ -3208,6 +3346,25 @@ LLMs don't "understand" your intent — they predict the most probable next toke
 The difference between a mediocre and excellent prompt for the same task is rarely about the model — it's about **context, constraints, and format instructions**.`,
         },
         {
+          type: 'flowDiagram',
+          title: 'Four layers of a well-structured prompt',
+          nodes: [
+            { id: 'role', position: { x: 0, y: 100 }, label: 'Role\n"You are a …"', type: 'input' },
+            { id: 'context', position: { x: 200, y: 100 }, label: 'Context\n(background info)', type: 'default' },
+            { id: 'task', position: { x: 400, y: 100 }, label: 'Task\n(specific request)', type: 'default' },
+            { id: 'format', position: { x: 600, y: 100 }, label: 'Format\n(length, structure,\nconstraints)', type: 'default' },
+            { id: 'model', position: { x: 800, y: 100 }, label: 'LLM\n(token prediction)', type: 'default' },
+            { id: 'output', position: { x: 1000, y: 100 }, label: 'Aligned\noutput', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'role', target: 'context' },
+            { id: 'e2', source: 'context', target: 'task' },
+            { id: 'e3', source: 'task', target: 'format' },
+            { id: 'e4', source: 'format', target: 'model', label: 'shapes token\nprobabilities' },
+            { id: 'e5', source: 'model', target: 'output' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'The four elements of a strong prompt',
@@ -3330,6 +3487,25 @@ When reviewing code, always:
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Chain-of-thought: reasoning steps improve final accuracy',
+          nodes: [
+            { id: 'q', position: { x: 0, y: 100 }, label: 'User question\n(complex reasoning)', type: 'input' },
+            { id: 'direct', position: { x: 220, y: 40 }, label: 'Direct answer\n(no CoT)', type: 'default' },
+            { id: 'cot', position: { x: 220, y: 160 }, label: '"Think step by step"\n(CoT)', type: 'default' },
+            { id: 'wrong', position: { x: 440, y: 40 }, label: 'Often wrong\n(single-step guess)', type: 'output' },
+            { id: 'steps', position: { x: 440, y: 160 }, label: 'Intermediate\nreasoning steps', type: 'default' },
+            { id: 'correct', position: { x: 660, y: 160 }, label: 'More accurate\nfinal answer', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'q', target: 'direct', label: 'zero-shot' },
+            { id: 'e2', source: 'q', target: 'cot', label: 'with CoT trigger' },
+            { id: 'e3', source: 'direct', target: 'wrong' },
+            { id: 'e4', source: 'cot', target: 'steps', label: 'generates context' },
+            { id: 'e5', source: 'steps', target: 'correct', label: 'grounds final answer' },
+          ],
+        },
         {
           type: 'text',
           content: `## Chain-of-thought (CoT) prompting
@@ -3461,6 +3637,26 @@ const response = await client.messages.create({
           content: `## Why "it works in the playground" isn't enough
 
 Prompts behave differently across model versions, temperatures, and user inputs you didn't test. Before shipping to production, you need a systematic way to measure quality — an **eval suite**.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'LLM eval pipeline: measure quality before shipping',
+          nodes: [
+            { id: 'prompt', position: { x: 0, y: 100 }, label: 'Prompt change\n(new version)', type: 'input' },
+            { id: 'cases', position: { x: 200, y: 100 }, label: 'Eval dataset\n(inputs + criteria)', type: 'default' },
+            { id: 'llm', position: { x: 400, y: 100 }, label: 'LLM API\n(generates outputs)', type: 'default' },
+            { id: 'grader', position: { x: 600, y: 100 }, label: 'Grader\n(rule-based or LLM-as-judge)', type: 'default' },
+            { id: 'pass', position: { x: 800, y: 40 }, label: 'Pass ✓\nDeploy to prod', type: 'output' },
+            { id: 'fail', position: { x: 800, y: 160 }, label: 'Fail ✗\nIterate on prompt', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'prompt', target: 'cases', label: 'run against' },
+            { id: 'e2', source: 'cases', target: 'llm', label: 'each input' },
+            { id: 'e3', source: 'llm', target: 'grader', label: 'output' },
+            { id: 'e4', source: 'grader', target: 'pass', label: 'score ≥ threshold' },
+            { id: 'e5', source: 'grader', target: 'fail', label: 'score < threshold' },
+            { id: 'e6', source: 'fail', target: 'prompt', label: 'fix & retry', animated: true },
+          ],
         },
         {
           type: 'callout',
@@ -3724,6 +3920,26 @@ const { resources } = await container.items
   .fetchAll();`,
         },
         {
+          type: 'flowDiagram',
+          title: 'Azure AD two-registration auth flow for SPA + API',
+          nodes: [
+            { id: 'user', position: { x: 0, y: 100 }, label: 'User / Browser\n(React SPA)', type: 'input' },
+            { id: 'aad', position: { x: 220, y: 100 }, label: 'Azure AD\n(Entra ID)', type: 'default' },
+            { id: 'spa_reg', position: { x: 220, y: 220 }, label: 'SPA App Registration\n(public client, PKCE)', type: 'default' },
+            { id: 'api_reg', position: { x: 440, y: 220 }, label: 'API App Registration\n(exposes access_as_user scope)', type: 'default' },
+            { id: 'access', position: { x: 440, y: 100 }, label: 'Access token\n(JWT, aud = API)', type: 'default' },
+            { id: 'api', position: { x: 660, y: 100 }, label: 'Express API\n(validates JWT via JWKS)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'user', target: 'aad', label: 'login + request\naccess_as_user scope' },
+            { id: 'e2', source: 'spa_reg', target: 'aad', label: 'registered redirect URI' },
+            { id: 'e3', source: 'api_reg', target: 'aad', label: 'scope definition' },
+            { id: 'e4', source: 'aad', target: 'access', label: 'issues token' },
+            { id: 'e5', source: 'access', target: 'user', label: 'returned to SPA' },
+            { id: 'e6', source: 'user', target: 'api', label: 'Authorization: Bearer <token>' },
+          ],
+        },
+        {
           type: 'text',
           content: `## Azure AD Authentication (two app registrations)
 
@@ -3927,6 +4143,29 @@ HAVING COUNT(*) > 10
 ORDER BY learner_count DESC;`,
         },
         {
+          type: 'flowDiagram',
+          title: 'SQL logical execution order (not writing order)',
+          nodes: [
+            { id: 'from', position: { x: 0, y: 160 }, label: '1. FROM\n(identify tables)', type: 'input' },
+            { id: 'join', position: { x: 140, y: 160 }, label: '2. JOIN\n(combine rows)', type: 'default' },
+            { id: 'where', position: { x: 280, y: 160 }, label: '3. WHERE\n(filter rows)', type: 'default' },
+            { id: 'group', position: { x: 420, y: 160 }, label: '4. GROUP BY\n(aggregate)', type: 'default' },
+            { id: 'having', position: { x: 560, y: 160 }, label: '5. HAVING\n(filter groups)', type: 'default' },
+            { id: 'select', position: { x: 420, y: 60 }, label: '6. SELECT\n(project cols)', type: 'default' },
+            { id: 'order', position: { x: 280, y: 60 }, label: '7. ORDER BY\n(sort)', type: 'default' },
+            { id: 'limit', position: { x: 140, y: 60 }, label: '8. LIMIT\n(paginate)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'from', target: 'join' },
+            { id: 'e2', source: 'join', target: 'where' },
+            { id: 'e3', source: 'where', target: 'group' },
+            { id: 'e4', source: 'group', target: 'having' },
+            { id: 'e5', source: 'having', target: 'select' },
+            { id: 'e6', source: 'select', target: 'order' },
+            { id: 'e7', source: 'order', target: 'limit' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'Execution order is not reading order',
@@ -4037,6 +4276,25 @@ An index is a separate data structure (usually a **B-tree**) that maps column va
 Think of it like the index at the back of a book: instead of reading every page to find "OAuth2," you look it up alphabetically and jump directly to the right pages.`,
         },
         {
+          type: 'flowDiagram',
+          title: 'Seq scan vs index scan — cost comparison',
+          nodes: [
+            { id: 'query', position: { x: 0, y: 100 }, label: 'SELECT * FROM users\nWHERE email = ?', type: 'input' },
+            { id: 'seq', position: { x: 220, y: 40 }, label: 'No index\n(seq scan)', type: 'default' },
+            { id: 'idx', position: { x: 220, y: 160 }, label: 'Index on email\n(B-tree)', type: 'default' },
+            { id: 'all_rows', position: { x: 440, y: 40 }, label: 'Read all 10M rows\nO(n) — slow', type: 'output' },
+            { id: 'btree', position: { x: 440, y: 160 }, label: 'B-tree lookup\nO(log n) — 24 reads', type: 'default' },
+            { id: 'row', position: { x: 660, y: 160 }, label: 'Direct row fetch\n(heap page pointer)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'query', target: 'seq', label: 'without index' },
+            { id: 'e2', source: 'query', target: 'idx', label: 'with index' },
+            { id: 'e3', source: 'seq', target: 'all_rows' },
+            { id: 'e4', source: 'idx', target: 'btree', label: 'traverse' },
+            { id: 'e5', source: 'btree', target: 'row' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'B-tree indexes are the default',
@@ -4136,6 +4394,25 @@ Execution Time: 0.1 ms
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Transaction lifecycle: commit vs rollback',
+          nodes: [
+            { id: 'begin', position: { x: 0, y: 100 }, label: 'BEGIN', type: 'input' },
+            { id: 'stmt1', position: { x: 200, y: 100 }, label: 'UPDATE accounts\n(debit Alice)', type: 'default' },
+            { id: 'stmt2', position: { x: 400, y: 100 }, label: 'UPDATE accounts\n(credit Bob)', type: 'default' },
+            { id: 'ok', position: { x: 600, y: 40 }, label: 'COMMIT\n(both changes persist)', type: 'output' },
+            { id: 'fail', position: { x: 600, y: 180 }, label: 'ROLLBACK\n(all changes undone)', type: 'output' },
+            { id: 'crash', position: { x: 400, y: 200 }, label: 'Server crash /\nerror mid-tx', type: 'default' },
+          ],
+          edges: [
+            { id: 'e1', source: 'begin', target: 'stmt1' },
+            { id: 'e2', source: 'stmt1', target: 'stmt2', label: 'success' },
+            { id: 'e3', source: 'stmt2', target: 'ok', label: 'success' },
+            { id: 'e4', source: 'crash', target: 'fail', label: 'auto rollback\non recovery' },
+            { id: 'e5', source: 'stmt1', target: 'fail', label: 'error' },
+          ],
+        },
+        {
           type: 'text',
           content: `## Transactions: all-or-nothing operations
 
@@ -4225,6 +4502,1049 @@ GROUP BY u.id;
               ],
               correctIndex: 2,
               explanation: 'A sequential scan on 10M rows for a point lookup by email is inefficient. An index on email lets the database go directly to the matching rows in O(log n) time instead of scanning every row. This is typically a 100-1000x speedup for selective queries.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── SQL Advanced Lesson 1: CTEs & Recursive Queries ────────────────────────
+  {
+    id: 'lesson-sql-adv-1',
+    courseId: 'course-sql-advanced',
+    order: 0,
+    title: 'Common Table Expressions & Recursive Queries',
+    estimatedMinutes: 15,
+    createdAt: '2025-06-01T00:00:00.000Z',
+    updatedAt: '2025-06-01T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## What is a CTE?
+
+A **Common Table Expression** (CTE) is a named temporary result set defined with \`WITH\`. It lives only for the duration of a single query, and can be referenced by name in the \`SELECT\`, \`INSERT\`, \`UPDATE\`, or \`DELETE\` that follows.
+
+CTEs are not a performance optimization — they're a readability tool. A deeply-nested subquery is the same cost as a CTE expressing the same logic. The win is structural: each CTE is a named building block you can read top to bottom.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'sql',
+          caption: 'CTE vs inline subquery — same plan, radically different readability',
+          code: `-- Without CTE: nested and hard to follow
+SELECT name, total
+FROM (
+  SELECT user_id, SUM(amount) AS total
+  FROM orders
+  WHERE status = 'completed'
+  GROUP BY user_id
+) AS t
+JOIN users ON users.id = t.user_id
+WHERE total > 1000;
+
+-- With CTE: reads like a story
+WITH completed_orders AS (
+  SELECT user_id, SUM(amount) AS total
+  FROM orders
+  WHERE status = 'completed'
+  GROUP BY user_id
+),
+high_value AS (
+  SELECT * FROM completed_orders WHERE total > 1000
+)
+SELECT users.name, high_value.total
+FROM high_value
+JOIN users ON users.id = high_value.user_id;`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'CTE execution: each WITH clause feeds the next',
+          nodes: [
+            { id: 'raw', position: { x: 0, y: 80 }, label: 'orders table\n(source data)', type: 'input' },
+            { id: 'cte1', position: { x: 220, y: 80 }, label: 'completed_orders CTE\nSUM(amount) per user', type: 'default' },
+            { id: 'cte2', position: { x: 440, y: 80 }, label: 'high_value CTE\ntotal > 1000 filter', type: 'default' },
+            { id: 'join', position: { x: 660, y: 80 }, label: 'JOIN users\n+ SELECT name, total', type: 'default' },
+            { id: 'out', position: { x: 880, y: 80 }, label: 'Result set\n(name, total)', type: 'output' },
+            { id: 'users', position: { x: 660, y: 200 }, label: 'users table', type: 'input' },
+          ],
+          edges: [
+            { id: 'e1', source: 'raw', target: 'cte1', label: 'aggregate' },
+            { id: 'e2', source: 'cte1', target: 'cte2', label: 'filter' },
+            { id: 'e3', source: 'cte2', target: 'join' },
+            { id: 'e4', source: 'users', target: 'join', label: 'lookup' },
+            { id: 'e5', source: 'join', target: 'out' },
+          ],
+        },
+        {
+          type: 'text',
+          content: `## Recursive CTEs: traversing hierarchies
+
+Add the \`RECURSIVE\` keyword and a \`UNION ALL\` to iterate. The pattern is always: **anchor member** (base case) UNION ALL **recursive member** (references the CTE itself). PostgreSQL continues until the recursive member returns no new rows.
+
+Canonical use cases:
+- Org charts / manager hierarchies
+- Folder trees / nested categories
+- Bill of materials (BOM) explosion
+- Graph reachability`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'sql',
+          caption: 'Walk an org-chart hierarchy from a given employee upward',
+          code: `-- employees(id, name, manager_id)
+WITH RECURSIVE org_chain AS (
+  -- Anchor: start from the employee we care about
+  SELECT id, name, manager_id, 0 AS depth
+  FROM employees
+  WHERE id = 42
+
+  UNION ALL
+
+  -- Recursive: join to the CTE to climb one level
+  SELECT e.id, e.name, e.manager_id, oc.depth + 1
+  FROM employees e
+  INNER JOIN org_chain oc ON e.id = oc.manager_id
+)
+SELECT depth, name FROM org_chain ORDER BY depth;
+
+-- Result:
+-- depth | name
+-- 0     | Alice (the employee)
+-- 1     | Bob (Alice's manager)
+-- 2     | Carol (Bob's manager / VP)`,
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'Guard against infinite recursion',
+          content: 'If your graph has cycles (A → B → A), a recursive CTE loops forever. Add a depth limit (WHERE depth < 20) or a visited array (WHERE NOT id = ANY(visited_ids)) to stop early. PostgreSQL does not detect cycles automatically.',
+        },
+        {
+          type: 'quiz',
+          title: 'CTEs Quiz',
+          passingScore: 75,
+          questions: [
+            {
+              id: 'sqladv1-q1',
+              question: 'Which of the following is the primary benefit of using a CTE over a nested subquery?',
+              options: [
+                'CTEs execute faster than subqueries',
+                'CTEs can reference tables that subqueries cannot',
+                'CTEs improve readability by naming intermediate result sets',
+                'CTEs are cached across multiple queries in a session',
+              ],
+              correctIndex: 2,
+              explanation: 'CTEs are primarily a readability tool. They let you decompose complex queries into named building blocks read top-to-bottom. In most databases, a CTE and an equivalent subquery produce the same query plan. Session-level caching does not occur.',
+            },
+            {
+              id: 'sqladv1-q2',
+              question: 'What does the RECURSIVE keyword in a CTE enable?',
+              options: [
+                'Multiple CTEs in a single WITH clause',
+                'A CTE that references itself to iterate until no new rows are returned',
+                'Automatic query optimization by the planner',
+                'The CTE result to be stored temporarily on disk',
+              ],
+              correctIndex: 1,
+              explanation: 'RECURSIVE allows the CTE\'s recursive member to reference the CTE itself, enabling iteration. The query alternates between the anchor (base case) and the recursive member until the recursive member returns zero rows. This enables tree and graph traversals.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── SQL Advanced Lesson 2: Window Functions ─────────────────────────────────
+  {
+    id: 'lesson-sql-adv-2',
+    courseId: 'course-sql-advanced',
+    order: 1,
+    title: 'Window Functions — Ranking, Running Totals & Offsets',
+    estimatedMinutes: 16,
+    createdAt: '2025-06-01T00:00:00.000Z',
+    updatedAt: '2025-06-01T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## What makes window functions different
+
+Aggregate functions (\`SUM\`, \`COUNT\`, \`AVG\`) collapse many rows into one. Window functions compute a value **across a set of related rows without collapsing them**. Each input row keeps its identity in the output — you just get an extra computed column alongside it.
+
+The \`OVER()\` clause defines the "window": which rows are considered and in what order.
+
+\`\`\`
+function_name(...) OVER (
+  [PARTITION BY partition_expr]   -- divide into independent groups
+  [ORDER BY sort_expr]            -- define row ordering within the group
+  [ROWS/RANGE frame_clause]       -- limit which rows the function sees
+)
+\`\`\``,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'OVER clause: partition, order, then compute',
+          nodes: [
+            { id: 'all', position: { x: 0, y: 100 }, label: 'Full table\n(all rows)', type: 'input' },
+            { id: 'part', position: { x: 220, y: 100 }, label: 'PARTITION BY\n(split into groups)', type: 'default' },
+            { id: 'grpA', position: { x: 440, y: 40 }, label: 'Group: dept=Eng\n(ordered by salary)', type: 'default' },
+            { id: 'grpB', position: { x: 440, y: 160 }, label: 'Group: dept=Sales\n(ordered by salary)', type: 'default' },
+            { id: 'fnA', position: { x: 660, y: 40 }, label: 'ROW_NUMBER()\napplied independently', type: 'default' },
+            { id: 'fnB', position: { x: 660, y: 160 }, label: 'ROW_NUMBER()\napplied independently', type: 'default' },
+            { id: 'out', position: { x: 880, y: 100 }, label: 'All original rows\n+ rank column', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'all', target: 'part' },
+            { id: 'e2', source: 'part', target: 'grpA' },
+            { id: 'e3', source: 'part', target: 'grpB' },
+            { id: 'e4', source: 'grpA', target: 'fnA' },
+            { id: 'e5', source: 'grpB', target: 'fnB' },
+            { id: 'e6', source: 'fnA', target: 'out', label: 'rows preserved' },
+            { id: 'e7', source: 'fnB', target: 'out', label: 'rows preserved' },
+          ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'sql',
+          caption: 'ROW_NUMBER, RANK, and DENSE_RANK — three ways to rank',
+          code: `SELECT
+  name,
+  department,
+  salary,
+  ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) AS row_num,
+  RANK()       OVER (PARTITION BY department ORDER BY salary DESC) AS rank,
+  DENSE_RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS dense_rank
+FROM employees;
+
+-- For two people tied at salary 90000 in Engineering:
+-- ROW_NUMBER → 1, 2  (arbitrary tiebreak, always unique)
+-- RANK       → 1, 1  (both get 1, next person gets 3)
+-- DENSE_RANK → 1, 1  (both get 1, next person gets 2)
+
+-- Common pattern: "top N per group"
+WITH ranked AS (
+  SELECT *, RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS rnk
+  FROM employees
+)
+SELECT * FROM ranked WHERE rnk <= 3;`,
+        },
+        {
+          type: 'text',
+          content: `## Running totals and moving averages
+
+When you add \`ORDER BY\` without \`PARTITION BY\`, the window covers all rows seen so far — giving you cumulative aggregates. Use \`ROWS BETWEEN\` for a rolling/moving window.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'sql',
+          caption: 'Running total and 7-day rolling average',
+          code: `SELECT
+  order_date,
+  daily_revenue,
+  -- Cumulative total from first row to current row
+  SUM(daily_revenue) OVER (ORDER BY order_date) AS running_total,
+  -- 7-day rolling average (current row + 6 preceding)
+  AVG(daily_revenue) OVER (
+    ORDER BY order_date
+    ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+  ) AS rolling_7d_avg
+FROM daily_sales
+ORDER BY order_date;`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'sql',
+          caption: 'LAG and LEAD — compare a row to its neighbors',
+          code: `SELECT
+  order_date,
+  daily_revenue,
+  -- Revenue from the previous day (NULL for first row)
+  LAG(daily_revenue)  OVER (ORDER BY order_date) AS prev_day,
+  -- Revenue from the next day (NULL for last row)
+  LEAD(daily_revenue) OVER (ORDER BY order_date) AS next_day,
+  -- Day-over-day growth %
+  ROUND(
+    (daily_revenue - LAG(daily_revenue) OVER (ORDER BY order_date))
+    / NULLIF(LAG(daily_revenue) OVER (ORDER BY order_date), 0) * 100,
+    1
+  ) AS pct_change
+FROM daily_sales;`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'FILTER clause: conditional aggregation in windows',
+          content: 'Window functions support FILTER (WHERE condition) to count or sum only rows matching a condition. Example: COUNT(*) FILTER (WHERE status = \'completed\') OVER (PARTITION BY user_id) gives completed order count per user without a subquery.',
+        },
+        {
+          type: 'quiz',
+          title: 'Window Functions Quiz',
+          passingScore: 75,
+          questions: [
+            {
+              id: 'sqladv2-q1',
+              question: 'You need the top 3 highest-paid employees per department. Two people in Engineering both earn $90k — the third highest earner should appear. Which ranking function guarantees you get exactly 3 rows per department in this scenario?',
+              options: [
+                'ROW_NUMBER() — always assigns unique ranks',
+                'RANK() — skips numbers after ties, so rank 2 does not exist',
+                'DENSE_RANK() — assigns consecutive ranks so rank 3 always exists',
+                'None — ties make top-N queries impossible without a tiebreak',
+              ],
+              correctIndex: 2,
+              explanation: 'DENSE_RANK does not skip rank numbers after ties. If two people are rank 1, the next person is rank 2, then rank 3. With RANK, two people at rank 1 means the next is rank 3 — so filtering WHERE rank <= 3 could still return 4 rows (the two tied at 1, plus ranks 2 and 3 don\'t exist). DENSE_RANK solves this cleanly.',
+            },
+            {
+              id: 'sqladv2-q2',
+              question: 'What does ROWS BETWEEN 6 PRECEDING AND CURRENT ROW in an OVER clause define?',
+              options: [
+                'The 6 rows after the current row',
+                'All rows in the current partition up to the current row',
+                'A sliding window of the current row and the 6 rows before it',
+                'The current row minus the 6th previous partition',
+              ],
+              correctIndex: 2,
+              explanation: 'ROWS BETWEEN 6 PRECEDING AND CURRENT ROW defines a physical frame of 7 rows: the current row plus the 6 rows before it (sorted by the ORDER BY clause). This is the standard rolling/moving window calculation — useful for 7-day rolling averages, smoothing time-series data, etc.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── SQL Advanced Lesson 3: EXPLAIN ANALYZE & Query Tuning ───────────────────
+  {
+    id: 'lesson-sql-adv-3',
+    courseId: 'course-sql-advanced',
+    order: 2,
+    title: 'EXPLAIN ANALYZE & Systematic Query Tuning',
+    estimatedMinutes: 14,
+    createdAt: '2025-06-01T00:00:00.000Z',
+    updatedAt: '2025-06-01T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Reading an EXPLAIN ANALYZE output
+
+\`EXPLAIN\` shows what PostgreSQL **plans** to do. \`EXPLAIN ANALYZE\` actually **runs** the query and shows what it did. Always use \`ANALYZE\` when diagnosing real performance problems — the planner's estimates can be wrong.
+
+The output is a tree. Read it **inside-out**: the innermost (most-indented) node runs first, its output feeds its parent, and so on up to the root which produces the final result set.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Query execution stages in PostgreSQL',
+          nodes: [
+            { id: 'parse', position: { x: 0, y: 100 }, label: 'Parser\n(SQL text → AST)', type: 'input' },
+            { id: 'rewrite', position: { x: 180, y: 100 }, label: 'Rewriter\n(views, rules)', type: 'default' },
+            { id: 'plan', position: { x: 360, y: 100 }, label: 'Planner / Optimizer\n(choose cheapest plan)', type: 'default' },
+            { id: 'stats', position: { x: 360, y: 220 }, label: 'Table statistics\n(pg_statistic)', type: 'default' },
+            { id: 'exec', position: { x: 540, y: 100 }, label: 'Executor\n(run the plan)', type: 'default' },
+            { id: 'buf', position: { x: 540, y: 220 }, label: 'Buffer cache\n(shared_buffers)', type: 'default' },
+            { id: 'out', position: { x: 720, y: 100 }, label: 'Result rows\n(to client)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'parse', target: 'rewrite' },
+            { id: 'e2', source: 'rewrite', target: 'plan' },
+            { id: 'e3', source: 'stats', target: 'plan', label: 'row estimates' },
+            { id: 'e4', source: 'plan', target: 'exec' },
+            { id: 'e5', source: 'buf', target: 'exec', label: 'I/O' },
+            { id: 'e6', source: 'exec', target: 'out' },
+          ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'sql',
+          caption: 'Annotated EXPLAIN ANALYZE output',
+          code: `EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
+SELECT u.name, COUNT(o.id)
+FROM users u
+JOIN orders o ON o.user_id = u.id
+WHERE u.created_at > '2024-01-01'
+GROUP BY u.id;
+
+-- Sample output:
+-- HashAggregate  (cost=4231.50..4331.50 rows=10000 ...) (actual time=42.3..43.1 rows=8723 ...)
+--   ->  Hash Join  (cost=1234..3901 ...) (actual time=12.1..35.9 ...)
+--         Hash Cond: (o.user_id = u.id)
+--         ->  Seq Scan on orders  (cost=0..2100 rows=150000 ...) (actual time=0.1..18.2 ...)
+--         ->  Hash  (cost=987..987 rows=19760 ...) (actual time=11.9..11.9 rows=18420 ...)
+--               ->  Index Scan using users_created_at_idx on users
+--                     Index Cond: (created_at > '2024-01-01')
+--
+-- Key signals to look for:
+-- "Seq Scan" on large table with filter  → may need index
+-- "rows=19760" vs "actual rows=18420"    → good estimate (within 10%)
+-- cost=987 vs actual time=11.9ms         → cost units ≠ ms, just relative
+-- "Buffers: hit=N read=M"                → M disk reads is expensive`,
+        },
+        {
+          type: 'callout',
+          variant: 'danger',
+          title: 'Seq Scan is not always bad',
+          content: 'If a query returns >10-15% of a table\'s rows, PostgreSQL correctly chooses a sequential scan — scanning the whole table is faster than following index pointers for thousands of rows. Seq Scan is a signal to investigate, not always a bug. The key question is: is the filter highly selective?',
+        },
+        {
+          type: 'codeBlock',
+          language: 'sql',
+          caption: 'Common fixes for slow queries',
+          code: `-- 1. Add an index for a highly selective WHERE clause
+CREATE INDEX CONCURRENTLY idx_orders_user_status
+  ON orders (user_id, status)
+  WHERE status != 'cancelled';   -- partial index: smaller, faster
+
+-- 2. Stale statistics causing bad estimates → refresh
+ANALYZE orders;                  -- quick, non-blocking
+VACUUM ANALYZE orders;           -- also reclaims dead tuples
+
+-- 3. Correlated subquery evaluated per-row → rewrite as JOIN or CTE
+-- SLOW: runs subquery for every order row
+SELECT * FROM orders o
+WHERE o.amount > (SELECT AVG(amount) FROM orders WHERE user_id = o.user_id);
+
+-- FAST: compute averages once, then join
+WITH user_avg AS (
+  SELECT user_id, AVG(amount) AS avg_amount FROM orders GROUP BY user_id
+)
+SELECT o.* FROM orders o
+JOIN user_avg ua ON ua.user_id = o.user_id
+WHERE o.amount > ua.avg_amount;
+
+-- 4. Covering index: include columns to avoid a heap fetch
+CREATE INDEX idx_users_email_covering
+  ON users (email)
+  INCLUDE (id, name, created_at);`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'CONCURRENTLY: add indexes without locking',
+          content: 'CREATE INDEX CONCURRENTLY builds the index without holding an exclusive lock. The table remains readable and writable throughout. The trade-off: it takes about twice as long and cannot run inside a transaction block. Always use CONCURRENTLY on production tables.',
+        },
+        {
+          type: 'quiz',
+          title: 'Query Tuning Quiz',
+          passingScore: 75,
+          questions: [
+            {
+              id: 'sqladv3-q1',
+              question: 'EXPLAIN ANALYZE shows "rows=50000" (planner estimate) but "actual rows=3" for a WHERE status = \'cancelled\' scan on orders. What does this mean and what should you do?',
+              options: [
+                'The query is running correctly; no action needed',
+                'The planner has stale statistics — run ANALYZE orders to refresh row estimates',
+                'The index is corrupt — drop and recreate it',
+                'The WHERE clause is wrong — status cannot be filtered this way',
+              ],
+              correctIndex: 1,
+              explanation: 'A huge gap between estimated rows (50000) and actual rows (3) means the planner is working with outdated statistics. It doesn\'t know that status=\'cancelled\' is rare. Running ANALYZE orders refreshes pg_statistic so future plans use accurate row counts. Without good estimates, the planner may choose a seq scan over an index scan.',
+            },
+            {
+              id: 'sqladv3-q2',
+              question: 'You want to add an index to a busy production table with millions of rows. What is the safest approach?',
+              options: [
+                'CREATE INDEX — takes a full table lock, fastest option',
+                'CREATE INDEX CONCURRENTLY — takes about twice as long but does not block reads or writes',
+                'REINDEX TABLE — rebuilds all indexes at once',
+                'Add the index during off-hours using a regular CREATE INDEX',
+              ],
+              correctIndex: 1,
+              explanation: 'CREATE INDEX CONCURRENTLY builds the index in multiple passes without holding an exclusive table lock. Reads and writes continue normally. The cost is roughly 2x build time and it cannot run inside a transaction. For any table that receives live traffic, CONCURRENTLY is the correct choice regardless of time of day.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── Python Lesson 1: Types, Variables & Control Flow ────────────────────────
+  {
+    id: 'lesson-py-1',
+    courseId: 'course-python',
+    order: 0,
+    title: 'Types, Variables & Control Flow',
+    estimatedMinutes: 13,
+    createdAt: '2025-05-27T00:00:00.000Z',
+    updatedAt: '2025-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Python's type system
+
+Python is **dynamically typed** — variables don't have a fixed type, values do. The type is determined at runtime. Python 3 adds optional **type hints** (enforced by tools like mypy, not the interpreter).
+
+| Type | Examples | Notes |
+|------|---------|-------|
+| \`int\` | 42, -7, 0 | Arbitrary precision |
+| \`float\` | 3.14, -0.5 | IEEE 754 double |
+| \`str\` | "hello", 'world' | Immutable unicode |
+| \`bool\` | True, False | Subclass of int |
+| \`list\` | [1, 2, 3] | Mutable sequence |
+| \`tuple\` | (1, 2, 3) | Immutable sequence |
+| \`dict\` | {"key": "value"} | Hash map |
+| \`set\` | {1, 2, 3} | Unordered unique |
+| \`None\` | None | Null equivalent |`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'python',
+          caption: 'Variables, strings, and type conversion',
+          code: `# Dynamic typing — no declaration needed
+name = "Alice"
+age = 30
+xp = 1500.5
+
+# f-strings (the modern way to format strings)
+message = f"Welcome back, {name}! You have {xp:.0f} XP."
+
+# Type conversion
+age_str = str(age)          # "30"
+xp_int = int(xp)            # 1500 (truncates)
+text_num = float("3.14")    # 3.14
+
+# Type hints (optional, for tooling/readability)
+def greet(name: str, rank: str = "Initiate") -> str:
+    return f"Greetings, {rank} {name}!"`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Python Control Flow',
+          nodes: [
+            { id: 'start', label: 'Script starts', type: 'input', position: { x: 200, y: 20 } },
+            { id: 'if', label: 'if condition:', type: 'decision', position: { x: 200, y: 100 } },
+            { id: 'body', label: 'if body runs', position: { x: 60, y: 190 } },
+            { id: 'else', label: 'else body runs', position: { x: 340, y: 190 } },
+            { id: 'for', label: 'for item in seq:', type: 'decision', position: { x: 200, y: 280 } },
+            { id: 'loop', label: 'loop body\n(break / continue)', position: { x: 60, y: 370 } },
+            { id: 'done', label: 'continue...', type: 'output', position: { x: 340, y: 370 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'start', target: 'if' },
+            { id: 'e2', source: 'if', target: 'body', label: 'True' },
+            { id: 'e3', source: 'if', target: 'else', label: 'False' },
+            { id: 'e4', source: 'body', target: 'for' },
+            { id: 'e5', source: 'else', target: 'for' },
+            { id: 'e6', source: 'for', target: 'loop', label: 'items remain', animated: true },
+            { id: 'e7', source: 'loop', target: 'for', label: 'next iteration' },
+            { id: 'e8', source: 'for', target: 'done', label: 'exhausted' },
+          ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'python',
+          caption: 'Control flow examples',
+          code: `# if / elif / else
+score = 85
+if score >= 90:
+    grade = 'A'
+elif score >= 80:
+    grade = 'B'
+else:
+    grade = 'C'
+
+# for loop + range
+for i in range(5):
+    print(i)  # 0 1 2 3 4
+
+# while loop
+attempts = 0
+while attempts < 3:
+    if check_answer():
+        break
+    attempts += 1
+
+# Ternary (conditional expression)
+status = "pass" if score >= 60 else "fail"
+
+# List comprehension (very Pythonic)
+squares = [x**2 for x in range(10) if x % 2 == 0]
+# [0, 4, 16, 36, 64]`,
+        },
+        {
+          type: 'callout',
+          variant: 'info',
+          title: 'Indentation IS the syntax',
+          content: 'Python uses indentation (4 spaces, no tabs) to define code blocks — there are no curly braces. Inconsistent indentation causes IndentationError. Most editors auto-indent, but mixing spaces and tabs across files will break your program.',
+        },
+        {
+          type: 'quiz',
+          title: 'Python Basics Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'py1-q1',
+              question: 'What does `[x**2 for x in range(5)]` evaluate to?',
+              options: ['[0, 1, 2, 3, 4]', '[0, 1, 4, 9, 16]', '[1, 4, 9, 16, 25]', '[0, 2, 4, 6, 8]'],
+              correctIndex: 1,
+              explanation: 'range(5) produces [0, 1, 2, 3, 4]. x**2 is x to the power 2. So [0²=0, 1²=1, 2²=4, 3²=9, 4²=16] → [0, 1, 4, 9, 16]. List comprehensions are the Pythonic way to transform sequences.',
+            },
+            {
+              id: 'py1-q2',
+              question: 'x = 5; x += 3; print(x) — what prints?',
+              options: ['5', '3', '8', 'None'],
+              correctIndex: 2,
+              explanation: '`x += 3` is shorthand for `x = x + 3`. Starting from 5, 5 + 3 = 8.',
+            },
+            {
+              id: 'py1-q3',
+              question: 'Which Python data type is mutable?',
+              options: ['str', 'tuple', 'list', 'int'],
+              correctIndex: 2,
+              explanation: 'Lists are mutable — you can append, remove, and modify elements in place. Strings and tuples are immutable — operations return new objects. Integers are immutable values.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── Python Lesson 2: Functions, Modules & Packages ──────────────────────────
+  {
+    id: 'lesson-py-2',
+    courseId: 'course-python',
+    order: 1,
+    title: 'Functions, Modules & the Standard Library',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-27T00:00:00.000Z',
+    updatedAt: '2025-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Defining functions
+
+Python functions are defined with \`def\`. They can have **positional arguments**, **keyword arguments**, **default values**, and **type hints**.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'python',
+          caption: 'Function signatures and calling patterns',
+          code: `# Basic function
+def add(a: int, b: int) -> int:
+    return a + b
+
+# Default values
+def greet(name: str, title: str = "Guild Member") -> str:
+    return f"Welcome, {title} {name}!"
+
+# *args and **kwargs — accept any number of arguments
+def log(level: str, *messages, **meta):
+    prefix = f"[{level.upper()}]"
+    print(prefix, *messages, meta)
+
+log("info", "User logged in", userId="u123", xp=50)
+# [INFO] User logged in {'userId': 'u123', 'xp': 50}
+
+# Unpacking
+def add3(a, b, c): return a + b + c
+values = [1, 2, 3]
+add3(*values)   # same as add3(1, 2, 3)
+
+# Lambda — single-expression anonymous function
+double = lambda x: x * 2
+sorted_list = sorted(items, key=lambda item: item.score)`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'First-class functions enable powerful patterns',
+          content: 'Functions in Python are objects — you can pass them as arguments, return them from other functions, and store them in data structures. This enables higher-order functions (map, filter, sorted with key=), decorators, and callbacks.',
+        },
+        {
+          type: 'text',
+          content: `## Modules and packages
+
+Every \`.py\` file is a **module**. A directory with \`__init__.py\` is a **package**. Import with \`import\` or \`from ... import\`.
+
+\`\`\`python
+# Import whole module
+import os
+os.path.join("dir", "file.txt")
+
+# Import specific names
+from pathlib import Path
+p = Path("data") / "config.json"
+
+# Import with alias
+import numpy as np
+arr = np.array([1, 2, 3])
+\`\`\`
+
+**Standard library highlights:**
+
+| Module | Use |
+|--------|-----|
+| \`os\`, \`pathlib\` | File system operations |
+| \`json\` | Parse/serialize JSON |
+| \`datetime\` | Date and time |
+| \`re\` | Regular expressions |
+| \`collections\` | defaultdict, Counter, deque |
+| \`functools\` | partial, lru_cache, reduce |
+| \`itertools\` | chain, islice, groupby |
+| \`typing\` | Type hints (List, Dict, Optional) |`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'python',
+          caption: 'Practical standard library usage',
+          code: `from collections import Counter, defaultdict
+from functools import lru_cache
+import json, datetime
+
+# Counter — count occurrences
+words = ["python", "is", "great", "python", "is"]
+counts = Counter(words)  # Counter({'python': 2, 'is': 2, 'great': 1})
+
+# defaultdict — no KeyError on missing keys
+graph = defaultdict(list)
+graph["A"].append("B")
+
+# lru_cache — memoize expensive functions
+@lru_cache(maxsize=None)
+def fibonacci(n: int) -> int:
+    if n < 2: return n
+    return fibonacci(n-1) + fibonacci(n-2)
+
+# json — serialise/deserialise
+config = json.loads('{"debug": true, "port": 3000}')
+json.dumps(config, indent=2)
+
+# datetime
+now = datetime.datetime.utcnow()
+expiry = now + datetime.timedelta(hours=1)`,
+        },
+        {
+          type: 'quiz',
+          title: 'Functions & Modules Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'py2-q1',
+              question: 'What does `@lru_cache(maxsize=None)` do to a function?',
+              options: [
+                'Makes it run faster by using multiple CPU cores',
+                'Caches the return value for each unique set of arguments',
+                'Limits the function to run at most once',
+                'Automatically retries the function on exceptions',
+              ],
+              correctIndex: 1,
+              explanation: 'lru_cache memoizes (caches) return values. On the first call with a given set of arguments, the function runs and the result is stored. Subsequent calls with the same arguments return the cached result instantly. maxsize=None means the cache can grow without limit.',
+            },
+            {
+              id: 'py2-q2',
+              question: 'What does `sorted(items, key=lambda x: x.score)` do?',
+              options: [
+                'Filters items where score is truthy',
+                'Sorts items ascending by their score attribute',
+                'Sorts items descending by score',
+                'Groups items by score',
+              ],
+              correctIndex: 1,
+              explanation: 'The key= argument to sorted() specifies a function to extract a comparison key from each item. `lambda x: x.score` extracts the score attribute. sorted() returns a new list sorted ascending by that key. Use `reverse=True` for descending.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── Python Lesson 3: Classes & Object-Oriented Python ───────────────────────
+  {
+    id: 'lesson-py-3',
+    courseId: 'course-python',
+    order: 2,
+    title: 'Object-Oriented Python',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-27T00:00:00.000Z',
+    updatedAt: '2025-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Classes and instances
+
+Python classes bundle data (attributes) and behaviour (methods). \`__init__\` is the constructor; \`self\` is the explicit reference to the instance.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'python',
+          caption: 'A well-structured Python class',
+          code: `from dataclasses import dataclass
+from typing import Optional
+from datetime import datetime
+
+@dataclass
+class UserProfile:
+    """Represents a Study Guild user."""
+    id: str
+    display_name: str
+    xp: int = 0
+    rank: str = "Initiate"
+    streak: int = 0
+    created_at: datetime = None
+
+    def __post_init__(self):
+        if self.created_at is None:
+            self.created_at = datetime.utcnow()
+
+    def award_xp(self, amount: int, reason: str) -> None:
+        self.xp += amount
+        self._update_rank()
+        print(f"{self.display_name} earned {amount} XP for {reason}!")
+
+    def _update_rank(self) -> None:
+        thresholds = [
+            (4000, "Grandmaster"), (2000, "Master"), (1000, "Expert"),
+            (600, "Adept"), (300, "Scholar"), (100, "Apprentice"),
+        ]
+        for threshold, rank in thresholds:
+            if self.xp >= threshold:
+                self.rank = rank
+                return
+        self.rank = "Initiate"
+
+    @property
+    def is_advanced(self) -> bool:
+        return self.xp >= 1000
+
+    def __repr__(self) -> str:
+        return f"UserProfile({self.display_name!r}, {self.rank}, {self.xp} XP)"`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Class Inheritance in Python',
+          nodes: [
+            { id: 'base', label: 'Animal\n(base class)\n__init__, speak()', type: 'input', position: { x: 200, y: 20 } },
+            { id: 'dog', label: 'Dog(Animal)\nspeak() → "Woof"', position: { x: 60, y: 150 } },
+            { id: 'cat', label: 'Cat(Animal)\nspeak() → "Meow"', position: { x: 200, y: 150 } },
+            { id: 'guide', label: 'GuideDog(Dog)\nguide() method\nsuper().__init__()', position: { x: 60, y: 270 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'base', target: 'dog', label: 'inherits' },
+            { id: 'e2', source: 'base', target: 'cat', label: 'inherits' },
+            { id: 'e3', source: 'dog', target: 'guide', label: 'inherits', animated: true },
+          ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'python',
+          caption: 'Inheritance, super(), and dunder methods',
+          code: `class Animal:
+    def __init__(self, name: str):
+        self.name = name
+
+    def speak(self) -> str:
+        raise NotImplementedError
+
+    def __str__(self) -> str:
+        return f"{type(self).__name__}({self.name!r})"
+
+class Dog(Animal):
+    def speak(self) -> str:
+        return "Woof!"
+
+class GuideDog(Dog):
+    def __init__(self, name: str, owner: str):
+        super().__init__(name)    # call Dog.__init__ → Animal.__init__
+        self.owner = owner
+
+    def guide(self) -> str:
+        return f"{self.name} guides {self.owner} safely."
+
+# Polymorphism — same interface, different behaviour
+animals = [Dog("Rex"), Dog("Buddy"), GuideDog("Lassie", "Alice")]
+for a in animals:
+    print(a.speak())   # Woof! Woof! Woof!`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Prefer dataclasses for data containers',
+          content: '`@dataclass` auto-generates `__init__`, `__repr__`, and `__eq__` from field annotations. For simple data holders (DTOs, configs), dataclasses are much less boilerplate than hand-writing these methods. Use `frozen=True` to make instances immutable.',
+        },
+        {
+          type: 'quiz',
+          title: 'OOP Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'py3-q1',
+              question: 'What does `super().__init__(name)` do inside a subclass constructor?',
+              options: [
+                'Creates a new instance of the parent class',
+                'Calls the parent class\'s __init__ method to initialize inherited attributes',
+                'Copies all attributes from the parent class to this instance',
+                'Checks if the parent class is properly initialized',
+              ],
+              correctIndex: 1,
+              explanation: '`super()` returns a proxy to the parent class. Calling `super().__init__(name)` runs the parent\'s constructor, which sets up any attributes defined there (like `self.name`). Without this, the parent\'s initialization code doesn\'t run and inherited attributes won\'t be set.',
+            },
+            {
+              id: 'py3-q2',
+              question: 'What is the purpose of a `@property` decorator in Python?',
+              options: [
+                'Makes an attribute read-only across the whole class',
+                'Allows a method to be called without parentheses, like an attribute',
+                'Prevents external code from accessing the attribute',
+                'Automatically caches the method\'s return value',
+              ],
+              correctIndex: 1,
+              explanation: '`@property` lets you define a method that\'s accessed as if it were an attribute: `user.is_advanced` (no parentheses). This is useful for computed properties, lazy evaluation, and maintaining a clean API while adding validation or logic behind the scenes.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── Python Lesson 4: Idiomatic Python & Error Handling ──────────────────────
+  {
+    id: 'lesson-py-4',
+    courseId: 'course-python',
+    order: 3,
+    title: 'Idiomatic Python: Error Handling & Common Patterns',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-27T00:00:00.000Z',
+    updatedAt: '2025-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Exception handling
+
+Python uses \`try / except / else / finally\`. Catch specific exceptions — never bare \`except:\`.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'python',
+          caption: 'Exception handling patterns',
+          code: `import json
+from pathlib import Path
+
+# Specific exceptions — always prefer over bare except
+try:
+    data = json.loads(raw_text)
+except json.JSONDecodeError as e:
+    print(f"Invalid JSON at position {e.pos}: {e.msg}")
+    data = {}
+
+# else: runs if no exception was raised
+# finally: always runs (cleanup)
+def read_config(path: str) -> dict:
+    file = None
+    try:
+        file = open(path)
+        return json.load(file)
+    except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Config file is invalid JSON: {e}") from e
+    finally:
+        if file:
+            file.close()   # always close the file
+
+# Context managers — the Pythonic way to handle resources
+def read_config_better(path: str) -> dict:
+    try:
+        with open(path) as f:   # auto-closes even on exception
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+# Custom exception
+class InsufficientXPError(ValueError):
+    def __init__(self, required: int, actual: int):
+        super().__init__(f"Need {required} XP, have {actual}")
+        self.required = required
+        self.actual = actual`,
+        },
+        {
+          type: 'text',
+          content: `## Pythonic patterns
+
+Writing idiomatic Python ("Pythonic" code) means using the language's features naturally rather than writing Python like it's Java or C.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'python',
+          caption: 'Pythonic patterns vs. non-idiomatic equivalents',
+          code: `# ❌ Non-Pythonic: manual index tracking
+for i in range(len(items)):
+    print(i, items[i])
+
+# ✅ Pythonic: enumerate
+for i, item in enumerate(items):
+    print(i, item)
+
+# ❌ Non-Pythonic: building dicts with loops
+result = {}
+for key, value in pairs:
+    result[key] = value
+
+# ✅ Pythonic: dict comprehension
+result = {key: value for key, value in pairs}
+
+# ❌ Non-Pythonic: checking length for emptiness
+if len(items) > 0:
+    ...
+
+# ✅ Pythonic: truthy/falsy
+if items:
+    ...
+
+# Context manager (with statement)
+with open("file.txt") as f:
+    content = f.read()
+
+# Walrus operator (Python 3.8+) — assign and check
+while chunk := f.read(1024):
+    process(chunk)
+
+# Unpacking
+first, *rest = [1, 2, 3, 4, 5]   # first=1, rest=[2,3,4,5]
+a, b = b, a                        # swap without temp variable`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'The Zen of Python — import this',
+          content: 'Run `import this` in a Python REPL to read the 19 guiding aphorisms. Key ones: "Explicit is better than implicit", "Simple is better than complex", "There should be one obvious way to do it", "Readability counts". Python values clarity and simplicity over cleverness.',
+        },
+        {
+          type: 'quiz',
+          title: 'Idiomatic Python Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'py4-q1',
+              question: 'Why should you use `with open("file.txt") as f:` instead of manually calling `f.close()`?',
+              options: [
+                'The `with` statement is faster than manual close',
+                'The context manager guarantees the file is closed even if an exception occurs inside the block',
+                'You cannot manually close files in Python 3',
+                'The `with` statement buffers writes automatically',
+              ],
+              correctIndex: 1,
+              explanation: '`with` statements use context managers that guarantee `__exit__` (and therefore file close) runs even if an exception is raised inside the block. Manual `f.close()` after a line that throws means close never runs and the file descriptor leaks.',
+            },
+            {
+              id: 'py4-q2',
+              question: 'What does `except Exception:` catch that `except:` also catches but you should avoid?',
+              options: [
+                'Nothing — they are identical',
+                'SystemExit, KeyboardInterrupt, and GeneratorExit — which should usually propagate up',
+                'Only ValueError and TypeError',
+                'Only exceptions from third-party libraries',
+              ],
+              correctIndex: 1,
+              explanation: 'Bare `except:` catches everything including `KeyboardInterrupt` (Ctrl+C) and `SystemExit` — making your program hard to kill and preventing Python from exiting cleanly. `except Exception:` excludes these base exceptions. Best practice: catch the most specific exception type you can handle.',
             },
           ],
         },
@@ -4664,6 +5984,23 @@ The six constraints:
 4. **Uniform Interface** — consistent resource identification and manipulation
 5. **Layered System** — client can't tell if it's talking directly to the server
 6. **Code on Demand** (optional) — server can send executable code`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'REST request lifecycle: stateless, layered, cacheable',
+          nodes: [
+            { id: 'client', position: { x: 0, y: 100 }, label: 'Client\n(browser, mobile, service)', type: 'input' },
+            { id: 'cache', position: { x: 220, y: 100 }, label: 'CDN / Reverse Proxy\n(cache layer)', type: 'default' },
+            { id: 'server', position: { x: 440, y: 100 }, label: 'API Server\n(stateless handler)', type: 'default' },
+            { id: 'db', position: { x: 660, y: 100 }, label: 'Database\n(state lives here)', type: 'output' },
+            { id: 'hit', position: { x: 220, y: 220 }, label: 'Cache hit\n(no server request)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'client', target: 'cache', label: 'GET /courses\n(with cache headers)' },
+            { id: 'e2', source: 'cache', target: 'server', label: 'cache miss\n(proxy to origin)' },
+            { id: 'e3', source: 'server', target: 'db', label: 'query' },
+            { id: 'e4', source: 'cache', target: 'hit', label: 'cache hit\n(200 + cached body)' },
+          ],
         },
         {
           type: 'callout',
@@ -5168,6 +6505,24 @@ Tests are not about proving code works — they're about **preventing regression
 The real value emerges when you change code: a passing test suite tells you everything that used to work still works. Without tests, every change is a leap of faith.`,
         },
         {
+          type: 'flowDiagram',
+          title: 'Testing pyramid: trade-offs between speed and fidelity',
+          nodes: [
+            { id: 'unit', position: { x: 0, y: 180 }, label: 'Unit tests\n(many, fast, isolated)', type: 'input' },
+            { id: 'integ', position: { x: 0, y: 100 }, label: 'Integration tests\n(fewer, real dependencies)', type: 'default' },
+            { id: 'e2e', position: { x: 0, y: 20 }, label: 'E2E tests\n(few, slow, full UI)', type: 'default' },
+            { id: 'speed', position: { x: 300, y: 180 }, label: 'Fast feedback\n(<1s per test)', type: 'output' },
+            { id: 'conf', position: { x: 300, y: 20 }, label: 'High confidence\n(tests real behavior)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'unit', target: 'speed', label: '1000s of tests' },
+            { id: 'e2', source: 'integ', target: 'speed', label: 'slower' },
+            { id: 'e3', source: 'e2e', target: 'conf', label: 'minutes each' },
+            { id: 'e4', source: 'integ', target: 'conf', label: 'moderate' },
+            { id: 'e5', source: 'unit', target: 'conf', label: 'mocks reduce\nfidelity' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'Why Vitest over Jest?',
@@ -5300,6 +6655,23 @@ Unit tests are fastest when they test **pure functions** — functions that take
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Mock replaces real dependency at the boundary',
+          nodes: [
+            { id: 'test', position: { x: 0, y: 100 }, label: 'Test code\n(unit under test)', type: 'input' },
+            { id: 'handler', position: { x: 200, y: 100 }, label: 'completeLessonHandler\n(function being tested)', type: 'default' },
+            { id: 'mock', position: { x: 440, y: 60 }, label: 'Mock DB\n(vi.fn() returns known data)', type: 'default' },
+            { id: 'real', position: { x: 440, y: 160 }, label: 'Real CosmosDB\n(used in production)', type: 'output' },
+            { id: 'assert', position: { x: 660, y: 60 }, label: 'Assert XP awarded\n(fast, deterministic)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'test', target: 'handler', label: 'calls' },
+            { id: 'e2', source: 'handler', target: 'mock', label: 'dep injected\n(test env)' },
+            { id: 'e3', source: 'handler', target: 'real', label: 'real dep\n(production)' },
+            { id: 'e4', source: 'mock', target: 'assert' },
+          ],
+        },
         {
           type: 'text',
           content: `## What is mocking?
@@ -5445,6 +6817,23 @@ describe('GET /api/courses', () => {
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Testing Library query priority: accessible first',
+          nodes: [
+            { id: 'a11y', position: { x: 0, y: 100 }, label: 'getByRole\ngetByLabelText\n(accessible — preferred)', type: 'input' },
+            { id: 'text', position: { x: 240, y: 100 }, label: 'getByText\ngetByPlaceholder\n(semantic — ok)', type: 'default' },
+            { id: 'testid', position: { x: 480, y: 100 }, label: 'getByTestId\n(data-testid — last resort)', type: 'default' },
+            { id: 'user', position: { x: 0, y: 220 }, label: 'User sees\n"Submit" button', type: 'output' },
+            { id: 'pass', position: { x: 480, y: 220 }, label: 'Refactor-resistant\ntest', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'a11y', target: 'user', label: 'mirrors how\nscreen readers work' },
+            { id: 'e2', source: 'a11y', target: 'pass', label: 'survives CSS refactor' },
+            { id: 'e3', source: 'text', target: 'pass' },
+            { id: 'e4', source: 'testid', target: 'pass', label: 'fragile to\nrenderer changes' },
+          ],
+        },
+        {
           type: 'text',
           content: `## Test behavior, not implementation
 
@@ -5579,6 +6968,25 @@ Avoid \`getByTestId\` when possible: it couples tests to implementation details 
 Unit and integration tests verify that individual pieces work. E2E tests verify that the **whole system** works together — browser, frontend, API, database — from the user's perspective. They're the only tests that can catch integration issues like CORS misconfigurations, broken auth flows, or API contract mismatches.`,
         },
         {
+          type: 'flowDiagram',
+          title: 'E2E test: exercises the full stack end to end',
+          nodes: [
+            { id: 'pw', position: { x: 0, y: 100 }, label: 'Playwright\n(test runner)', type: 'input' },
+            { id: 'browser', position: { x: 200, y: 100 }, label: 'Real browser\n(Chromium / Firefox)', type: 'default' },
+            { id: 'spa', position: { x: 400, y: 100 }, label: 'React SPA\n(UI interactions)', type: 'default' },
+            { id: 'api', position: { x: 600, y: 100 }, label: 'Express API\n(real HTTP)', type: 'default' },
+            { id: 'db', position: { x: 800, y: 100 }, label: 'Test DB\n(seeded data)', type: 'output' },
+            { id: 'assert', position: { x: 400, y: 220 }, label: 'Assert visible text\nURL, network calls', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'pw', target: 'browser', label: 'drives' },
+            { id: 'e2', source: 'browser', target: 'spa', label: 'loads' },
+            { id: 'e3', source: 'spa', target: 'api', label: 'fetch requests' },
+            { id: 'e4', source: 'api', target: 'db', label: 'queries' },
+            { id: 'e5', source: 'spa', target: 'assert', label: 'pw.expect()' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'Playwright vs Cypress',
@@ -5711,6 +7119,25 @@ test('shows error on bad credentials', async ({ page }) => {
 TypeScript is a **superset of JavaScript** — all valid JavaScript is valid TypeScript. TypeScript adds a type system that's checked at compile time, then compiled away to plain JavaScript for the browser or Node.js.
 
 The key insight: TypeScript types exist **only at compile time**. At runtime, your code is JavaScript. TypeScript gives you a safety net during development, not a runtime validator.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'TypeScript toolchain: from .ts source to browser',
+          nodes: [
+            { id: 'ts', position: { x: 0, y: 80 }, label: '.ts source\n(your code)', type: 'input' },
+            { id: 'check', position: { x: 180, y: 80 }, label: 'tsc type checker\n(errors if wrong)', type: 'default' },
+            { id: 'js', position: { x: 360, y: 80 }, label: '.js output\n(types erased)', type: 'default' },
+            { id: 'bundle', position: { x: 540, y: 80 }, label: 'Bundler\n(Vite / esbuild)', type: 'default' },
+            { id: 'browser', position: { x: 720, y: 80 }, label: 'Browser\n(runs JS only)', type: 'output' },
+            { id: 'fail', position: { x: 180, y: 200 }, label: 'Type Error\n(build fails)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'ts', target: 'check' },
+            { id: 'e2', source: 'check', target: 'js', label: 'types OK' },
+            { id: 'e3', source: 'check', target: 'fail', label: 'type error' },
+            { id: 'e4', source: 'js', target: 'bundle' },
+            { id: 'e5', source: 'bundle', target: 'browser' },
+          ],
         },
         {
           type: 'callout',
@@ -5887,6 +7314,21 @@ interface ApiResponse<T> {
 
 type CourseResponse = ApiResponse<Course>;       // { data: Course, status: number, ... }
 type CoursesResponse = ApiResponse<Course[]>;    // { data: Course[], ... }`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Generic type resolution: T flows from call site to return type',
+          nodes: [
+            { id: 'call', position: { x: 0, y: 80 }, label: 'first([1, 2, 3])\ncall site', type: 'input' },
+            { id: 'infer', position: { x: 220, y: 80 }, label: 'TypeScript infers\nT = number', type: 'default' },
+            { id: 'sig', position: { x: 440, y: 80 }, label: 'first<number>(arr: number[])\n: number | undefined', type: 'default' },
+            { id: 'result', position: { x: 660, y: 80 }, label: 'const n: number | undefined\n(fully typed!)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'call', target: 'infer', label: 'argument type' },
+            { id: 'e2', source: 'infer', target: 'sig', label: 'T bound' },
+            { id: 'e3', source: 'sig', target: 'result', label: 'return type' },
+          ],
         },
         {
           type: 'text',
@@ -6112,6 +7554,27 @@ setDifficulty('expert');     // ❌ Argument of type '"expert"' is not assignabl
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'REST vs GraphQL: client controls the data shape',
+          nodes: [
+            { id: 'client', position: { x: 0, y: 100 }, label: 'Client\n(needs title + 3 fields)', type: 'input' },
+            { id: 'rest1', position: { x: 220, y: 40 }, label: 'GET /courses\n(returns 20 fields)', type: 'default' },
+            { id: 'rest2', position: { x: 220, y: 140 }, label: 'GET /courses/:id/lessons\n(second request)', type: 'default' },
+            { id: 'gql', position: { x: 220, y: 240 }, label: 'POST /graphql\n{ course { title lessons { id } } }', type: 'default' },
+            { id: 'over', position: { x: 460, y: 40 }, label: 'Over-fetching\n17 unused fields', type: 'output' },
+            { id: 'under', position: { x: 460, y: 140 }, label: 'Under-fetching\n2 round trips', type: 'output' },
+            { id: 'exact', position: { x: 460, y: 240 }, label: 'Exact shape\n1 round trip', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'client', target: 'rest1', label: 'REST' },
+            { id: 'e2', source: 'client', target: 'rest2', label: 'REST' },
+            { id: 'e3', source: 'client', target: 'gql', label: 'GraphQL' },
+            { id: 'e4', source: 'rest1', target: 'over' },
+            { id: 'e5', source: 'rest2', target: 'under' },
+            { id: 'e6', source: 'gql', target: 'exact' },
+          ],
+        },
         {
           type: 'text',
           content: `## What problem does GraphQL solve?
@@ -6531,6 +7994,24 @@ const resolvers = {
 \`\`\``,
         },
         {
+          type: 'flowDiagram',
+          title: 'GraphQL subscription: client ↔ server WebSocket lifecycle',
+          nodes: [
+            { id: 'client', position: { x: 0, y: 120 }, label: 'Client\nApollo / urql', type: 'input' },
+            { id: 'ws', position: { x: 200, y: 120 }, label: 'WebSocket\nConnection', type: 'default' },
+            { id: 'server', position: { x: 400, y: 120 }, label: 'Apollo Server\nsubscription resolver', type: 'default' },
+            { id: 'pubsub', position: { x: 600, y: 120 }, label: 'PubSub / Redis\nevent bus', type: 'output' },
+            { id: 'mutator', position: { x: 600, y: 20 }, label: 'Another client\nruns mutation', type: 'input' },
+          ],
+          edges: [
+            { id: 'e1', source: 'client', target: 'ws', label: 'subscribe()', animated: true },
+            { id: 'e2', source: 'ws', target: 'server', label: 'connection_init' },
+            { id: 'e3', source: 'server', target: 'pubsub', label: 'asyncIterator' },
+            { id: 'e4', source: 'mutator', target: 'pubsub', label: 'publish(event)' },
+            { id: 'e5', source: 'pubsub', target: 'client', label: 'push data', animated: true },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'warning',
           title: 'Subscriptions vs polling — choose carefully',
@@ -6693,6 +8174,32 @@ A well-structured monolith is often the right choice, especially early. All code
 | Scaling | Scale the whole thing | Scale hot services independently |
 | Team size | Works well for small-medium teams | Enables large, independent teams |
 | Data consistency | ACID transactions across everything | Eventual consistency, sagas needed |`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Monolith vs microservices deployment topology',
+          nodes: [
+            { id: 'client_m', position: { x: 0, y: 60 }, label: 'Client', type: 'input' },
+            { id: 'mono', position: { x: 200, y: 60 }, label: 'Monolith\n(one process)', type: 'default' },
+            { id: 'db_m', position: { x: 400, y: 60 }, label: 'Single DB\n(ACID txns)', type: 'output' },
+            { id: 'client_ms', position: { x: 0, y: 220 }, label: 'Client', type: 'input' },
+            { id: 'gw', position: { x: 200, y: 220 }, label: 'API Gateway', type: 'default' },
+            { id: 'svc1', position: { x: 400, y: 160 }, label: 'Courses svc', type: 'default' },
+            { id: 'svc2', position: { x: 400, y: 220 }, label: 'Auth svc', type: 'default' },
+            { id: 'svc3', position: { x: 400, y: 280 }, label: 'Progress svc', type: 'default' },
+            { id: 'dbs', position: { x: 600, y: 220 }, label: 'Separate DBs\n(eventual consistency)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'client_m', target: 'mono', label: 'Monolith' },
+            { id: 'e2', source: 'mono', target: 'db_m' },
+            { id: 'e3', source: 'client_ms', target: 'gw', label: 'Microservices' },
+            { id: 'e4', source: 'gw', target: 'svc1' },
+            { id: 'e5', source: 'gw', target: 'svc2' },
+            { id: 'e6', source: 'gw', target: 'svc3' },
+            { id: 'e7', source: 'svc1', target: 'dbs' },
+            { id: 'e8', source: 'svc2', target: 'dbs' },
+            { id: 'e9', source: 'svc3', target: 'dbs' },
+          ],
         },
         {
           type: 'callout',
@@ -7169,6 +8676,29 @@ Each step publishes an event; failures trigger compensation. Either orchestratio
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'K8s object hierarchy: Deployment owns ReplicaSet owns Pods',
+          nodes: [
+            { id: 'deploy', position: { x: 0, y: 100 }, label: 'Deployment\n(desired state: 3 replicas)', type: 'input' },
+            { id: 'rs', position: { x: 220, y: 100 }, label: 'ReplicaSet\n(maintains pod count)', type: 'default' },
+            { id: 'pod1', position: { x: 440, y: 40 }, label: 'Pod 1\n(container + IP)', type: 'default' },
+            { id: 'pod2', position: { x: 440, y: 100 }, label: 'Pod 2\n(container + IP)', type: 'default' },
+            { id: 'pod3', position: { x: 440, y: 160 }, label: 'Pod 3\n(container + IP)', type: 'default' },
+            { id: 'svc', position: { x: 660, y: 100 }, label: 'Service\n(stable DNS + load balance)', type: 'default' },
+            { id: 'client', position: { x: 880, y: 100 }, label: 'Client\n(Ingress / other pod)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'deploy', target: 'rs', label: 'owns' },
+            { id: 'e2', source: 'rs', target: 'pod1' },
+            { id: 'e3', source: 'rs', target: 'pod2' },
+            { id: 'e4', source: 'rs', target: 'pod3' },
+            { id: 'e5', source: 'svc', target: 'pod1', label: 'label selector' },
+            { id: 'e6', source: 'svc', target: 'pod2' },
+            { id: 'e7', source: 'svc', target: 'pod3' },
+            { id: 'e8', source: 'client', target: 'svc', label: 'routes to' },
+          ],
+        },
+        {
           type: 'text',
           content: `## Kubernetes core objects
 
@@ -7296,6 +8826,25 @@ envFrom:
 \`\`\``,
         },
         {
+          type: 'flowDiagram',
+          title: 'Liveness vs readiness probe: different failure actions',
+          nodes: [
+            { id: 'kubelet', position: { x: 0, y: 100 }, label: 'Kubelet\n(on each node)', type: 'input' },
+            { id: 'live', position: { x: 220, y: 40 }, label: 'Liveness probe\nGET /health', type: 'default' },
+            { id: 'ready', position: { x: 220, y: 160 }, label: 'Readiness probe\nGET /ready', type: 'default' },
+            { id: 'restart', position: { x: 460, y: 40 }, label: 'Restart container\n(3 failures)', type: 'output' },
+            { id: 'remove', position: { x: 460, y: 160 }, label: 'Remove from\nService endpoints', type: 'output' },
+            { id: 'rejoin', position: { x: 680, y: 160 }, label: 'Re-add when\nprobe passes again', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'kubelet', target: 'live', label: 'checks' },
+            { id: 'e2', source: 'kubelet', target: 'ready', label: 'checks' },
+            { id: 'e3', source: 'live', target: 'restart', label: 'fails' },
+            { id: 'e4', source: 'ready', target: 'remove', label: 'fails\n(no restart)' },
+            { id: 'e5', source: 'remove', target: 'rejoin', label: 'probe recovers' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'warning',
           title: 'Secrets are base64, not encrypted',
@@ -7360,6 +8909,27 @@ Your \`/health\` endpoint should return 200 if the app is running. Your \`/ready
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Rolling update: new pods up before old pods down',
+          nodes: [
+            { id: 'v1a', position: { x: 0, y: 40 }, label: 'Pod v1.2 (running)', type: 'input' },
+            { id: 'v1b', position: { x: 0, y: 120 }, label: 'Pod v1.2 (running)', type: 'input' },
+            { id: 'v1c', position: { x: 0, y: 200 }, label: 'Pod v1.2 (running)', type: 'input' },
+            { id: 'surge', position: { x: 240, y: 40 }, label: 'Pod v1.3 starting\n(maxSurge=1)', type: 'default' },
+            { id: 'term', position: { x: 240, y: 200 }, label: 'Pod v1.2 terminating\n(graceful shutdown)', type: 'default' },
+            { id: 'v13a', position: { x: 480, y: 40 }, label: 'Pod v1.3 ready', type: 'default' },
+            { id: 'v13b', position: { x: 480, y: 120 }, label: 'Pod v1.3 ready', type: 'default' },
+            { id: 'v13c', position: { x: 480, y: 200 }, label: 'Pod v1.3 ready', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'v1a', target: 'surge', label: 'new pod\nstarts first' },
+            { id: 'e2', source: 'surge', target: 'v13a', label: 'passes\nliveness + readiness' },
+            { id: 'e3', source: 'v1c', target: 'term', label: 'old pod\nterminated' },
+            { id: 'e4', source: 'v1b', target: 'v13b' },
+            { id: 'e5', source: 'term', target: 'v13c', label: 'replaced' },
+          ],
+        },
         {
           type: 'text',
           content: `## Rolling updates — zero-downtime deploys
@@ -7923,6 +9493,33 @@ Linux's core philosophy: files, directories, devices, and even processes are rep
 | \`/proc\` | Virtual filesystem — running process info |`,
         },
         {
+          type: 'flowDiagram',
+          title: 'Linux Filesystem Hierarchy (FHS key directories)',
+          nodes: [
+            { id: 'root', position: { x: 260, y: 280 }, label: '/ (root)', type: 'input' },
+            { id: 'etc', position: { x: 0, y: 180 }, label: '/etc\nconfig files', type: 'default' },
+            { id: 'home', position: { x: 120, y: 180 }, label: '/home\nuser dirs', type: 'default' },
+            { id: 'var', position: { x: 240, y: 180 }, label: '/var\nlogs & spool', type: 'default' },
+            { id: 'usr', position: { x: 360, y: 180 }, label: '/usr\nuser programs', type: 'default' },
+            { id: 'tmp', position: { x: 480, y: 180 }, label: '/tmp\ntemp files', type: 'default' },
+            { id: 'alice', position: { x: 60, y: 80 }, label: '/home/alice', type: 'output' },
+            { id: 'log', position: { x: 200, y: 80 }, label: '/var/log', type: 'output' },
+            { id: 'bin', position: { x: 320, y: 80 }, label: '/usr/bin\nexecutables', type: 'output' },
+            { id: 'lib', position: { x: 440, y: 80 }, label: '/usr/lib\nlibraries', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'root', target: 'etc' },
+            { id: 'e2', source: 'root', target: 'home' },
+            { id: 'e3', source: 'root', target: 'var' },
+            { id: 'e4', source: 'root', target: 'usr' },
+            { id: 'e5', source: 'root', target: 'tmp' },
+            { id: 'e6', source: 'home', target: 'alice' },
+            { id: 'e7', source: 'var', target: 'log' },
+            { id: 'e8', source: 'usr', target: 'bin' },
+            { id: 'e9', source: 'usr', target: 'lib' },
+          ],
+        },
+        {
           type: 'text',
           content: `## The 20 commands you'll use daily
 
@@ -8047,6 +9644,24 @@ Each entry is 10 characters:
 | 8-10 | **Others** permissions |
 
 So \`-rwxr-xr--\` means: file, owner can read/write/execute, group can read/execute, others can only read.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Linux permission bits: -rwxr-xr-- decoded',
+          nodes: [
+            { id: 'type', position: { x: 0, y: 80 }, label: 'Type\n- (file)\nd (dir)\nl (link)', type: 'input' },
+            { id: 'owner', position: { x: 180, y: 80 }, label: 'Owner\nrwx = 7\nr/w/execute', type: 'default' },
+            { id: 'group', position: { x: 360, y: 80 }, label: 'Group\nr-x = 5\nread/execute', type: 'default' },
+            { id: 'others', position: { x: 540, y: 80 }, label: 'Others\nr-- = 4\nread only', type: 'output' },
+            { id: 'example', position: { x: 270, y: 200 }, label: '-rwxr-xr--\n→ chmod 754', type: 'default' },
+          ],
+          edges: [
+            { id: 'e1', source: 'type', target: 'owner' },
+            { id: 'e2', source: 'owner', target: 'group' },
+            { id: 'e3', source: 'group', target: 'others' },
+            { id: 'e4', source: 'type', target: 'example' },
+            { id: 'e5', source: 'others', target: 'example' },
+          ],
         },
         {
           type: 'text',
@@ -8422,6 +10037,28 @@ echo "Deploy complete: $TIMESTAMP"`,
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Training loop: forward pass → loss → gradient → update',
+          nodes: [
+            { id: 'data', position: { x: 0, y: 100 }, label: 'Training batch\n(features + labels)', type: 'input' },
+            { id: 'model', position: { x: 200, y: 100 }, label: 'Model\n(parameters W, b)', type: 'default' },
+            { id: 'pred', position: { x: 400, y: 100 }, label: 'Predictions\nforward pass', type: 'default' },
+            { id: 'loss', position: { x: 600, y: 100 }, label: 'Loss function\n(MSE / cross-entropy)', type: 'default' },
+            { id: 'grad', position: { x: 600, y: 220 }, label: 'Gradients\n(backpropagation)', type: 'default' },
+            { id: 'update', position: { x: 200, y: 220 }, label: 'Parameter update\nW = W − lr * ∇W', type: 'default' },
+            { id: 'converge', position: { x: 0, y: 220 }, label: 'Loss → minimum\n(model trained)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'data', target: 'model', label: 'input x' },
+            { id: 'e2', source: 'model', target: 'pred', label: 'ŷ = f(x, W)' },
+            { id: 'e3', source: 'pred', target: 'loss', label: 'compare to y' },
+            { id: 'e4', source: 'loss', target: 'grad', label: '∂L/∂W' },
+            { id: 'e5', source: 'grad', target: 'update' },
+            { id: 'e6', source: 'update', target: 'model', label: 'new W', animated: true },
+            { id: 'e7', source: 'update', target: 'converge', label: 'over epochs' },
+          ],
+        },
+        {
           type: 'text',
           content: `## What is machine learning?
 
@@ -8528,6 +10165,27 @@ def train(X, y, learning_rate=0.01, epochs=1000):
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Three ML paradigms: data source and feedback type',
+          nodes: [
+            { id: 'data', position: { x: 0, y: 100 }, label: 'Training data', type: 'input' },
+            { id: 'sup', position: { x: 220, y: 40 }, label: 'Supervised\n(labeled X → y)', type: 'default' },
+            { id: 'unsup', position: { x: 220, y: 120 }, label: 'Unsupervised\n(unlabeled X only)', type: 'default' },
+            { id: 'rl', position: { x: 220, y: 200 }, label: 'Reinforcement\n(agent + environment)', type: 'default' },
+            { id: 'class', position: { x: 460, y: 40 }, label: 'Classification\nRegression', type: 'output' },
+            { id: 'cluster', position: { x: 460, y: 120 }, label: 'Clustering\nDimensionality reduction', type: 'output' },
+            { id: 'policy', position: { x: 460, y: 200 }, label: 'Policy (action → reward)\nGame playing / robotics', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'data', target: 'sup', label: 'labels provided' },
+            { id: 'e2', source: 'data', target: 'unsup', label: 'no labels' },
+            { id: 'e3', source: 'data', target: 'rl', label: 'reward signal' },
+            { id: 'e4', source: 'sup', target: 'class' },
+            { id: 'e5', source: 'unsup', target: 'cluster' },
+            { id: 'e6', source: 'rl', target: 'policy' },
+          ],
+        },
         {
           type: 'text',
           content: `## The three learning paradigms
@@ -9596,6 +11254,27 @@ A hash function takes arbitrary input and produces a **fixed-length output** (th
 | **Avalanche effect** | Tiny input change → completely different digest |`,
         },
         {
+          type: 'flowDiagram',
+          title: 'Hashing vs password hashing: different algorithms for different purposes',
+          nodes: [
+            { id: 'input', position: { x: 0, y: 100 }, label: 'Input data\n(any length)', type: 'input' },
+            { id: 'sha', position: { x: 220, y: 40 }, label: 'SHA-256\n(fast, deterministic)', type: 'default' },
+            { id: 'bcrypt', position: { x: 220, y: 160 }, label: 'bcrypt / Argon2\n(slow, salted)', type: 'default' },
+            { id: 'digest', position: { x: 440, y: 40 }, label: '256-bit digest\n(microseconds)', type: 'output' },
+            { id: 'phash', position: { x: 440, y: 160 }, label: 'Password hash\n(100ms+ intentional)', type: 'output' },
+            { id: 'usecase_sha', position: { x: 660, y: 40 }, label: 'File integrity\nDigital signatures\nHMAC', type: 'output' },
+            { id: 'usecase_pw', position: { x: 660, y: 160 }, label: 'User passwords\n(brute-force resistant)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'input', target: 'sha', label: 'general' },
+            { id: 'e2', source: 'input', target: 'bcrypt', label: 'passwords' },
+            { id: 'e3', source: 'sha', target: 'digest' },
+            { id: 'e4', source: 'bcrypt', target: 'phash' },
+            { id: 'e5', source: 'digest', target: 'usecase_sha' },
+            { id: 'e6', source: 'phash', target: 'usecase_pw' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'warning',
           title: 'MD5 and SHA-1 are broken',
@@ -9830,6 +11509,28 @@ function verify(data: string, signature: string, publicKey: string): boolean {
   return verifier.verify(publicKey, signature, 'base64');
 }
 \`\`\``,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Digital signature: sign with private key, verify with public key',
+          nodes: [
+            { id: 'msg', position: { x: 0, y: 100 }, label: 'Message\n(document / JWT payload)', type: 'input' },
+            { id: 'hash', position: { x: 200, y: 100 }, label: 'SHA-256 hash\n(digest)', type: 'default' },
+            { id: 'sign', position: { x: 400, y: 100 }, label: 'Encrypt digest\nwith private key → Signature', type: 'default' },
+            { id: 'send', position: { x: 600, y: 100 }, label: 'Send:\nmessage + signature', type: 'default' },
+            { id: 'verify', position: { x: 800, y: 100 }, label: 'Decrypt sig\nwith public key → digest', type: 'default' },
+            { id: 'rehash', position: { x: 800, y: 220 }, label: 'Re-hash message\nCompare digests', type: 'default' },
+            { id: 'valid', position: { x: 1000, y: 100 }, label: 'Match ✓\n(authentic + unmodified)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'msg', target: 'hash', label: 'sender' },
+            { id: 'e2', source: 'hash', target: 'sign' },
+            { id: 'e3', source: 'sign', target: 'send' },
+            { id: 'e4', source: 'send', target: 'verify', label: 'receiver' },
+            { id: 'e5', source: 'send', target: 'rehash' },
+            { id: 'e6', source: 'verify', target: 'valid', label: 'digest matches' },
+            { id: 'e7', source: 'rehash', target: 'valid' },
+          ],
         },
         {
           type: 'callout',
@@ -10912,6 +12613,27 @@ GoF (Gang of Four) patterns fall into three categories:
 | **Behavioral** | Communication between objects | Observer, Strategy, Command |`,
         },
         {
+          type: 'flowDiagram',
+          title: 'GoF pattern categories and relationships',
+          nodes: [
+            { id: 'gof', position: { x: 220, y: 240 }, label: 'GoF Design Patterns\n(23 classic patterns)', type: 'input' },
+            { id: 'create', position: { x: 60, y: 120 }, label: 'Creational\nControl construction', type: 'default' },
+            { id: 'struct', position: { x: 220, y: 120 }, label: 'Structural\nCompose objects', type: 'default' },
+            { id: 'behave', position: { x: 380, y: 120 }, label: 'Behavioral\nCoordinate behavior', type: 'default' },
+            { id: 'cex', position: { x: 60, y: 20 }, label: 'Factory · Builder\nSingleton · Prototype', type: 'output' },
+            { id: 'sex', position: { x: 220, y: 20 }, label: 'Adapter · Decorator\nFacade · Proxy', type: 'output' },
+            { id: 'bex', position: { x: 380, y: 20 }, label: 'Observer · Strategy\nCommand · Iterator', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'gof', target: 'create' },
+            { id: 'e2', source: 'gof', target: 'struct' },
+            { id: 'e3', source: 'gof', target: 'behave' },
+            { id: 'e4', source: 'create', target: 'cex' },
+            { id: 'e5', source: 'struct', target: 'sex' },
+            { id: 'e6', source: 'behave', target: 'bex' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'tip',
           title: 'Patterns are a vocabulary, not a rulebook',
@@ -11067,6 +12789,21 @@ const cache: Cache = new LoggingCache(new RedisCacheAdapter(redisClient));
 \`\`\``,
         },
         {
+          type: 'flowDiagram',
+          title: 'Decorator chain: caller → LoggingCache → RedisCacheAdapter → Redis',
+          nodes: [
+            { id: 'caller', position: { x: 0, y: 80 }, label: 'Caller\ncache.get(key)', type: 'input' },
+            { id: 'log', position: { x: 200, y: 80 }, label: 'LoggingCache\n(Decorator)\nlogs hit/miss', type: 'default' },
+            { id: 'adapter', position: { x: 400, y: 80 }, label: 'RedisCacheAdapter\n(Adapter)\nbridges interface', type: 'default' },
+            { id: 'redis', position: { x: 600, y: 80 }, label: 'RedisClient\n(Third-party)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'caller', target: 'log', label: 'Cache interface' },
+            { id: 'e2', source: 'log', target: 'adapter', label: 'delegates' },
+            { id: 'e3', source: 'adapter', target: 'redis', label: 'getex()' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'Decorator vs inheritance',
@@ -11199,6 +12936,23 @@ class CourseSorter {
 \`\`\``,
         },
         {
+          type: 'flowDiagram',
+          title: 'Observer pattern: event source notifies multiple subscribers',
+          nodes: [
+            { id: 'source', position: { x: 240, y: 240 }, label: 'Event Source\ncourseEmitter.emit("enrolled")', type: 'input' },
+            { id: 'emitter', position: { x: 240, y: 140 }, label: 'EventEmitter\nnotifies all listeners', type: 'default' },
+            { id: 'email', position: { x: 60, y: 40 }, label: 'sendWelcomeEmail\n(subscriber 1)', type: 'output' },
+            { id: 'count', position: { x: 240, y: 40 }, label: 'updateEnrollmentCount\n(subscriber 2)', type: 'output' },
+            { id: 'analytics', position: { x: 420, y: 40 }, label: 'trackAnalyticsEvent\n(subscriber 3)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'source', target: 'emitter', label: 'emit event' },
+            { id: 'e2', source: 'emitter', target: 'email', animated: true },
+            { id: 'e3', source: 'emitter', target: 'count', animated: true },
+            { id: 'e4', source: 'emitter', target: 'analytics', animated: true },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'Strategy vs simple function params',
@@ -11272,141 +13026,145 @@ class CommandHistory {
     },
   },
 
-  // ── Design Patterns Lesson 4: Structural Patterns (Adapter, Decorator, Facade) ─
   {
     id: 'lesson-dp-4',
     courseId: 'course-design-patterns',
     order: 3,
-    title: 'Structural Patterns: Adapter, Decorator & Facade',
-    estimatedMinutes: 12,
-    createdAt: '2025-05-18T00:00:00.000Z',
-    updatedAt: '2025-05-18T00:00:00.000Z',
+    title: 'Repository Pattern & Dependency Injection',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
         {
           type: 'text',
-          content: `## Structural patterns: composing objects
+          content: `## The Repository Pattern
 
-Structural patterns are about how classes and objects are composed to form larger structures. Unlike creational patterns (how objects are created) or behavioral (how they communicate), structural patterns focus on relationships.`,
-        },
-        {
-          type: 'callout',
-          variant: 'info',
-          title: 'Adapter — make incompatible interfaces work together',
-          content: 'The Adapter wraps an existing class with a new interface that your code expects. Classic use case: integrating a third-party library whose API doesn\'t match your domain interface. You write an adapter once and the rest of your code never touches the third-party API directly.',
-        },
-        {
-          type: 'codeBlock',
-          language: 'typescript',
-          caption: 'Adapter: wrapping a third-party email library',
-          code: `// Your app's expected interface
-interface EmailService {
-  send(to: string, subject: string, body: string): Promise<void>;
-}
+Repository abstracts data access behind a domain-focused interface. Your business logic talks to \`UserRepository\`, not \`CosmosDbContainer\`. This decouples the domain from the persistence technology.
 
-// Third-party library has a different API
-class SendGridClient {
-  async sendEmail(config: {
-    to: string[];
-    subject: string;
-    text: string;
-    apiKey: string;
-  }): Promise<{ statusCode: number }> { /* ... */ return { statusCode: 202 }; }
-}
-
-// Adapter bridges the gap
-class SendGridAdapter implements EmailService {
-  constructor(
-    private client: SendGridClient,
-    private apiKey: string
-  ) {}
-
-  async send(to: string, subject: string, body: string): Promise<void> {
-    await this.client.sendEmail({
-      to: [to],
-      subject,
-      text: body,
-      apiKey: this.apiKey,
-    });
-  }
-}
-
-// Your app uses EmailService — easy to swap providers later
-const mailer: EmailService = new SendGridAdapter(new SendGridClient(), process.env.SENDGRID_KEY!);
-await mailer.send('alice@example.com', 'Welcome!', 'Hello Alice');`,
-        },
-        {
-          type: 'callout',
-          variant: 'tip',
-          title: 'Decorator — add behaviour without subclassing',
-          content: 'A Decorator wraps an object and adds new behaviour before or after delegating to the wrapped object. Unlike inheritance, decorators can be stacked arbitrarily. Classic examples: logging middleware, caching wrappers, access control checks. In TypeScript, the Decorator pattern is used extensively in NestJS.',
-        },
-        {
-          type: 'codeBlock',
-          language: 'typescript',
-          caption: 'Decorator: adding caching and logging to a repository',
-          code: `interface UserRepository {
+\`\`\`typescript
+// The interface — domain speaks in domain terms
+interface UserRepository {
   findById(id: string): Promise<User | null>;
+  findByEmail(email: string): Promise<User | null>;
+  save(user: User): Promise<void>;
+  delete(id: string): Promise<void>;
 }
 
-// Caching decorator
-class CachingUserRepository implements UserRepository {
-  private cache = new Map<string, User>();
+// Production: CosmosDB implementation
+class CosmosUserRepository implements UserRepository {
+  constructor(private container: Container) {}
 
-  constructor(private inner: UserRepository) {}
+  async findById(id: string) {
+    const { resource } = await this.container.item(id, id).read<User>();
+    return resource ?? null;
+  }
+  async findByEmail(email: string) {
+    const q = { query: 'SELECT * FROM c WHERE c.email = @e', parameters: [{ name: '@e', value: email }] };
+    const { resources } = await this.container.items.query<User>(q).fetchAll();
+    return resources[0] ?? null;
+  }
+  async save(user: User) { await this.container.items.upsert(user); }
+  async delete(id: string) { await this.container.item(id, id).delete(); }
+}
 
-  async findById(id: string): Promise<User | null> {
-    if (this.cache.has(id)) return this.cache.get(id)!;
-    const user = await this.inner.findById(id);
-    if (user) this.cache.set(id, user);
+// Test: in-memory implementation
+class InMemoryUserRepository implements UserRepository {
+  private store = new Map<string, User>();
+
+  async findById(id: string) { return this.store.get(id) ?? null; }
+  async findByEmail(email: string) {
+    return [...this.store.values()].find(u => u.email === email) ?? null;
+  }
+  async save(user: User) { this.store.set(user.id, user); }
+  async delete(id: string) { this.store.delete(id); }
+}
+\`\`\``,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Repository isolates domain logic from storage details',
+          nodes: [
+            { id: 'service', position: { x: 0, y: 80 }, label: 'UserService\n(domain logic)', type: 'input' },
+            { id: 'repo', position: { x: 220, y: 80 }, label: 'UserRepository\n(interface)', type: 'default' },
+            { id: 'cosmos', position: { x: 440, y: 20 }, label: 'CosmosUserRepo\n(production)', type: 'output' },
+            { id: 'memory', position: { x: 440, y: 140 }, label: 'InMemoryUserRepo\n(tests)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'service', target: 'repo', label: 'depends on\ninterface' },
+            { id: 'e2', source: 'repo', target: 'cosmos', label: 'implements' },
+            { id: 'e3', source: 'repo', target: 'memory', label: 'implements' },
+          ],
+        },
+        {
+          type: 'text',
+          content: `## Dependency Injection
+
+Repository only works if you inject the implementation rather than creating it. **Dependency Injection (DI)** means a class declares what it needs (in its constructor) and something else provides it.
+
+\`\`\`typescript
+// Without DI — service creates its own dependency (tightly coupled)
+class UserService {
+  private repo = new CosmosUserRepository(cosmosContainer); // ← hard to test
+}
+
+// With DI — dependency injected at construction time
+class UserService {
+  constructor(private repo: UserRepository) {} // ← accepts the interface
+
+  async registerUser(email: string, name: string) {
+    const existing = await this.repo.findByEmail(email);
+    if (existing) throw new Error('Email already registered');
+    const user = { id: uuid(), email, name, createdAt: new Date() };
+    await this.repo.save(user);
     return user;
   }
 }
 
-// Logging decorator
-class LoggingUserRepository implements UserRepository {
-  constructor(private inner: UserRepository) {}
+// Production wiring
+const service = new UserService(new CosmosUserRepository(container));
 
-  async findById(id: string): Promise<User | null> {
-    console.log(\`findById(\${id})\`);
-    const result = await this.inner.findById(id);
-    console.log(\`findById(\${id}) → \${result ? 'found' : 'not found'}\`);
-    return result;
-  }
-}
-
-// Stack decorators: logging wraps caching wraps CosmosDB repo
-const repo = new LoggingUserRepository(
-  new CachingUserRepository(
-    new CosmosUserRepository(container)
-  )
-);`,
+// Test wiring — no database needed
+const testRepo = new InMemoryUserRepository();
+await testRepo.save({ id: 'existing', email: 'taken@example.com', name: 'Alice', createdAt: new Date() });
+const service = new UserService(testRepo);
+await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow();
+\`\`\``,
         },
         {
           type: 'callout',
-          variant: 'info',
-          title: 'Facade — simplify a complex subsystem',
-          content: 'A Facade provides a simplified interface to a complex subsystem. It doesn\'t add functionality — it reduces complexity. Use it when you have many interacting components and callers need a simple "do the thing" method without needing to understand the steps.',
+          variant: 'tip',
+          title: 'DI without a framework',
+          content: 'You don\'t need NestJS or InversifyJS to do dependency injection. Passing dependencies via the constructor is already DI — it\'s a pattern, not a framework. Frameworks just automate the wiring at scale. Start with manual constructor injection; reach for a DI container only when the wiring becomes complex.',
         },
         {
           type: 'quiz',
-          title: 'Structural Patterns Quiz',
-          passingScore: 75,
+          passingScore: 70,
           questions: [
             {
               id: 'dp4-q1',
-              question: 'You want to switch from SendGrid to AWS SES without changing your application code. Which pattern enables this?',
-              options: ['Decorator — wrap SendGrid to add SES behavior', 'Adapter — write an AWSSESAdapter that implements your EmailService interface', 'Facade — create a unified email API', 'Observer — emit email events'],
+              question: 'What is the main benefit of the Repository pattern over calling the database directly in business logic?',
+              options: [
+                'Repositories run faster because they cache everything',
+                'Business logic is decoupled from the storage technology — you can swap databases or use an in-memory implementation for tests',
+                'Repositories automatically handle transactions',
+                'The database is called less frequently because repositories batch queries',
+              ],
               correctIndex: 1,
-              explanation: 'Adapter is the right choice when you need to make an incompatible interface (AWS SES API) conform to your expected interface (EmailService). Write AWSSESAdapter once, swap it for SendGridAdapter in your DI container — no other code changes needed.',
+              explanation: 'Repository hides persistence details behind a domain interface. UserService calls findByEmail() without knowing whether the answer comes from CosmosDB, PostgreSQL, or an in-memory Map. This means you can test business logic in milliseconds without a database, and swap storage implementations without touching domain code.',
             },
             {
               id: 'dp4-q2',
-              question: 'You need to add rate limiting, request logging, and authentication validation to API calls. You want to add/remove each independently. Which pattern is most appropriate?',
-              options: ['Adapter — adapt each concern', 'Facade — one method that does all three', 'Decorator — stack rate limiter, logger, and auth as independent decorators', 'Strategy — swap between different validation strategies'],
+              question: 'Which of these is NOT a benefit of Dependency Injection?',
+              options: [
+                'Easy to swap implementations (e.g., real vs mock)',
+                'Classes are more testable because dependencies can be injected',
+                'Automatic performance optimization of dependencies',
+                'Looser coupling between components',
+              ],
               correctIndex: 2,
-              explanation: 'Decorators are ideal for stackable, composable cross-cutting concerns. Each Decorator adds one responsibility. You can add/remove/reorder them independently: new LoggingDecorator(new RateLimiterDecorator(new AuthDecorator(apiClient))). Adding a new concern never modifies existing decorators.',
+              explanation: 'DI is about testability and loose coupling — not performance. Injecting a dependency doesn\'t make it run faster. The benefits are: testability (inject a fast in-memory mock), flexibility (swap implementations), and clarity (dependencies are explicit in the constructor rather than hidden inside the class).',
             },
           ],
         },
@@ -11429,6 +13187,29 @@ const repo = new LoggingUserRepository(
         {
           type: 'text',
           content: '## The AWS Cloud\n\nAmazon Web Services (AWS) is a collection of on-demand cloud services — compute, storage, networking, databases, AI — available over the internet. You pay only for what you use, with no upfront hardware investment.\n\n### Regions & Availability Zones\n\nAWS infrastructure is organized into **Regions** (geographic areas like `us-east-1`, `eu-west-1`) and **Availability Zones** (isolated data centers within a region). Deploying across multiple AZs provides high availability — if one AZ fails, your app keeps running.\n\n### Shared Responsibility Model\n\nAWS manages security **of** the cloud (hardware, facilities, hypervisor). You are responsible for security **in** the cloud — your OS patches, firewall rules, IAM policies, and data encryption.',
+        },
+        {
+          type: 'flowDiagram',
+          title: 'AWS Region → Availability Zones → resources',
+          nodes: [
+            { id: 'region', position: { x: 200, y: 240 }, label: 'AWS Region\nus-east-1', type: 'input' },
+            { id: 'az1', position: { x: 60, y: 140 }, label: 'AZ — us-east-1a\nData centre 1', type: 'default' },
+            { id: 'az2', position: { x: 200, y: 140 }, label: 'AZ — us-east-1b\nData centre 2', type: 'default' },
+            { id: 'az3', position: { x: 340, y: 140 }, label: 'AZ — us-east-1c\nData centre 3', type: 'default' },
+            { id: 'ec2a', position: { x: 0, y: 40 }, label: 'EC2 instance\n(App server)', type: 'output' },
+            { id: 'rdsa', position: { x: 120, y: 40 }, label: 'RDS\n(primary)', type: 'output' },
+            { id: 'ec2b', position: { x: 200, y: 40 }, label: 'EC2 instance\n(standby)', type: 'output' },
+            { id: 'rdsb', position: { x: 320, y: 40 }, label: 'RDS\n(read replica)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'region', target: 'az1' },
+            { id: 'e2', source: 'region', target: 'az2' },
+            { id: 'e3', source: 'region', target: 'az3' },
+            { id: 'e4', source: 'az1', target: 'ec2a' },
+            { id: 'e5', source: 'az1', target: 'rdsa' },
+            { id: 'e6', source: 'az2', target: 'ec2b' },
+            { id: 'e7', source: 'az3', target: 'rdsb' },
+          ],
         },
         {
           type: 'callout',
@@ -11481,6 +13262,23 @@ const repo = new LoggingUserRepository(
         {
           type: 'text',
           content: '## IAM — Identity & Access Management\n\nIAM controls **who** can do **what** in your AWS account. The three building blocks:\n\n- **Users** — individual people or service accounts (avoid long-lived credentials)\n- **Groups** — collections of users that share the same policies\n- **Roles** — temporary identities assumed by services, Lambda functions, or EC2 instances\n\nPolicies are JSON documents that define allowed/denied actions on specific resources:\n\n```json\n{\n  "Version": "2012-10-17",\n  "Statement": [\n    {\n      "Effect": "Allow",\n      "Action": ["s3:GetObject", "s3:PutObject"],\n      "Resource": "arn:aws:s3:::my-bucket/*"\n    }\n  ]\n}\n```\n\n**Principle of least privilege**: grant only the permissions actually needed. Use IAM roles (not access keys) for EC2 and Lambda — roles provide temporary, auto-rotating credentials.',
+        },
+        {
+          type: 'flowDiagram',
+          title: 'IAM access control: user → role → policy → resource',
+          nodes: [
+            { id: 'user', position: { x: 0, y: 80 }, label: 'IAM User / Service', type: 'input' },
+            { id: 'role', position: { x: 200, y: 80 }, label: 'IAM Role\n(assumes)', type: 'default' },
+            { id: 'policy', position: { x: 380, y: 80 }, label: 'IAM Policy\n(Allow s3:GetObject)', type: 'default' },
+            { id: 'resource', position: { x: 560, y: 80 }, label: 'S3 Bucket\n(resource)', type: 'output' },
+            { id: 'deny', position: { x: 560, y: 200 }, label: 'DynamoDB Table\n(Denied — no policy)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'user', target: 'role', label: 'AssumeRole' },
+            { id: 'e2', source: 'role', target: 'policy', label: 'attached' },
+            { id: 'e3', source: 'policy', target: 'resource', label: 'Allow' },
+            { id: 'e4', source: 'policy', target: 'deny', label: 'Implicit Deny' },
+          ],
         },
         {
           type: 'callout',
@@ -11902,7 +13700,26 @@ const repo = new LoggingUserRepository(
         },
         {
           type: 'text',
-          content: '## TCP vs UDP\n\n**TCP** (Transmission Control Protocol) guarantees delivery and ordering. It establishes a connection with a 3-way handshake, numbers every byte, retransmits lost packets, and acknowledges received data. Use it for anything where correctness matters: HTTP, databases, email.\n\n**UDP** (User Datagram Protocol) is fire-and-forget. No handshake, no retransmission, no ordering. Lower latency and lower overhead. Use it where speed matters more than reliability: video streaming, DNS, online gaming, real-time voice.\n\n```\nTCP 3-way handshake:\nClient: SYN →\n              ← SYN-ACK :Server\nClient: ACK →\n           [connection established]\n```',
+          content: '## TCP vs UDP\n\n**TCP** (Transmission Control Protocol) guarantees delivery and ordering. It establishes a connection with a 3-way handshake, numbers every byte, retransmits lost packets, and acknowledges received data. Use it for anything where correctness matters: HTTP, databases, email.\n\n**UDP** (User Datagram Protocol) is fire-and-forget. No handshake, no retransmission, no ordering. Lower latency and lower overhead. Use it where speed matters more than reliability: video streaming, DNS, online gaming, real-time voice.',
+        },
+        {
+          type: 'flowDiagram',
+          title: 'TCP 3-way handshake: connection establishment',
+          nodes: [
+            { id: 'c1', position: { x: 0, y: 0 }, label: 'Client\nSYN →', type: 'input' },
+            { id: 's1', position: { x: 300, y: 0 }, label: 'Server\nreceives SYN', type: 'default' },
+            { id: 's2', position: { x: 300, y: 100 }, label: 'Server\n← SYN-ACK', type: 'default' },
+            { id: 'c2', position: { x: 0, y: 100 }, label: 'Client\nreceives SYN-ACK', type: 'default' },
+            { id: 'c3', position: { x: 0, y: 200 }, label: 'Client\nACK →', type: 'default' },
+            { id: 'conn', position: { x: 300, y: 200 }, label: 'Connection\nestablished!', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'c1', target: 's1', label: 'SYN (seq=x)', animated: true },
+            { id: 'e2', source: 's1', target: 's2' },
+            { id: 'e3', source: 's2', target: 'c2', label: 'SYN-ACK (seq=y, ack=x+1)', animated: true },
+            { id: 'e4', source: 'c2', target: 'c3' },
+            { id: 'e5', source: 'c3', target: 'conn', label: 'ACK (ack=y+1)', animated: true },
+          ],
         },
         {
           type: 'callout',
@@ -11946,7 +13763,28 @@ const repo = new LoggingUserRepository(
       sections: [
         {
           type: 'text',
-          content: '## DNS — The Internet\'s Phone Book\n\nEvery time you type `api.example.com`, your OS performs a DNS lookup to translate the name to an IP address. The process:\n\n1. Check local cache\n2. Ask the OS resolver (usually your router)\n3. Router asks the ISP\'s recursive resolver\n4. Recursive resolver works through root → TLD (`.com`) → authoritative name server\n5. IP returned and cached (TTL controls how long)\n\n**Common record types:**\n- `A` — hostname → IPv4 address\n- `AAAA` — hostname → IPv6 address\n- `CNAME` — alias to another hostname\n- `MX` — mail server for a domain\n- `TXT` — arbitrary text (used for SPF, DKIM, domain verification)\n\n```bash\n# Diagnose DNS from the command line\ndig api.example.com A\nnslookup api.example.com\n```',
+          content: '## DNS — The Internet\'s Phone Book\n\nEvery time you type `api.example.com`, your OS performs a DNS lookup to translate the name to an IP address. The process:\n\n1. Check local cache\n2. Ask the OS resolver (usually your router)\n3. Router asks the ISP\'s recursive resolver\n4. Recursive resolver works through root → TLD (`.com`) → authoritative name server\n5. IP returned and cached (TTL controls how long)\n\n**Common record types:**\n- `A` — hostname → IPv4 address\n- `AAAA` — hostname → IPv6 address\n- `CNAME` — alias to another hostname\n- `MX` — mail server for a domain\n- `TXT` — arbitrary text (used for SPF, DKIM, domain verification)',
+        },
+        {
+          type: 'flowDiagram',
+          title: 'DNS resolution: browser → cache → resolver → authoritative NS',
+          nodes: [
+            { id: 'browser', position: { x: 0, y: 80 }, label: 'Browser\napi.example.com?', type: 'input' },
+            { id: 'cache', position: { x: 180, y: 80 }, label: 'OS DNS Cache\n(check TTL)', type: 'default' },
+            { id: 'resolver', position: { x: 360, y: 80 }, label: 'ISP Recursive\nResolver', type: 'default' },
+            { id: 'root', position: { x: 540, y: 20 }, label: 'Root NS\n(13 servers)', type: 'default' },
+            { id: 'tld', position: { x: 540, y: 80 }, label: '.com TLD NS', type: 'default' },
+            { id: 'auth', position: { x: 540, y: 140 }, label: 'example.com\nAuthoritative NS', type: 'default' },
+            { id: 'ip', position: { x: 0, y: 200 }, label: '93.184.216.34\n(A record, TTL 300s)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'browser', target: 'cache', label: 'lookup' },
+            { id: 'e2', source: 'cache', target: 'resolver', label: 'cache miss' },
+            { id: 'e3', source: 'resolver', target: 'root', label: 'ask' },
+            { id: 'e4', source: 'root', target: 'tld', label: 'refer to' },
+            { id: 'e5', source: 'tld', target: 'auth', label: 'refer to' },
+            { id: 'e6', source: 'auth', target: 'ip', label: '93.184.216.34', animated: true },
+          ],
         },
         {
           type: 'text',
@@ -12045,6 +13883,27 @@ const repo = new LoggingUserRepository(
         {
           type: 'text',
           content: '## Authentication vs Authorization\n\n- **Authentication**: proves who you are ("you are Alice")\n- **Authorization**: determines what you can do ("Alice can read courses but not delete them")\n\nAuthentication always happens first. Authorization uses the verified identity to make access decisions.\n\n## Role-Based Access Control (RBAC)\n\nRBAC assigns users to **roles**, and roles to **permissions**. This is the most common model for enterprise applications:\n\n```\nUser: alice@example.com\n  └── Role: editor\n        ├── Permission: course:read\n        ├── Permission: course:write\n        └── Permission: course:publish\n\nUser: bob@example.com\n  └── Role: viewer\n        └── Permission: course:read\n```\n\nThe key advantage: when a user\'s responsibilities change, you reassign their role — not individual permissions.',
+        },
+        {
+          type: 'flowDiagram',
+          title: 'RBAC: user → role → permissions hierarchy',
+          nodes: [
+            { id: 'alice', position: { x: 0, y: 40 }, label: 'Alice\n(user)', type: 'input' },
+            { id: 'bob', position: { x: 0, y: 160 }, label: 'Bob\n(user)', type: 'input' },
+            { id: 'editor', position: { x: 220, y: 0 }, label: 'editor\n(role)', type: 'default' },
+            { id: 'viewer', position: { x: 220, y: 160 }, label: 'viewer\n(role)', type: 'default' },
+            { id: 'read', position: { x: 440, y: 0 }, label: 'course:read', type: 'output' },
+            { id: 'write', position: { x: 440, y: 80 }, label: 'course:write', type: 'output' },
+            { id: 'pub', position: { x: 440, y: 160 }, label: 'course:publish', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'alice', target: 'editor', label: 'has role' },
+            { id: 'e2', source: 'bob', target: 'viewer', label: 'has role' },
+            { id: 'e3', source: 'editor', target: 'read' },
+            { id: 'e4', source: 'editor', target: 'write' },
+            { id: 'e5', source: 'editor', target: 'pub' },
+            { id: 'e6', source: 'viewer', target: 'read' },
+          ],
         },
         {
           type: 'codeBlock',
@@ -12785,6 +14644,27 @@ const repo = new LoggingUserRepository(
           content: '## Measure, Don\'t Guess\n\nPerformance intuition is notoriously wrong. The bottleneck is almost never where you think it is. The first rule: **profile before optimising**. Optimising unmeasured code is premature — you\'ll spend time on code that isn\'t the bottleneck.\n\n## The USE Method\n\nFor every resource in your system, check three metrics:\n- **Utilisation** — how busy is it? (CPU %, disk %, network %)\n- **Saturation** — is it overloaded? (queue depth, context switches, disk I/O wait)\n- **Errors** — is it failing? (packet drops, disk errors, segfaults)\n\n```bash\n# CPU utilisation and load average\ntop -bn1\nmpstat -P ALL 1\n\n# Memory — free, cached, swap usage\nfree -h\nvmstat 1 5\n\n# Disk I/O\niostat -xz 1\n\n# Network\nss -s               # socket statistics\nsar -n DEV 1       # network interface stats\n```',
         },
         {
+          type: 'flowDiagram',
+          title: 'Memory hierarchy: latency from CPU to disk',
+          nodes: [
+            { id: 'l1', position: { x: 240, y: 0 }, label: 'L1 Cache\n~1ns, 32–64KB', type: 'input' },
+            { id: 'l2', position: { x: 240, y: 70 }, label: 'L2 Cache\n~4ns, 256KB–1MB', type: 'default' },
+            { id: 'l3', position: { x: 240, y: 140 }, label: 'L3 Cache\n~15ns, 4–32MB', type: 'default' },
+            { id: 'dram', position: { x: 240, y: 210 }, label: 'DRAM (RAM)\n~60ns', type: 'default' },
+            { id: 'ssd', position: { x: 240, y: 280 }, label: 'SSD (NVMe)\n~100µs (100,000ns)', type: 'default' },
+            { id: 'net', position: { x: 240, y: 350 }, label: 'Network (same DC)\n~0.5ms', type: 'default' },
+            { id: 'disk', position: { x: 240, y: 420 }, label: 'HDD / Remote DB\n10ms–100ms', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'l1', target: 'l2', label: '4×' },
+            { id: 'e2', source: 'l2', target: 'l3', label: '4×' },
+            { id: 'e3', source: 'l3', target: 'dram', label: '4×' },
+            { id: 'e4', source: 'dram', target: 'ssd', label: '1,600×' },
+            { id: 'e5', source: 'ssd', target: 'net', label: '5×' },
+            { id: 'e6', source: 'net', target: 'disk', label: '100×' },
+          ],
+        },
+        {
           type: 'text',
           content: '## Latency Percentiles\n\nAverage latency hides the tail. A 99th percentile (p99) of 2s means 1% of users wait over 2 seconds — that\'s 1 in 100 requests.\n\n```\np50 (median): 12ms  — half of requests faster\np90:          45ms  — 90% of requests faster\np99:         230ms  — 99% of requests faster\np99.9:      1800ms  — 0.1% of requests take 1.8s\n```\n\nFor user-facing services, optimise the tail (p99, p99.9) not just the median. Tail latency often comes from GC pauses, lock contention, cold caches, or slow DNS.\n\n## Flame Graphs\n\nFlame graphs visualise where CPU time is spent across all stack frames. The x-axis is time (not order); the y-axis is stack depth. Wide bars at the top of the flame are your hotspots.\n\n```bash\n# Profile a Node.js process\nnode --prof app.js &\nnpm run loadtest\nkill %1\nnode --prof-process isolate-*.log > profile.txt\n\n# Linux perf (system-wide)\nperf record -F 99 -p <pid> -g -- sleep 30\nperf script | stackcollapse-perf.pl | flamegraph.pl > flame.svg\n```',
         },
@@ -13022,6 +14902,29 @@ A database query that takes 50ms might be fast, but if 10,000 users hit the same
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Redis data structures: use case mapping',
+          nodes: [
+            { id: 'string', position: { x: 0, y: 20 }, label: 'String\nGET/SET/INCR', type: 'input' },
+            { id: 'hash', position: { x: 0, y: 100 }, label: 'Hash\nHGET/HSET', type: 'input' },
+            { id: 'list', position: { x: 0, y: 180 }, label: 'List\nLPUSH/RPOP', type: 'input' },
+            { id: 'set', position: { x: 0, y: 260 }, label: 'Set\nSADD/SINTER', type: 'input' },
+            { id: 'zset', position: { x: 0, y: 340 }, label: 'Sorted Set\nZADD/ZRANGE', type: 'input' },
+            { id: 'uc_string', position: { x: 280, y: 20 }, label: 'Session tokens\nCounters, rate limits', type: 'output' },
+            { id: 'uc_hash', position: { x: 280, y: 100 }, label: 'User objects\nPartial field updates', type: 'output' },
+            { id: 'uc_list', position: { x: 280, y: 180 }, label: 'Message queues\nRecent activity feed', type: 'output' },
+            { id: 'uc_set', position: { x: 280, y: 260 }, label: 'Unique tags\nFriend lists, dedup', type: 'output' },
+            { id: 'uc_zset', position: { x: 280, y: 340 }, label: 'Leaderboards\nPriority queues', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'string', target: 'uc_string' },
+            { id: 'e2', source: 'hash', target: 'uc_hash' },
+            { id: 'e3', source: 'list', target: 'uc_list' },
+            { id: 'e4', source: 'set', target: 'uc_set' },
+            { id: 'e5', source: 'zset', target: 'uc_zset' },
+          ],
+        },
         {
           type: 'text',
           content: `## Redis Is Not Just a Key-Value Store
@@ -13516,6 +15419,251 @@ Services on the same Compose network resolve each other by **service name** as h
               options: ['It removes images in addition to containers', 'It also deletes named volumes (your database data) — use with caution', 'It runs verbose output', 'It forces-kills containers instead of graceful stop'],
               correctIndex: 1,
               explanation: 'Named volumes (like postgres_data) persist between `compose down` / `compose up` cycles — that\'s the point. Adding `-v` deletes those volumes too, giving you a completely fresh state. Useful for testing migrations from scratch, dangerous in production.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  {
+    id: 'lesson-docker-4',
+    courseId: 'course-docker',
+    order: 3,
+    title: 'Docker Networking Deep Dive',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Docker Network Drivers
+
+Docker networking is built around **drivers** that control how containers talk to each other and the outside world.
+
+| Driver | Description | Use case |
+|---|---|---|
+| \`bridge\` | Default. Private virtual network on the host. Containers reach each other by IP or name (within a user-defined bridge). | Local development, single-host |
+| \`host\` | Container shares host network stack — no isolation, no port mapping needed. | High-throughput scenarios, monitoring tools |
+| \`none\` | No networking at all — container is fully isolated. | Batch jobs that don't need networking |
+| \`overlay\` | Spans multiple Docker hosts (requires Swarm). | Multi-host production (or use Kubernetes) |
+
+The default bridge (\`docker0\`) does **not** do DNS-based container discovery. Always create a **user-defined bridge** for real apps — containers on it resolve each other by name automatically.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Bridge network: host port mapping to container',
+          nodes: [
+            { id: 'internet', position: { x: 0, y: 80 }, label: 'Internet / Client', type: 'input' },
+            { id: 'host', position: { x: 220, y: 80 }, label: 'Docker Host\niptables NAT', type: 'default' },
+            { id: 'bridge', position: { x: 440, y: 80 }, label: 'docker0 bridge\n(virtual switch)', type: 'default' },
+            { id: 'c1', position: { x: 640, y: 20 }, label: 'Container A\n172.17.0.2:8080', type: 'output' },
+            { id: 'c2', position: { x: 640, y: 140 }, label: 'Container B\n172.17.0.3:5432', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'internet', target: 'host', label: ':80 → :8080' },
+            { id: 'e2', source: 'host', target: 'bridge', label: 'DNAT' },
+            { id: 'e3', source: 'bridge', target: 'c1' },
+            { id: 'e4', source: 'bridge', target: 'c2' },
+            { id: 'e5', source: 'c1', target: 'c2', label: 'container-to-container\n(by name or IP)' },
+          ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'bash',
+          caption: 'Working with Docker networks',
+          code: `# Create a user-defined bridge network
+docker network create my-network
+
+# Connect containers to it (they resolve each other by name)
+docker run -d --name api --network my-network my-api:latest
+docker run -d --name db --network my-network postgres:16
+
+# The api container can now reach db at postgres://db:5432
+# DNS is handled automatically — no --link needed
+
+# Inspect network (see connected containers + IPs)
+docker network inspect my-network
+
+# Connect a running container to an additional network
+docker network connect my-network some-other-container
+
+# Expose host port 80 → container port 8080
+docker run -d -p 80:8080 --network my-network my-api:latest
+
+# Host network (container uses host's IP stack directly)
+docker run --network host nginx`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'User-defined bridges vs the default bridge',
+          content: 'The default `docker0` bridge does not support DNS-based container discovery — you need `--link` (deprecated) or IP addresses. User-defined bridges (`docker network create`) automatically provide DNS so containers find each other by service name. Prefer user-defined networks for anything beyond quick experiments.',
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'docker4-q1',
+              question: 'Container A and Container B are on a user-defined bridge network. How does Container A reach Container B?',
+              options: [
+                'It must use Container B\'s IP address found from `docker inspect`',
+                'It uses Container B\'s name as a hostname — Docker\'s embedded DNS resolves it automatically',
+                'It must use `--link` flags to establish a connection',
+                'Containers on the same network share localhost',
+              ],
+              correctIndex: 1,
+              explanation: 'User-defined bridge networks include an embedded DNS server. Containers register themselves by their `--name` value. Other containers on the same network resolve that name to an IP automatically. This is why Docker Compose works — service names become hostnames.',
+            },
+            {
+              id: 'docker4-q2',
+              question: 'What does `-p 8080:3000` mean when running a container?',
+              options: [
+                'Expose container port 8080 on host port 3000',
+                'Map host port 8080 to container port 3000 — requests on the host\'s :8080 reach the app on :3000 inside the container',
+                'Open two ports: 8080 and 3000, both on the container',
+                'The container uses port 8080 internally and 3000 externally',
+              ],
+              correctIndex: 1,
+              explanation: 'The format is `-p HOST_PORT:CONTAINER_PORT`. So `-p 8080:3000` means: when traffic arrives on host port 8080, Docker\'s iptables NAT rules forward it to container port 3000. The app inside the container only knows about port 3000.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-docker-5',
+    courseId: 'course-docker',
+    order: 4,
+    title: 'Registries, Security & Production Readiness',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Image Registries
+
+A **registry** is a server that stores and distributes Docker images. You push images to share them; your CI/CD system or Kubernetes cluster pulls them to deploy.
+
+| Registry | Provider | Notes |
+|---|---|---|
+| Docker Hub | Docker | Default. Public images free; private images limited |
+| Amazon ECR | AWS | Native integration with ECS/EKS; lifecycle policies |
+| Azure Container Registry | Microsoft | Integrates with AKS, Azure Pipelines |
+| Google Artifact Registry | Google | Successor to GCR, also stores npm/Maven |
+| GitHub Container Registry | GitHub | Free for public repos; tight Actions integration |
+
+**Image naming:** \`registry/organisation/image:tag\`
+- \`nginx:latest\` — Docker Hub shorthand for \`docker.io/library/nginx:latest\`
+- \`ghcr.io/myorg/my-app:v1.2.0\` — GitHub Container Registry`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'CI/CD image pipeline: build → push → deploy',
+          nodes: [
+            { id: 'dev', position: { x: 0, y: 80 }, label: 'Developer\ngit push', type: 'input' },
+            { id: 'ci', position: { x: 180, y: 80 }, label: 'CI Pipeline\ndocker build', type: 'default' },
+            { id: 'scan', position: { x: 360, y: 80 }, label: 'Image Scan\n(Trivy/Snyk)', type: 'default' },
+            { id: 'registry', position: { x: 540, y: 80 }, label: 'Container Registry\ndocker push', type: 'default' },
+            { id: 'staging', position: { x: 720, y: 20 }, label: 'Staging\ndocker pull', type: 'output' },
+            { id: 'prod', position: { x: 720, y: 140 }, label: 'Production\n(K8s pull)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'dev', target: 'ci' },
+            { id: 'e2', source: 'ci', target: 'scan', label: 'on tag' },
+            { id: 'e3', source: 'scan', target: 'registry', label: 'if no CVEs' },
+            { id: 'e4', source: 'registry', target: 'staging' },
+            { id: 'e5', source: 'registry', target: 'prod', label: 'after staging OK' },
+          ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'bash',
+          caption: 'Push an image to a registry',
+          code: `# Tag your local image for a registry
+docker tag my-app:latest ghcr.io/myorg/my-app:v1.2.0
+
+# Authenticate (GitHub example — use a Personal Access Token)
+echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
+
+# Push
+docker push ghcr.io/myorg/my-app:v1.2.0
+
+# Pull (from CI/CD or production server)
+docker pull ghcr.io/myorg/my-app:v1.2.0`,
+        },
+        {
+          type: 'text',
+          content: `## Production Security Checklist
+
+**Don't run as root.** If an attacker breaks out of the app, they gain root on the host.
+
+\`\`\`dockerfile
+# Create a non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+\`\`\`
+
+**Pin versions.** \`FROM node:20-alpine\` is safer than \`FROM node:latest\` which can break silently.
+
+**Use minimal base images:**
+- \`alpine\` variants are 5–10 MB (vs ~200 MB for full Debian)
+- \`distroless\` images (Google) contain only the runtime — no shell, no package manager
+
+**Scan images for CVEs:**
+\`\`\`bash
+# Trivy — fast, open-source scanner
+trivy image my-app:v1.2.0
+
+# Docker Scout (built-in)
+docker scout cves my-app:v1.2.0
+\`\`\`
+
+**Never store secrets in images.** No ENV with passwords, no COPY of .env files. Use:
+- Docker secrets (Swarm / Compose)
+- Kubernetes secrets (mounted as files or env)
+- Cloud provider secrets managers (AWS SSM, Azure Key Vault)`,
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'Never use :latest in production',
+          content: '`FROM node:latest` or pulling `my-app:latest` in production is a footgun. The "latest" tag is mutable — it changes when a new image is pushed. You lose reproducibility and can break deployments silently. Always tag with a specific version (`v1.2.0` or a git SHA) and pin your base images too.',
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'docker5-q1',
+              question: 'Why should you never store secrets (passwords, API keys) in a Docker image?',
+              options: [
+                'Docker images can only store text, not binary secrets',
+                'Anyone who pulls the image can extract the secrets by running `docker history` or inspecting layers — even if the secret was deleted in a later layer',
+                'Secrets slow down the build process',
+                'Docker does not support ENV variables with secrets',
+              ],
+              correctIndex: 1,
+              explanation: 'Docker image layers are immutable and stackable. Even if you `RUN rm /app/.env` in a later layer, the .env file still exists in the earlier layer and can be extracted with `docker history --no-trunc` or by running the image at that layer. Always pass secrets at runtime via orchestrator secrets management.',
+            },
+            {
+              id: 'docker5-q2',
+              question: 'What is the main benefit of a multi-stage Dockerfile build?',
+              options: [
+                'It allows containers to run multiple processes at once',
+                'It produces a small final image: build tools and source code stay in the builder stage and are not included in the runtime image',
+                'It speeds up the container startup time at runtime',
+                'It lets you run tests inside the Dockerfile',
+              ],
+              correctIndex: 1,
+              explanation: 'The builder stage has compilers, test frameworks, dev dependencies — all of which you do not want in production. The final stage uses a minimal base image and only copies the compiled artifacts from the builder via `COPY --from=builder`. The result can be 10× smaller, with fewer attack surface packages.',
             },
           ],
         },
@@ -14035,6 +16183,26 @@ Under the hood, gRPC uses:
 | Best for | Public APIs, browser clients | Internal service-to-service |`,
         },
         {
+          type: 'flowDiagram',
+          title: 'gRPC request flow: proto schema drives code generation',
+          nodes: [
+            { id: 'proto', position: { x: 0, y: 100 }, label: 'service.proto\n(schema source of truth)', type: 'input' },
+            { id: 'gen_client', position: { x: 220, y: 40 }, label: 'Generated client stub\n(TypeScript / Go / Python)', type: 'default' },
+            { id: 'gen_server', position: { x: 220, y: 160 }, label: 'Generated server interface\n(implement your logic)', type: 'default' },
+            { id: 'protobuf', position: { x: 440, y: 100 }, label: 'Binary protobuf\n(3-10× smaller than JSON)', type: 'default' },
+            { id: 'h2', position: { x: 440, y: 200 }, label: 'HTTP/2 transport\n(multiplexed)', type: 'default' },
+            { id: 'server', position: { x: 660, y: 100 }, label: 'gRPC Server\n(typed handler)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'proto', target: 'gen_client', label: 'protoc generates' },
+            { id: 'e2', source: 'proto', target: 'gen_server', label: 'protoc generates' },
+            { id: 'e3', source: 'gen_client', target: 'protobuf', label: 'serializes' },
+            { id: 'e4', source: 'protobuf', target: 'h2' },
+            { id: 'e5', source: 'h2', target: 'server', label: 'delivers' },
+            { id: 'e6', source: 'server', target: 'gen_client', label: 'response stream', animated: true },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'gRPC is not a replacement for REST',
@@ -14483,6 +16651,25 @@ The difference matters in microservices: a cascading failure might not trip any 
           variant: 'info',
           title: 'Monitoring vs Observability',
           content: 'Monitoring answers "is this service up?" — a yes/no question. Observability answers "what is this service doing, and why is it behaving that way?" The first tells you something is wrong; the second helps you understand what.',
+        },
+        {
+          type: 'flowDiagram',
+          title: 'The three pillars: what each tells you about a failing request',
+          nodes: [
+            { id: 'incident', position: { x: 240, y: 280 }, label: 'Production Incident\n"checkout is slow"', type: 'input' },
+            { id: 'metrics', position: { x: 60, y: 140 }, label: 'Metrics\n"p99 = 3.2s, spike at 14:23"', type: 'default' },
+            { id: 'traces', position: { x: 240, y: 140 }, label: 'Traces\n"DB query takes 2.8s"', type: 'default' },
+            { id: 'logs', position: { x: 420, y: 140 }, label: 'Logs\n"Pool exhausted: queue=32"', type: 'default' },
+            { id: 'fix', position: { x: 240, y: 20 }, label: 'Root Cause\nDB connection pool too small', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'incident', target: 'metrics', label: 'when?' },
+            { id: 'e2', source: 'incident', target: 'traces', label: 'where?' },
+            { id: 'e3', source: 'incident', target: 'logs', label: 'why?' },
+            { id: 'e4', source: 'metrics', target: 'fix' },
+            { id: 'e5', source: 'traces', target: 'fix' },
+            { id: 'e6', source: 'logs', target: 'fix' },
+          ],
         },
         {
           type: 'text',
@@ -15421,12 +17608,12 @@ export function getMockCourseProgress(): Array<{ course: Course; completedCount:
 export const MOCK_TAXONOMIES = [
   { l1: 'Security', l2: ['Authentication', 'Authorization', 'Network', 'Cryptography'] },
   { l1: 'Web Development', l2: ['Frontend', 'Backend', 'APIs', 'GraphQL'] },
-  { l1: 'Cloud', l2: ['Azure', 'AWS', 'Kubernetes', 'CI/CD'] },
+  { l1: 'Cloud', l2: ['Azure', 'AWS', 'Kubernetes', 'CI/CD', 'Docker'] },
   { l1: 'Databases', l2: ['SQL', 'NoSQL', 'Data Modeling', 'Performance'] },
   { l1: 'Mobile', l2: ['iOS', 'Android', 'React Native', 'Flutter'] },
   { l1: 'AI & ML', l2: ['Machine Learning', 'LLMs', 'Computer Vision', 'Data Science'] },
   { l1: 'Systems', l2: ['Linux', 'Networking', 'Performance', 'Architecture'] },
-  { l1: 'Engineering', l2: ['Design Patterns', 'Testing', 'Git', 'Code Quality'] },
+  { l1: 'Engineering', l2: ['Design Patterns', 'Testing', 'Git', 'Code Quality', 'Python'] },
 ];
 
 export interface LeaderboardEntry {
