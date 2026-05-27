@@ -266,6 +266,25 @@ export const MOCK_COURSES: Course[] = [
     updatedAt: '2025-05-10T00:00:00.000Z',
   },
   {
+    id: 'course-sql-advanced',
+    title: 'Advanced SQL — CTEs, Window Functions & Query Analysis',
+    description: 'Level up your SQL with common table expressions, recursive queries, window functions (ROW_NUMBER, RANK, LAG/LEAD), and deep-dive query tuning with EXPLAIN ANALYZE.',
+    taxonomy: { l1: 'Databases', l2: 'SQL' },
+    difficulty: 'intermediate',
+    authorId: 'teacher-001',
+    authorName: 'The Guild',
+    published: true,
+    publishedAt: '2025-06-01T00:00:00.000Z',
+    tags: ['sql', 'cte', 'window-functions', 'postgresql', 'query-optimization'],
+    lessonIds: ['lesson-sql-adv-1', 'lesson-sql-adv-2', 'lesson-sql-adv-3'],
+    totalLessons: 3,
+    estimatedMinutes: 45,
+    ratingAverage: 4.7,
+    ratingCount: 19,
+    createdAt: '2025-06-01T00:00:00.000Z',
+    updatedAt: '2025-06-01T00:00:00.000Z',
+  },
+  {
     id: 'course-rest-api',
     title: 'REST APIs with Express & TypeScript',
     description: 'Build production-quality REST APIs using Express and TypeScript. Learn resource design, routing, middleware, validation, error handling, and authentication.',
@@ -4267,6 +4286,456 @@ GROUP BY u.id;
               ],
               correctIndex: 2,
               explanation: 'A sequential scan on 10M rows for a point lookup by email is inefficient. An index on email lets the database go directly to the matching rows in O(log n) time instead of scanning every row. This is typically a 100-1000x speedup for selective queries.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── SQL Advanced Lesson 1: CTEs & Recursive Queries ────────────────────────
+  {
+    id: 'lesson-sql-adv-1',
+    courseId: 'course-sql-advanced',
+    order: 0,
+    title: 'Common Table Expressions & Recursive Queries',
+    estimatedMinutes: 15,
+    createdAt: '2025-06-01T00:00:00.000Z',
+    updatedAt: '2025-06-01T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## What is a CTE?
+
+A **Common Table Expression** (CTE) is a named temporary result set defined with \`WITH\`. It lives only for the duration of a single query, and can be referenced by name in the \`SELECT\`, \`INSERT\`, \`UPDATE\`, or \`DELETE\` that follows.
+
+CTEs are not a performance optimization — they're a readability tool. A deeply-nested subquery is the same cost as a CTE expressing the same logic. The win is structural: each CTE is a named building block you can read top to bottom.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'sql',
+          caption: 'CTE vs inline subquery — same plan, radically different readability',
+          code: `-- Without CTE: nested and hard to follow
+SELECT name, total
+FROM (
+  SELECT user_id, SUM(amount) AS total
+  FROM orders
+  WHERE status = 'completed'
+  GROUP BY user_id
+) AS t
+JOIN users ON users.id = t.user_id
+WHERE total > 1000;
+
+-- With CTE: reads like a story
+WITH completed_orders AS (
+  SELECT user_id, SUM(amount) AS total
+  FROM orders
+  WHERE status = 'completed'
+  GROUP BY user_id
+),
+high_value AS (
+  SELECT * FROM completed_orders WHERE total > 1000
+)
+SELECT users.name, high_value.total
+FROM high_value
+JOIN users ON users.id = high_value.user_id;`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'CTE execution: each WITH clause feeds the next',
+          nodes: [
+            { id: 'raw', position: { x: 0, y: 80 }, label: 'orders table\n(source data)', type: 'input' },
+            { id: 'cte1', position: { x: 220, y: 80 }, label: 'completed_orders CTE\nSUM(amount) per user', type: 'default' },
+            { id: 'cte2', position: { x: 440, y: 80 }, label: 'high_value CTE\ntotal > 1000 filter', type: 'default' },
+            { id: 'join', position: { x: 660, y: 80 }, label: 'JOIN users\n+ SELECT name, total', type: 'default' },
+            { id: 'out', position: { x: 880, y: 80 }, label: 'Result set\n(name, total)', type: 'output' },
+            { id: 'users', position: { x: 660, y: 200 }, label: 'users table', type: 'input' },
+          ],
+          edges: [
+            { id: 'e1', source: 'raw', target: 'cte1', label: 'aggregate' },
+            { id: 'e2', source: 'cte1', target: 'cte2', label: 'filter' },
+            { id: 'e3', source: 'cte2', target: 'join' },
+            { id: 'e4', source: 'users', target: 'join', label: 'lookup' },
+            { id: 'e5', source: 'join', target: 'out' },
+          ],
+        },
+        {
+          type: 'text',
+          content: `## Recursive CTEs: traversing hierarchies
+
+Add the \`RECURSIVE\` keyword and a \`UNION ALL\` to iterate. The pattern is always: **anchor member** (base case) UNION ALL **recursive member** (references the CTE itself). PostgreSQL continues until the recursive member returns no new rows.
+
+Canonical use cases:
+- Org charts / manager hierarchies
+- Folder trees / nested categories
+- Bill of materials (BOM) explosion
+- Graph reachability`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'sql',
+          caption: 'Walk an org-chart hierarchy from a given employee upward',
+          code: `-- employees(id, name, manager_id)
+WITH RECURSIVE org_chain AS (
+  -- Anchor: start from the employee we care about
+  SELECT id, name, manager_id, 0 AS depth
+  FROM employees
+  WHERE id = 42
+
+  UNION ALL
+
+  -- Recursive: join to the CTE to climb one level
+  SELECT e.id, e.name, e.manager_id, oc.depth + 1
+  FROM employees e
+  INNER JOIN org_chain oc ON e.id = oc.manager_id
+)
+SELECT depth, name FROM org_chain ORDER BY depth;
+
+-- Result:
+-- depth | name
+-- 0     | Alice (the employee)
+-- 1     | Bob (Alice's manager)
+-- 2     | Carol (Bob's manager / VP)`,
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'Guard against infinite recursion',
+          content: 'If your graph has cycles (A → B → A), a recursive CTE loops forever. Add a depth limit (WHERE depth < 20) or a visited array (WHERE NOT id = ANY(visited_ids)) to stop early. PostgreSQL does not detect cycles automatically.',
+        },
+        {
+          type: 'quiz',
+          title: 'CTEs Quiz',
+          passingScore: 75,
+          questions: [
+            {
+              id: 'sqladv1-q1',
+              question: 'Which of the following is the primary benefit of using a CTE over a nested subquery?',
+              options: [
+                'CTEs execute faster than subqueries',
+                'CTEs can reference tables that subqueries cannot',
+                'CTEs improve readability by naming intermediate result sets',
+                'CTEs are cached across multiple queries in a session',
+              ],
+              correctIndex: 2,
+              explanation: 'CTEs are primarily a readability tool. They let you decompose complex queries into named building blocks read top-to-bottom. In most databases, a CTE and an equivalent subquery produce the same query plan. Session-level caching does not occur.',
+            },
+            {
+              id: 'sqladv1-q2',
+              question: 'What does the RECURSIVE keyword in a CTE enable?',
+              options: [
+                'Multiple CTEs in a single WITH clause',
+                'A CTE that references itself to iterate until no new rows are returned',
+                'Automatic query optimization by the planner',
+                'The CTE result to be stored temporarily on disk',
+              ],
+              correctIndex: 1,
+              explanation: 'RECURSIVE allows the CTE\'s recursive member to reference the CTE itself, enabling iteration. The query alternates between the anchor (base case) and the recursive member until the recursive member returns zero rows. This enables tree and graph traversals.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── SQL Advanced Lesson 2: Window Functions ─────────────────────────────────
+  {
+    id: 'lesson-sql-adv-2',
+    courseId: 'course-sql-advanced',
+    order: 1,
+    title: 'Window Functions — Ranking, Running Totals & Offsets',
+    estimatedMinutes: 16,
+    createdAt: '2025-06-01T00:00:00.000Z',
+    updatedAt: '2025-06-01T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## What makes window functions different
+
+Aggregate functions (\`SUM\`, \`COUNT\`, \`AVG\`) collapse many rows into one. Window functions compute a value **across a set of related rows without collapsing them**. Each input row keeps its identity in the output — you just get an extra computed column alongside it.
+
+The \`OVER()\` clause defines the "window": which rows are considered and in what order.
+
+\`\`\`
+function_name(...) OVER (
+  [PARTITION BY partition_expr]   -- divide into independent groups
+  [ORDER BY sort_expr]            -- define row ordering within the group
+  [ROWS/RANGE frame_clause]       -- limit which rows the function sees
+)
+\`\`\``,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'OVER clause: partition, order, then compute',
+          nodes: [
+            { id: 'all', position: { x: 0, y: 100 }, label: 'Full table\n(all rows)', type: 'input' },
+            { id: 'part', position: { x: 220, y: 100 }, label: 'PARTITION BY\n(split into groups)', type: 'default' },
+            { id: 'grpA', position: { x: 440, y: 40 }, label: 'Group: dept=Eng\n(ordered by salary)', type: 'default' },
+            { id: 'grpB', position: { x: 440, y: 160 }, label: 'Group: dept=Sales\n(ordered by salary)', type: 'default' },
+            { id: 'fnA', position: { x: 660, y: 40 }, label: 'ROW_NUMBER()\napplied independently', type: 'default' },
+            { id: 'fnB', position: { x: 660, y: 160 }, label: 'ROW_NUMBER()\napplied independently', type: 'default' },
+            { id: 'out', position: { x: 880, y: 100 }, label: 'All original rows\n+ rank column', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'all', target: 'part' },
+            { id: 'e2', source: 'part', target: 'grpA' },
+            { id: 'e3', source: 'part', target: 'grpB' },
+            { id: 'e4', source: 'grpA', target: 'fnA' },
+            { id: 'e5', source: 'grpB', target: 'fnB' },
+            { id: 'e6', source: 'fnA', target: 'out', label: 'rows preserved' },
+            { id: 'e7', source: 'fnB', target: 'out', label: 'rows preserved' },
+          ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'sql',
+          caption: 'ROW_NUMBER, RANK, and DENSE_RANK — three ways to rank',
+          code: `SELECT
+  name,
+  department,
+  salary,
+  ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) AS row_num,
+  RANK()       OVER (PARTITION BY department ORDER BY salary DESC) AS rank,
+  DENSE_RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS dense_rank
+FROM employees;
+
+-- For two people tied at salary 90000 in Engineering:
+-- ROW_NUMBER → 1, 2  (arbitrary tiebreak, always unique)
+-- RANK       → 1, 1  (both get 1, next person gets 3)
+-- DENSE_RANK → 1, 1  (both get 1, next person gets 2)
+
+-- Common pattern: "top N per group"
+WITH ranked AS (
+  SELECT *, RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS rnk
+  FROM employees
+)
+SELECT * FROM ranked WHERE rnk <= 3;`,
+        },
+        {
+          type: 'text',
+          content: `## Running totals and moving averages
+
+When you add \`ORDER BY\` without \`PARTITION BY\`, the window covers all rows seen so far — giving you cumulative aggregates. Use \`ROWS BETWEEN\` for a rolling/moving window.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'sql',
+          caption: 'Running total and 7-day rolling average',
+          code: `SELECT
+  order_date,
+  daily_revenue,
+  -- Cumulative total from first row to current row
+  SUM(daily_revenue) OVER (ORDER BY order_date) AS running_total,
+  -- 7-day rolling average (current row + 6 preceding)
+  AVG(daily_revenue) OVER (
+    ORDER BY order_date
+    ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+  ) AS rolling_7d_avg
+FROM daily_sales
+ORDER BY order_date;`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'sql',
+          caption: 'LAG and LEAD — compare a row to its neighbors',
+          code: `SELECT
+  order_date,
+  daily_revenue,
+  -- Revenue from the previous day (NULL for first row)
+  LAG(daily_revenue)  OVER (ORDER BY order_date) AS prev_day,
+  -- Revenue from the next day (NULL for last row)
+  LEAD(daily_revenue) OVER (ORDER BY order_date) AS next_day,
+  -- Day-over-day growth %
+  ROUND(
+    (daily_revenue - LAG(daily_revenue) OVER (ORDER BY order_date))
+    / NULLIF(LAG(daily_revenue) OVER (ORDER BY order_date), 0) * 100,
+    1
+  ) AS pct_change
+FROM daily_sales;`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'FILTER clause: conditional aggregation in windows',
+          content: 'Window functions support FILTER (WHERE condition) to count or sum only rows matching a condition. Example: COUNT(*) FILTER (WHERE status = \'completed\') OVER (PARTITION BY user_id) gives completed order count per user without a subquery.',
+        },
+        {
+          type: 'quiz',
+          title: 'Window Functions Quiz',
+          passingScore: 75,
+          questions: [
+            {
+              id: 'sqladv2-q1',
+              question: 'You need the top 3 highest-paid employees per department. Two people in Engineering both earn $90k — the third highest earner should appear. Which ranking function guarantees you get exactly 3 rows per department in this scenario?',
+              options: [
+                'ROW_NUMBER() — always assigns unique ranks',
+                'RANK() — skips numbers after ties, so rank 2 does not exist',
+                'DENSE_RANK() — assigns consecutive ranks so rank 3 always exists',
+                'None — ties make top-N queries impossible without a tiebreak',
+              ],
+              correctIndex: 2,
+              explanation: 'DENSE_RANK does not skip rank numbers after ties. If two people are rank 1, the next person is rank 2, then rank 3. With RANK, two people at rank 1 means the next is rank 3 — so filtering WHERE rank <= 3 could still return 4 rows (the two tied at 1, plus ranks 2 and 3 don\'t exist). DENSE_RANK solves this cleanly.',
+            },
+            {
+              id: 'sqladv2-q2',
+              question: 'What does ROWS BETWEEN 6 PRECEDING AND CURRENT ROW in an OVER clause define?',
+              options: [
+                'The 6 rows after the current row',
+                'All rows in the current partition up to the current row',
+                'A sliding window of the current row and the 6 rows before it',
+                'The current row minus the 6th previous partition',
+              ],
+              correctIndex: 2,
+              explanation: 'ROWS BETWEEN 6 PRECEDING AND CURRENT ROW defines a physical frame of 7 rows: the current row plus the 6 rows before it (sorted by the ORDER BY clause). This is the standard rolling/moving window calculation — useful for 7-day rolling averages, smoothing time-series data, etc.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── SQL Advanced Lesson 3: EXPLAIN ANALYZE & Query Tuning ───────────────────
+  {
+    id: 'lesson-sql-adv-3',
+    courseId: 'course-sql-advanced',
+    order: 2,
+    title: 'EXPLAIN ANALYZE & Systematic Query Tuning',
+    estimatedMinutes: 14,
+    createdAt: '2025-06-01T00:00:00.000Z',
+    updatedAt: '2025-06-01T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Reading an EXPLAIN ANALYZE output
+
+\`EXPLAIN\` shows what PostgreSQL **plans** to do. \`EXPLAIN ANALYZE\` actually **runs** the query and shows what it did. Always use \`ANALYZE\` when diagnosing real performance problems — the planner's estimates can be wrong.
+
+The output is a tree. Read it **inside-out**: the innermost (most-indented) node runs first, its output feeds its parent, and so on up to the root which produces the final result set.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Query execution stages in PostgreSQL',
+          nodes: [
+            { id: 'parse', position: { x: 0, y: 100 }, label: 'Parser\n(SQL text → AST)', type: 'input' },
+            { id: 'rewrite', position: { x: 180, y: 100 }, label: 'Rewriter\n(views, rules)', type: 'default' },
+            { id: 'plan', position: { x: 360, y: 100 }, label: 'Planner / Optimizer\n(choose cheapest plan)', type: 'default' },
+            { id: 'stats', position: { x: 360, y: 220 }, label: 'Table statistics\n(pg_statistic)', type: 'default' },
+            { id: 'exec', position: { x: 540, y: 100 }, label: 'Executor\n(run the plan)', type: 'default' },
+            { id: 'buf', position: { x: 540, y: 220 }, label: 'Buffer cache\n(shared_buffers)', type: 'default' },
+            { id: 'out', position: { x: 720, y: 100 }, label: 'Result rows\n(to client)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'parse', target: 'rewrite' },
+            { id: 'e2', source: 'rewrite', target: 'plan' },
+            { id: 'e3', source: 'stats', target: 'plan', label: 'row estimates' },
+            { id: 'e4', source: 'plan', target: 'exec' },
+            { id: 'e5', source: 'buf', target: 'exec', label: 'I/O' },
+            { id: 'e6', source: 'exec', target: 'out' },
+          ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'sql',
+          caption: 'Annotated EXPLAIN ANALYZE output',
+          code: `EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
+SELECT u.name, COUNT(o.id)
+FROM users u
+JOIN orders o ON o.user_id = u.id
+WHERE u.created_at > '2024-01-01'
+GROUP BY u.id;
+
+-- Sample output:
+-- HashAggregate  (cost=4231.50..4331.50 rows=10000 ...) (actual time=42.3..43.1 rows=8723 ...)
+--   ->  Hash Join  (cost=1234..3901 ...) (actual time=12.1..35.9 ...)
+--         Hash Cond: (o.user_id = u.id)
+--         ->  Seq Scan on orders  (cost=0..2100 rows=150000 ...) (actual time=0.1..18.2 ...)
+--         ->  Hash  (cost=987..987 rows=19760 ...) (actual time=11.9..11.9 rows=18420 ...)
+--               ->  Index Scan using users_created_at_idx on users
+--                     Index Cond: (created_at > '2024-01-01')
+--
+-- Key signals to look for:
+-- "Seq Scan" on large table with filter  → may need index
+-- "rows=19760" vs "actual rows=18420"    → good estimate (within 10%)
+-- cost=987 vs actual time=11.9ms         → cost units ≠ ms, just relative
+-- "Buffers: hit=N read=M"                → M disk reads is expensive`,
+        },
+        {
+          type: 'callout',
+          variant: 'danger',
+          title: 'Seq Scan is not always bad',
+          content: 'If a query returns >10-15% of a table\'s rows, PostgreSQL correctly chooses a sequential scan — scanning the whole table is faster than following index pointers for thousands of rows. Seq Scan is a signal to investigate, not always a bug. The key question is: is the filter highly selective?',
+        },
+        {
+          type: 'codeBlock',
+          language: 'sql',
+          caption: 'Common fixes for slow queries',
+          code: `-- 1. Add an index for a highly selective WHERE clause
+CREATE INDEX CONCURRENTLY idx_orders_user_status
+  ON orders (user_id, status)
+  WHERE status != 'cancelled';   -- partial index: smaller, faster
+
+-- 2. Stale statistics causing bad estimates → refresh
+ANALYZE orders;                  -- quick, non-blocking
+VACUUM ANALYZE orders;           -- also reclaims dead tuples
+
+-- 3. Correlated subquery evaluated per-row → rewrite as JOIN or CTE
+-- SLOW: runs subquery for every order row
+SELECT * FROM orders o
+WHERE o.amount > (SELECT AVG(amount) FROM orders WHERE user_id = o.user_id);
+
+-- FAST: compute averages once, then join
+WITH user_avg AS (
+  SELECT user_id, AVG(amount) AS avg_amount FROM orders GROUP BY user_id
+)
+SELECT o.* FROM orders o
+JOIN user_avg ua ON ua.user_id = o.user_id
+WHERE o.amount > ua.avg_amount;
+
+-- 4. Covering index: include columns to avoid a heap fetch
+CREATE INDEX idx_users_email_covering
+  ON users (email)
+  INCLUDE (id, name, created_at);`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'CONCURRENTLY: add indexes without locking',
+          content: 'CREATE INDEX CONCURRENTLY builds the index without holding an exclusive lock. The table remains readable and writable throughout. The trade-off: it takes about twice as long and cannot run inside a transaction block. Always use CONCURRENTLY on production tables.',
+        },
+        {
+          type: 'quiz',
+          title: 'Query Tuning Quiz',
+          passingScore: 75,
+          questions: [
+            {
+              id: 'sqladv3-q1',
+              question: 'EXPLAIN ANALYZE shows "rows=50000" (planner estimate) but "actual rows=3" for a WHERE status = \'cancelled\' scan on orders. What does this mean and what should you do?',
+              options: [
+                'The query is running correctly; no action needed',
+                'The planner has stale statistics — run ANALYZE orders to refresh row estimates',
+                'The index is corrupt — drop and recreate it',
+                'The WHERE clause is wrong — status cannot be filtered this way',
+              ],
+              correctIndex: 1,
+              explanation: 'A huge gap between estimated rows (50000) and actual rows (3) means the planner is working with outdated statistics. It doesn\'t know that status=\'cancelled\' is rare. Running ANALYZE orders refreshes pg_statistic so future plans use accurate row counts. Without good estimates, the planner may choose a seq scan over an index scan.',
+            },
+            {
+              id: 'sqladv3-q2',
+              question: 'You want to add an index to a busy production table with millions of rows. What is the safest approach?',
+              options: [
+                'CREATE INDEX — takes a full table lock, fastest option',
+                'CREATE INDEX CONCURRENTLY — takes about twice as long but does not block reads or writes',
+                'REINDEX TABLE — rebuilds all indexes at once',
+                'Add the index during off-hours using a regular CREATE INDEX',
+              ],
+              correctIndex: 1,
+              explanation: 'CREATE INDEX CONCURRENTLY builds the index in multiple passes without holding an exclusive table lock. Reads and writes continue normally. The cost is roughly 2x build time and it cannot run inside a transaction. For any table that receives live traffic, CONCURRENTLY is the correct choice regardless of time of day.',
             },
           ],
         },
