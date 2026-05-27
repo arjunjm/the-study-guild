@@ -145,7 +145,7 @@ export const MOCK_COURSES: Course[] = [
     tags: ['oauth2', 'security', 'authentication', 'pkce'],
     lessonIds: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004', 'lesson-005', 'lesson-006', 'lesson-007'],
     totalLessons: 7,
-    estimatedMinutes: 79,
+    estimatedMinutes: 93,
     ratingAverage: 4.8,
     ratingCount: 42,
     createdAt: '2025-01-01T00:00:00.000Z',
@@ -910,51 +910,72 @@ export const MOCK_LESSONS: Lesson[] = [
           type: 'text',
           content: `## The problem OAuth2 solves
 
-Before OAuth2, if an app needed access to your Google contacts it would ask for your **Google password**. You'd hand over your credentials — which meant the app could do *anything* on your behalf, forever.
+Imagine it's 2007. A new app called TripIt wants to scan your email for flight confirmations. Their solution: **ask for your Gmail password**.
 
-OAuth2 introduces a better idea: instead of sharing passwords, you grant **limited, revocable access** using short-lived tokens.`,
+You hand over your credentials — and now TripIt can read your emails, send messages on your behalf, and do anything else your password allows. Forever. With no easy way to revoke just that access.
+
+OAuth2, published as RFC 6749 in 2012, introduced a better model: instead of sharing passwords, you grant **limited, revocable access** using short-lived tokens that only work for specific actions.`,
         },
         {
           type: 'callout',
           variant: 'info',
-          title: 'Core idea',
-          content: "OAuth2 is an authorization framework — it tells a service WHAT an app can do on your behalf. It is not an authentication protocol (that's OpenID Connect, which builds on top of OAuth2).",
+          title: 'Authorization ≠ Authentication',
+          content: "OAuth2 is an *authorization* framework — it answers 'what can this app do?' It is NOT an authentication protocol — it doesn't tell you who the user is. That's OpenID Connect (OIDC), which layers identity on top of OAuth2. You'll often use both together.",
         },
         {
           type: 'text',
           content: `## The four roles
 
-| Role | Description |
-|------|-------------|
-| **Resource Owner** | You — the user who owns the data |
-| **Client** | The app that wants access |
-| **Authorization Server** | Issues tokens (e.g. Google, Azure AD) |
-| **Resource Server** | The API holding your data |`,
+Every OAuth2 interaction involves exactly four roles. Understanding these is the key to understanding every flow.
+
+| Role | Who they are | Real-world example |
+|------|-------------|-------------------|
+| **Resource Owner** | The user who owns the data | You |
+| **Client** | The app wanting access | A calendar app |
+| **Authorization Server** | Issues tokens after verifying identity & consent | Google, Azure AD, Auth0 |
+| **Resource Server** | The API holding the protected data | Google Calendar API |
+
+The critical insight: the **Client never sees your password**. It only ever sees tokens that the Authorization Server has approved.`,
         },
         {
           type: 'flowDiagram',
-          title: 'OAuth2 Authorization Code Flow',
+          title: 'OAuth2 Authorization Code Flow — The Full Picture',
           nodes: [
-            { id: '1', label: 'User clicks\n"Login with Google"', type: 'input', position: { x: 50, y: 50 } },
-            { id: '2', label: 'App redirects to\nAuthorization Server', position: { x: 50, y: 150 } },
-            { id: '3', label: 'User logs in &\ngrants permission', type: 'decision', position: { x: 50, y: 250 } },
-            { id: '4', label: 'Auth Server returns\nAuthorization Code', position: { x: 300, y: 250 } },
-            { id: '5', label: 'App exchanges code\nfor Access Token', position: { x: 300, y: 150 } },
-            { id: '6', label: 'App calls API with\nAccess Token', type: 'output', position: { x: 300, y: 50 } },
+            { id: '1', label: 'User clicks\n"Connect Google"', type: 'input', position: { x: 60, y: 30 } },
+            { id: '2', label: 'App builds auth URL\n+ redirects browser', position: { x: 60, y: 130 } },
+            { id: '3', label: 'User authenticates\n& grants consent', type: 'decision', position: { x: 60, y: 230 } },
+            { id: '4', label: 'Auth Server redirects\nback with auth CODE', position: { x: 330, y: 230 } },
+            { id: '5', label: 'App server exchanges\nCODE → tokens\n(back-channel)', position: { x: 330, y: 130 } },
+            { id: '6', label: 'App calls API with\nAccess Token', type: 'output', position: { x: 330, y: 30 } },
           ],
           edges: [
-            { id: 'e1-2', source: '1', target: '2', label: 'step 1' },
-            { id: 'e2-3', source: '2', target: '3', label: 'step 2' },
-            { id: 'e3-4', source: '3', target: '4', label: 'approved', animated: true },
-            { id: 'e4-5', source: '4', target: '5', label: 'step 3' },
-            { id: 'e5-6', source: '5', target: '6', label: 'step 4', animated: true },
+            { id: 'e1-2', source: '1', target: '2', label: '1. User action' },
+            { id: 'e2-3', source: '2', target: '3', label: '2. Front-channel\nredirect' },
+            { id: 'e3-4', source: '3', target: '4', label: '3. Code issued', animated: true },
+            { id: 'e4-5', source: '4', target: '5', label: '4. Back-channel\nPOST /token' },
+            { id: 'e5-6', source: '5', target: '6', label: '5. Bearer token\nin header', animated: true },
           ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'http',
+          caption: 'Step 2: what the authorization redirect actually looks like',
+          code: `GET /authorize?
+  response_type=code            ← "give me a code to exchange"
+  &client_id=my-spa             ← identifies the app
+  &redirect_uri=https://myapp.com/callback
+  &scope=openid%20profile%20email%20Calendar.Read
+  &state=xK9mPqRt               ← CSRF protection (random nonce)
+  &code_challenge=E9Melhoa2...  ← PKCE (covered in lesson 5)
+  &code_challenge_method=S256
+
+Host: login.microsoftonline.com`,
         },
         {
           type: 'callout',
           variant: 'tip',
-          title: 'Why the code exchange step?',
-          content: 'The authorization code is short-lived and single-use. Exchanging it for a token happens server-to-server (back-channel), so the token never travels through the browser URL bar where it could be logged or leaked.',
+          title: 'Why the two-step code exchange?',
+          content: 'The authorization code is returned in the browser redirect URL — visible in address bars, browser history, and server logs. Exchanging it for a token happens **server-to-server over HTTPS** (the back-channel), so the actual access token never touches the browser URL bar. A two-line interception that grabs the code gives the attacker nothing useful — they still need the client secret (or PKCE verifier) to complete the exchange.',
         },
       ],
     },
@@ -972,41 +993,132 @@ OAuth2 introduces a better idea: instead of sharing passwords, you grant **limit
       sections: [
         {
           type: 'text',
-          content: `## Three types of tokens
+          content: `## Three tokens, three jobs
 
-OAuth2 and OIDC use three different tokens, each with a distinct purpose.`,
+OAuth2 and OIDC use three different tokens. They are **not interchangeable** — each has a specific purpose and a specific place it should live.`,
         },
         {
           type: 'callout',
           variant: 'info',
-          title: 'Access Token',
-          content: 'Short-lived (minutes to hours). Sent with every API request. The Resource Server validates it. Never store in localStorage — use memory or httpOnly cookies.',
+          title: '🔑 Access Token — the API key',
+          content: 'Short-lived (typically 1 hour). This is what you send to the API. The Resource Server validates it on every request. Think of it as a day pass — it expires, and when it does, you get a new one with the refresh token.',
         },
         {
           type: 'callout',
           variant: 'warning',
-          title: 'Refresh Token',
-          content: 'Long-lived (days to months). Used ONLY to get a new access token when it expires. Keep this locked down — if leaked, it can generate new access tokens.',
+          title: '🔄 Refresh Token — the master key',
+          content: 'Long-lived (days to months, sometimes indefinite). Its only job is to get new access tokens when the current one expires. Never send it to your API. If a refresh token leaks, an attacker has persistent access until it\'s revoked.',
         },
         {
           type: 'callout',
           variant: 'tip',
-          title: 'ID Token (OIDC)',
-          content: "A JWT containing claims about WHO you are (name, email, sub). Not meant to be sent to APIs — it's for the client app to know the user's identity.",
+          title: '🪪 ID Token (OIDC only) — the identity card',
+          content: "A JWT containing WHO you are — sub, name, email, picture. This is for your app's UI (show the user's name, decide what to render). Never send it to APIs as a credential. It doesn't prove authorization, only identity.",
+        },
+        {
+          type: 'text',
+          content: `## JWT anatomy — what's actually in these tokens?
+
+JWTs (JSON Web Tokens) have three parts separated by dots:
+
+\`\`\`
+eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhYmMxMjMiLCJleHAiOjE3NDh9.SIG...
+     HEADER                    PAYLOAD                        SIGNATURE
+\`\`\`
+
+Each part is base64url-encoded. The **header** declares the algorithm. The **payload** carries the claims. The **signature** is what you verify — without it, anyone could forge a JWT.`,
         },
         {
           type: 'codeBlock',
           language: 'json',
-          caption: 'Decoded JWT access token',
-          code: `{
-  "iss": "https://login.microsoftonline.com/tenant-id/v2.0",
-  "sub": "abc123",
-  "aud": "api://your-app-id",
-  "exp": 1748275200,
-  "iat": 1748271600,
-  "scp": "Courses.Read User.Write",
-  "name": "Dev Guildmate"
+          caption: 'Decoded JWT access token — every claim explained',
+          code: `// Header
+{
+  "alg": "RS256",   // signing algorithm (asymmetric — public key verification)
+  "typ": "JWT",
+  "kid": "key-2025" // which key to use from the JWKS endpoint
+}
+
+// Payload (the "claims")
+{
+  "iss": "https://login.microsoftonline.com/tenant-id/v2.0", // issuer
+  "sub": "abc123",                  // subject — the user's stable unique ID
+  "aud": "api://your-app-id",       // audience — WHO this token is for
+  "exp": 1748275200,                // expiry (Unix timestamp)
+  "iat": 1748271600,                // issued at
+  "nbf": 1748271600,                // not valid before
+  "scp": "Courses.Read User.Write", // scopes granted
+  "name": "Dev Guildmate",          // display name (from profile scope)
+  "oid": "user-object-id"           // Azure AD object ID
 }`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Token Lifecycle — from login to silent refresh',
+          nodes: [
+            { id: 'tl1', label: 'User logs in\n(auth code flow)', type: 'input', position: { x: 30, y: 40 } },
+            { id: 'tl2', label: 'Receive access token\n(1h) + refresh token\n(30 days)', position: { x: 30, y: 140 } },
+            { id: 'tl3', label: 'API call with\nAccess Token', position: { x: 30, y: 240 } },
+            { id: 'tl4', label: 'Access token\nexpired → 401', type: 'decision', position: { x: 250, y: 240 } },
+            { id: 'tl5', label: 'POST /token\nwith refresh token', position: { x: 250, y: 140 } },
+            { id: 'tl6', label: 'New access token\n(+ rotated refresh\ntoken)', type: 'output', position: { x: 250, y: 40 } },
+          ],
+          edges: [
+            { id: 'etl1', source: 'tl1', target: 'tl2', label: 'tokens issued' },
+            { id: 'etl2', source: 'tl2', target: 'tl3', label: 'use for ~1hr' },
+            { id: 'etl3', source: 'tl3', target: 'tl4', animated: true },
+            { id: 'etl4', source: 'tl4', target: 'tl5', label: 'silent refresh' },
+            { id: 'etl5', source: 'tl5', target: 'tl6', animated: true, label: 'new tokens' },
+          ],
+        },
+        {
+          type: 'callout',
+          variant: 'info',
+          title: 'Refresh token rotation',
+          content: 'Modern authorization servers rotate refresh tokens on every use — each refresh returns a new refresh token and invalidates the old one. This means a leaked refresh token is detected as soon as the legitimate user next refreshes (the old token is already used). Azure AD and Auth0 both enable rotation by default.',
+        },
+        {
+          type: 'quiz',
+          title: 'Token Types Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'tok-q1',
+              question: 'An attacker steals a refresh token. What can they do with it?',
+              options: [
+                'Read API responses directly',
+                'Obtain new access tokens until the refresh token is revoked',
+                'Nothing — the access token is needed too',
+                'Only view the user\'s profile information',
+              ],
+              correctIndex: 1,
+              explanation: 'A refresh token alone is enough to continuously generate new access tokens. This is why refresh tokens must be stored more carefully than access tokens — they represent long-lived access.',
+            },
+            {
+              id: 'tok-q2',
+              question: 'You want to display the logged-in user\'s name in the UI. Which token should you use?',
+              options: [
+                'Access token — it has the scp claim',
+                'Refresh token — it has the longest lifetime',
+                'ID token — it contains identity claims like name and email',
+                'Authorization code — it\'s issued first',
+              ],
+              correctIndex: 2,
+              explanation: 'The ID Token (from OIDC) contains identity claims including name, email, and picture. It\'s specifically meant for client-side consumption to build the user interface. The access token is for API authorization, not identity display.',
+            },
+            {
+              id: 'tok-q3',
+              question: 'What does the "aud" (audience) claim in a JWT do?',
+              options: [
+                'Identifies who issued the token',
+                'Specifies the token\'s expiry time',
+                'Identifies the intended recipient — the API the token is for',
+                'Lists the user\'s granted scopes',
+              ],
+              correctIndex: 2,
+              explanation: 'The aud claim specifies which service this token is intended for. An API must reject tokens not addressed to it — otherwise a token issued for one service could be replayed against another in the same tenant.',
+            },
+          ],
         },
       ],
     },
@@ -1024,11 +1136,21 @@ OAuth2 and OIDC use three different tokens, each with a distinct purpose.`,
       sections: [
         {
           type: 'text',
-          content: "Let's test your understanding of OAuth2 fundamentals.",
+          content: `## Mid-course check
+
+You've covered the core theory: what OAuth2 is, the four roles, the authorization code flow, and the three token types. Before diving into scopes, PKCE, and token security — let's make sure it's all clicking.
+
+These questions mix conceptual understanding with practical implications.`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Test-taking tip',
+          content: "When unsure, map the answer back to the fundamental principle: OAuth2 delegates limited, revocable access using tokens — without sharing credentials. Answers that involve passwords, permanent access, or bypassing the authorization server are almost certainly wrong.",
         },
         {
           type: 'quiz',
-          title: 'OAuth2 Quiz',
+          title: 'OAuth2 Fundamentals Quiz',
           passingScore: 60,
           questions: [
             {
@@ -1036,7 +1158,7 @@ OAuth2 and OIDC use three different tokens, each with a distinct purpose.`,
               question: 'In OAuth2, which party issues access tokens?',
               options: ['Resource Server', 'Client Application', 'Authorization Server', 'Resource Owner'],
               correctIndex: 2,
-              explanation: "The Authorization Server (e.g. Azure AD, Google) is responsible for issuing tokens after verifying the user's identity and consent.",
+              explanation: "The Authorization Server (e.g. Azure AD, Google) is responsible for issuing tokens after verifying the user's identity and consent. The Resource Server only validates tokens — it never issues them.",
             },
             {
               id: 'q2',
@@ -1048,14 +1170,38 @@ OAuth2 and OIDC use three different tokens, each with a distinct purpose.`,
                 'To comply with GDPR requirements',
               ],
               correctIndex: 1,
-              explanation: 'The back-channel exchange ensures the token never appears in the browser URL, browser history, or server access logs — preventing easy interception.',
+              explanation: 'The back-channel exchange ensures the token never appears in the browser URL, browser history, or server access logs. The authorization code that does appear in the URL is single-use and short-lived — far less dangerous than the actual token.',
             },
             {
               id: 'q3',
               question: 'Which token should you send with every API request?',
               options: ['ID Token', 'Refresh Token', 'Authorization Code', 'Access Token'],
               correctIndex: 3,
-              explanation: 'The Access Token is the bearer credential sent to the Resource Server. The ID Token is for identity, the Refresh Token for getting new access tokens, and the code is one-time use.',
+              explanation: 'The Access Token is the bearer credential sent to the Resource Server with every API call. The ID Token is for identity display in the UI. The Refresh Token only ever goes to the Authorization Server. The code is one-time use only.',
+            },
+            {
+              id: 'q4',
+              question: 'A legacy integration requires a third-party app to access your data. With OAuth2, what does the app receive instead of your password?',
+              options: [
+                'A copy of your hashed password',
+                'A time-limited access token for specific scopes only',
+                'An API key tied to your account permanently',
+                'Your session cookie from the Authorization Server',
+              ],
+              correctIndex: 1,
+              explanation: "This is the core value proposition of OAuth2. The app gets a time-limited, scope-restricted access token — not your password. If the app is compromised, you revoke that specific token without changing your password or affecting other apps.",
+            },
+            {
+              id: 'q5',
+              question: 'In OAuth2 terminology, what is the "Resource Server"?',
+              options: [
+                'The server that stores user passwords',
+                'The app that the user is trying to log into',
+                'The API that holds the protected data the client wants to access',
+                'The server that issues authorization codes',
+              ],
+              correctIndex: 2,
+              explanation: 'The Resource Server is the API holding protected data (e.g. Google Calendar API, your own backend). It validates incoming access tokens but does not issue them — that\'s the Authorization Server\'s job.',
             },
           ],
         },
@@ -1069,7 +1215,7 @@ OAuth2 and OIDC use three different tokens, each with a distinct purpose.`,
     courseId: 'course-oauth2',
     order: 3,
     title: 'Scopes & Consent',
-    estimatedMinutes: 9,
+    estimatedMinutes: 11,
     createdAt: '2025-01-01T00:00:00.000Z',
     updatedAt: '2025-01-01T00:00:00.000Z',
     content: {
@@ -1081,44 +1227,122 @@ OAuth2 and OIDC use three different tokens, each with a distinct purpose.`,
 
 Scopes are strings that define **what permissions** an access token grants. When your app redirects to an authorization server it includes a \`scope\` parameter listing everything it needs.
 
-\`\`\`
-GET /authorize?
-  response_type=code
-  &client_id=my-app
-  &scope=openid profile email Calendar.Read
-  &redirect_uri=https://myapp.com/callback
-\`\`\`
+The authorization server shows the user a **consent screen** listing what the app is requesting. The user can approve or deny it.
 
-The authorization server shows the user a **consent screen** listing the requested scopes. The user can approve or deny each one.`,
+Think of scopes as line items on a permission invoice: the app presents what it wants, the user decides what to grant, and the access token records what was approved.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'The Incremental Consent Journey',
+          nodes: [
+            { id: 'sc1', label: 'User signs up\nscope: openid profile', type: 'input', position: { x: 30, y: 40 } },
+            { id: 'sc2', label: 'Consent granted\n✓ Profile access', position: { x: 30, y: 140 } },
+            { id: 'sc3', label: 'User opens\nCalendar feature', position: { x: 30, y: 240 } },
+            { id: 'sc4', label: 'Request Calendar.Read\n(new consent screen)', type: 'decision', position: { x: 280, y: 240 } },
+            { id: 'sc5', label: 'Token now includes\nprofile + Calendar.Read', position: { x: 280, y: 140 } },
+            { id: 'sc6', label: 'App reads\ncalendar events', type: 'output', position: { x: 280, y: 40 } },
+          ],
+          edges: [
+            { id: 'esc1', source: 'sc1', target: 'sc2', label: 'minimal ask\nat signup' },
+            { id: 'esc2', source: 'sc2', target: 'sc3' },
+            { id: 'esc3', source: 'sc3', target: 'sc4', label: 'new scope needed' },
+            { id: 'esc4', source: 'sc4', target: 'sc5', label: 'granted', animated: true },
+            { id: 'esc5', source: 'sc5', target: 'sc6', animated: true },
+          ],
         },
         {
           type: 'callout',
           variant: 'tip',
-          title: 'Principle of least privilege',
-          content: 'Only request scopes you actually need right now. Requesting broad permissions upfront increases user anxiety and rejection rates. Request additional scopes incrementally as the user tries features that need them.',
+          title: 'Principle of least privilege — and better conversion',
+          content: 'Only request scopes you need right now. Apps that request 15 permissions upfront see dramatically higher "Deny" rates — users are suspicious of over-asking. Incremental consent (ask when the user reaches a feature) builds trust and improves conversion. Google\'s UX guidelines make this a requirement for apps in their marketplace.',
         },
         {
           type: 'text',
-          content: `## Common scope patterns
+          content: `## Standard scope vocabulary
 
-| Scope | What it grants |
-|-------|---------------|
-| \`openid\` | Enables OIDC — returns an ID token |
-| \`profile\` | Name, picture, locale |
-| \`email\` | Email address |
-| \`offline_access\` | A refresh token (for long-lived sessions) |
-| \`api://app-id/read\` | Custom API scope — read data |
-| \`api://app-id/write\` | Custom API scope — write data |
+| Scope | What it grants | Notes |
+|-------|---------------|-------|
+| \`openid\` | Enables OIDC — returns an ID token | Required for OIDC flows |
+| \`profile\` | Name, picture, locale, birthdate | Common in sign-in flows |
+| \`email\` | Email address | Request separately from profile |
+| \`offline_access\` | A refresh token | Without this, sessions end when the access token expires |
+| \`api://app-id/Courses.Read\` | Custom API scope — read | Define in your API registration |
+| \`api://app-id/Courses.Write\` | Custom API scope — write | Separate read/write for least-privilege |
 
-## Incremental consent
+## How scopes appear in tokens
 
-Rather than asking for all scopes upfront, modern apps use **incremental consent**: start with \`openid profile\`, then ask for \`Calendar.Read\` only when the user opens the calendar feature. Google, Microsoft, and GitHub all support this pattern.`,
+The scopes the user approved are recorded in the access token's \`scp\` (or \`scope\`) claim. Your API should check this claim before executing privileged operations:`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'Checking scopes on the Resource Server',
+          code: `// Express middleware to require a specific scope
+export function requireScope(scope: string) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const token = req.user as JwtPayload;
+    const scopes = (token.scp ?? token.scope ?? '').split(' ');
+
+    if (!scopes.includes(scope)) {
+      return res.status(403).json({
+        error: 'insufficient_scope',
+        required: scope,
+      });
+    }
+    next();
+  };
+}
+
+// Usage:
+app.delete('/courses/:id',
+  requireAuth,                          // is the token valid?
+  requireScope('Courses.Write'),         // does it have write permission?
+  deleteCourseHandler
+);`,
         },
         {
           type: 'callout',
           variant: 'warning',
-          title: 'Scope != role',
-          content: "Scopes control what the app can ask for — they don't control what the user is allowed to do on the resource server. A scope of `Files.ReadWrite` means the app *can* write files, but whether it's allowed depends on the user's permissions in the resource server.",
+          title: 'Scope ≠ Permission (an important distinction)',
+          content: "A scope like `Files.ReadWrite` means the *app* is authorized to read and write files — but your Resource Server still needs to check whether the *user* has permission on the specific resource. If Alice requests `Files.ReadWrite` and Bob's file, your server should check Alice has access to Bob's file regardless of the scope. Scopes control app capabilities; your business logic controls resource permissions.",
+        },
+        {
+          type: 'quiz',
+          title: 'Scopes & Consent Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'scope-q1',
+              question: 'Why should apps use incremental consent rather than requesting all scopes upfront?',
+              options: [
+                'OAuth2 spec requires it for all apps',
+                'It reduces user anxiety and improves consent approval rates',
+                'The authorization server limits how many scopes fit in a request',
+                'It makes tokens smaller and faster to validate',
+              ],
+              correctIndex: 1,
+              explanation: 'Requesting many permissions upfront is suspicious and alarming to users. Incremental consent — asking for permissions contextually when a feature needs them — builds trust and dramatically improves approval rates.',
+            },
+            {
+              id: 'scope-q2',
+              question: 'Which scope must be included to receive a refresh token (for long-lived sessions)?',
+              options: ['profile', 'email', 'offline_access', 'openid'],
+              correctIndex: 2,
+              explanation: "The `offline_access` scope requests a refresh token. Without it, the user's session ends when the access token expires (typically ~1 hour), requiring a new login.",
+            },
+            {
+              id: 'scope-q3',
+              question: 'A user grants the scope "Files.Read" to your app. Does this mean the user can read ALL files via your app?',
+              options: [
+                'Yes — the scope grants full read access',
+                'No — the Resource Server still enforces its own permission model',
+                'Only if the user is an admin',
+                'Only files created after the scope was granted',
+              ],
+              correctIndex: 1,
+              explanation: 'Scopes are about what the *app* is allowed to request — not about user permissions on specific resources. Your Resource Server must still enforce authorization (e.g. Alice cannot read Bob\'s private files even if the app has Files.Read scope on Alice\'s behalf).',
+            },
+          ],
         },
       ],
     },
@@ -1239,7 +1463,7 @@ sessionStorage.setItem('pkce_verifier', codeVerifier);`,
     courseId: 'course-oauth2',
     order: 5,
     title: 'Token Storage & Security',
-    estimatedMinutes: 13,
+    estimatedMinutes: 15,
     createdAt: '2025-01-01T00:00:00.000Z',
     updatedAt: '2025-01-01T00:00:00.000Z',
     content: {
@@ -1254,12 +1478,35 @@ This is one of the most debated questions in web security. The answer involves a
 - **XSS (Cross-Site Scripting)** — malicious JavaScript running in your page can read anything JavaScript can access (localStorage, sessionStorage, in-memory variables)
 - **CSRF (Cross-Site Request Forgery)** — a malicious site tricks the browser into making authenticated requests using cookies it can't read but the browser sends automatically
 
-| Storage | XSS accessible | CSRF risk | Survives refresh | Recommendation |
-|---------|---------------|-----------|-----------------|----------------|
-| \`localStorage\` | ✅ Yes | ❌ No | ✅ Yes | ❌ Avoid for tokens |
+| Storage | XSS readable | CSRF risk | Survives refresh | Best for |
+|---------|-------------|-----------|-----------------|----------|
+| \`localStorage\` | ✅ Yes | ❌ No | ✅ Yes | ❌ Never use for tokens |
 | \`sessionStorage\` | ✅ Yes | ❌ No | ❌ No | ⚠️ Short sessions only |
-| In-memory (JS var) | ✅ Yes | ❌ No | ❌ No | ✅ Best for access tokens |
-| \`httpOnly\` cookie | ❌ No | ✅ Yes | ✅ Yes | ✅ Best for refresh tokens |`,
+| In-memory (JS var) | ✅ Yes* | ❌ No | ❌ No | ✅ Access tokens |
+| \`httpOnly\` cookie | ❌ No | ✅ Yes | ✅ Yes | ✅ Refresh tokens |
+
+*In-memory is still XSS-readable, but an attacker would need to extract it within the token's lifetime (~1hr). More importantly, they can't exfiltrate it across sessions or reload it.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Token Storage Decision Tree',
+          nodes: [
+            { id: 'sd1', label: 'Which token?', type: 'decision', position: { x: 200, y: 30 } },
+            { id: 'sd2', label: 'Access Token\n(short-lived)', position: { x: 60, y: 130 } },
+            { id: 'sd3', label: 'Refresh Token\n(long-lived)', position: { x: 350, y: 130 } },
+            { id: 'sd4', label: 'Store in JS memory\n(module variable)', type: 'output', position: { x: 60, y: 230 } },
+            { id: 'sd5', label: 'Store in httpOnly\nSecure cookie', type: 'output', position: { x: 350, y: 230 } },
+            { id: 'sd6', label: 'Lost on refresh?\nSilently fetch new\none via /auth/refresh', position: { x: 60, y: 330 } },
+            { id: 'sd7', label: 'CSRF protected?\nYes, via SameSite=Strict\n+ CSRF token header', position: { x: 350, y: 330 } },
+          ],
+          edges: [
+            { id: 'esd1', source: 'sd1', target: 'sd2', label: 'access' },
+            { id: 'esd2', source: 'sd1', target: 'sd3', label: 'refresh' },
+            { id: 'esd3', source: 'sd2', target: 'sd4', animated: true },
+            { id: 'esd4', source: 'sd3', target: 'sd5', animated: true },
+            { id: 'esd5', source: 'sd4', target: 'sd6' },
+            { id: 'esd6', source: 'sd5', target: 'sd7' },
+          ],
         },
         {
           type: 'callout',
@@ -1408,9 +1655,26 @@ apiClient.interceptors.response.use(
           type: 'text',
           content: `## From theory to production
 
-You now understand the OAuth2 concepts. Let's walk through what a complete, production-ready implementation looks like using **MSAL.js** — Microsoft's official library for Azure AD (Entra ID) OAuth2 flows.
+You now understand OAuth2 from first principles. Let's wire everything together into a complete picture of how it all works in a real SPA + API architecture.
 
-The same patterns apply to Auth0, Okta, and any other OIDC-compliant provider; only the config changes.`,
+The implementation below uses **MSAL.js** (Microsoft's library for Azure AD), but the patterns apply identically to Auth0, Okta, Cognito, and any OIDC-compliant provider.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Complete SPA + API OAuth2 Architecture',
+          nodes: [
+            { id: 'arch1', label: 'SPA\n(React)', type: 'input', position: { x: 30, y: 120 } },
+            { id: 'arch2', label: 'Azure AD\n(Auth Server)', position: { x: 250, y: 30 } },
+            { id: 'arch3', label: 'Your API\n(Node/Express)', position: { x: 250, y: 210 } },
+            { id: 'arch4', label: 'JWKS Endpoint\npublic keys', position: { x: 470, y: 30 } },
+          ],
+          edges: [
+            { id: 'eaa1', source: 'arch1', target: 'arch2', label: '1. Auth code\n+ PKCE', animated: true },
+            { id: 'eaa2', source: 'arch2', target: 'arch1', label: '2. Access token\n+ ID token\n+ refresh token' },
+            { id: 'eaa3', source: 'arch1', target: 'arch3', label: '3. Bearer token\nin header', animated: true },
+            { id: 'eaa4', source: 'arch3', target: 'arch4', label: '4. Fetch signing\nkeys (cached)' },
+            { id: 'eaa5', source: 'arch4', target: 'arch3', label: '5. Verify JWT\nsignature' },
+          ],
         },
         {
           type: 'codeBlock',
