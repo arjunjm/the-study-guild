@@ -3807,6 +3807,23 @@ async function runEvals() {
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Azure web hosting: request flow through CDN → App Service',
+          nodes: [
+            { id: 'client',  position: { x: 0,   y: 140 }, label: 'Browser / Client', type: 'input' },
+            { id: 'cdn',     position: { x: 220, y: 60  }, label: 'Azure CDN / Front Door\n(static assets, edge cache)', type: 'default' },
+            { id: 'swa',     position: { x: 440, y: 60  }, label: 'Static Web App\n(React / Next.js build)', type: 'default' },
+            { id: 'appgw',   position: { x: 220, y: 220 }, label: 'App Gateway / APIM\n(routing, SSL termination)', type: 'default' },
+            { id: 'svc',     position: { x: 440, y: 220 }, label: 'App Service\n(Node.js / Python API)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'client', target: 'cdn',   label: 'GET /static' },
+            { id: 'e2', source: 'client', target: 'appgw', label: 'GET /api/*' },
+            { id: 'e3', source: 'cdn',    target: 'swa',   label: 'origin pull', animated: true },
+            { id: 'e4', source: 'appgw',  target: 'svc',   label: 'proxy', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: `## The Azure hosting landscape
 
@@ -3912,6 +3929,23 @@ For a React SPA + Node API: **Static Web Apps** (client) + **App Service** (API)
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Azure AD auth: SPA → token → API → CosmosDB',
+          nodes: [
+            { id: 'spa',    position: { x: 0,   y: 140 }, label: 'React SPA\n(MSAL)', type: 'input' },
+            { id: 'aad',    position: { x: 220, y: 140 }, label: 'Azure AD\n(Entra ID)', type: 'default' },
+            { id: 'token',  position: { x: 440, y: 140 }, label: 'JWT Access Token\n(aud: api-app-id)', type: 'default' },
+            { id: 'api',    position: { x: 660, y: 140 }, label: 'Express API\n(validates JWT)', type: 'default' },
+            { id: 'cosmos', position: { x: 880, y: 140 }, label: 'CosmosDB\n(NoSQL store)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'spa',   target: 'aad',   label: 'loginPopup()' },
+            { id: 'e2', source: 'aad',   target: 'token', label: 'issues token', animated: true },
+            { id: 'e3', source: 'token', target: 'api',   label: 'Bearer header', animated: true },
+            { id: 'e4', source: 'api',   target: 'cosmos',label: 'read/write' },
+          ],
+        },
         {
           type: 'text',
           content: `## CosmosDB for document storage
@@ -6295,6 +6329,26 @@ app.use(errorHandler);`,
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Defense-in-depth: layers of API security middleware',
+          nodes: [
+            { id: 'req',    position: { x: 0,   y: 140 }, label: 'HTTP Request', type: 'input' },
+            { id: 'rate',   position: { x: 180, y: 140 }, label: 'Rate limiter\n(100 req/min)', type: 'default' },
+            { id: 'auth',   position: { x: 360, y: 140 }, label: 'Authentication\n(JWT / API key)', type: 'default' },
+            { id: 'valid',  position: { x: 540, y: 140 }, label: 'Input validation\n(Zod / Joi schema)', type: 'default' },
+            { id: 'handler',position: { x: 720, y: 140 }, label: 'Route handler\n(business logic)', type: 'output' },
+            { id: 'reject', position: { x: 360, y: 280 }, label: '4xx / 429\nreject early', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'req',    target: 'rate',   label: 'enters' },
+            { id: 'e2', source: 'rate',   target: 'auth',   label: 'allowed', animated: true },
+            { id: 'e3', source: 'auth',   target: 'valid',  label: 'authed', animated: true },
+            { id: 'e4', source: 'valid',  target: 'handler',label: 'valid body', animated: true },
+            { id: 'e5', source: 'rate',   target: 'reject', label: 'throttled' },
+            { id: 'e6', source: 'auth',   target: 'reject', label: 'unauthorized' },
+          ],
+        },
+        {
           type: 'text',
           content: `## Validate at the boundary, trust nothing
 
@@ -7333,6 +7387,24 @@ function isCourse(val: unknown): val is Course {
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Generic type instantiation: T is resolved at call site',
+          nodes: [
+            { id: 'def',    position: { x: 0,   y: 140 }, label: 'function identity<T>\n(value: T): T', type: 'input' },
+            { id: 'call1',  position: { x: 280, y: 60  }, label: 'identity("hello")\n→ T = string', type: 'default' },
+            { id: 'call2',  position: { x: 280, y: 140 }, label: 'identity(42)\n→ T = number', type: 'default' },
+            { id: 'call3',  position: { x: 280, y: 220 }, label: 'identity({ id: 1 })\n→ T = { id: number }', type: 'default' },
+            { id: 'infer',  position: { x: 520, y: 140 }, label: 'TypeScript infers T\nat call site\n(no annotation needed)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'def',   target: 'call1', label: 'instantiate' },
+            { id: 'e2', source: 'def',   target: 'call2', label: 'instantiate' },
+            { id: 'e3', source: 'def',   target: 'call3', label: 'instantiate' },
+            { id: 'e4', source: 'call1', target: 'infer', label: 'inferred', animated: true },
+            { id: 'e5', source: 'call2', target: 'infer', label: 'inferred', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: `## Generics — reusable type-safe code
 
@@ -7742,6 +7814,26 @@ Both queries hit the same \`/graphql\` endpoint — the difference is which fiel
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'GraphQL request execution: parse → validate → resolve tree',
+          nodes: [
+            { id: 'client',  position: { x: 0,   y: 140 }, label: 'Client\nPOST /graphql', type: 'input' },
+            { id: 'parse',   position: { x: 200, y: 140 }, label: 'Parse\nquery document', type: 'default' },
+            { id: 'validate',position: { x: 400, y: 140 }, label: 'Validate\nagainst schema', type: 'default' },
+            { id: 'root',    position: { x: 600, y: 60  }, label: 'Root resolver\nQuery.user()', type: 'default' },
+            { id: 'child',   position: { x: 600, y: 200 }, label: 'Child resolver\nUser.posts()', type: 'default' },
+            { id: 'resp',    position: { x: 800, y: 140 }, label: 'Merged response\n{ data: {...} }', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'client',   target: 'parse',    label: 'query string' },
+            { id: 'e2', source: 'parse',    target: 'validate', label: 'AST' },
+            { id: 'e3', source: 'validate', target: 'root',     label: 'execute', animated: true },
+            { id: 'e4', source: 'root',     target: 'child',    label: 'resolves', animated: true },
+            { id: 'e5', source: 'root',     target: 'resp',     label: 'data' },
+            { id: 'e6', source: 'child',    target: 'resp',     label: 'data' },
+          ],
+        },
+        {
           type: 'text',
           content: `## Resolvers — the functions behind the schema
 
@@ -7880,6 +7972,23 @@ mutation RateCourse($courseId: ID!, $rating: Int!) {
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'DataLoader: batch N individual queries into one',
+          nodes: [
+            { id: 'query',   position: { x: 0,   y: 140 }, label: '1 GraphQL query\nfetch 10 users + their posts', type: 'input' },
+            { id: 'naive',   position: { x: 220, y: 60  }, label: 'Without DataLoader\n11 DB queries (N+1)', type: 'default' },
+            { id: 'loader',  position: { x: 220, y: 220 }, label: 'With DataLoader\ncollect IDs in tick', type: 'default' },
+            { id: 'batch',   position: { x: 440, y: 220 }, label: 'Single batch query\nSELECT WHERE id IN (...)', type: 'default' },
+            { id: 'resp',    position: { x: 660, y: 220 }, label: 'All posts returned\n2 DB queries total', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'query',  target: 'naive',  label: 'N+1 path' },
+            { id: 'e2', source: 'query',  target: 'loader', label: 'batched path', animated: true },
+            { id: 'e3', source: 'loader', target: 'batch',  label: 'flush tick', animated: true },
+            { id: 'e4', source: 'batch',  target: 'resp',   label: 'distribute' },
+          ],
+        },
         {
           type: 'text',
           content: `## The N+1 problem — GraphQL's biggest gotcha
@@ -10999,6 +11108,24 @@ process.on('SIGTERM', () => {
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Refactoring cycle: smell → identify → refactor → verify',
+          nodes: [
+            { id: 'smell',    position: { x: 0,   y: 140 }, label: 'Code smell\n(long method, magic number)', type: 'input' },
+            { id: 'identify', position: { x: 220, y: 140 }, label: 'Identify the rule\n(SRP, naming, DRY)', type: 'default' },
+            { id: 'refactor', position: { x: 440, y: 140 }, label: 'Refactor\n(extract, rename, split)', type: 'default' },
+            { id: 'tests',    position: { x: 440, y: 280 }, label: 'Tests still pass?\n(safety net)', type: 'decision' },
+            { id: 'clean',    position: { x: 660, y: 140 }, label: 'Cleaner code\n(readable, testable)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'smell',    target: 'identify', label: 'review' },
+            { id: 'e2', source: 'identify', target: 'refactor', label: 'plan change' },
+            { id: 'e3', source: 'refactor', target: 'tests',    label: 'run suite' },
+            { id: 'e4', source: 'tests',    target: 'clean',    label: 'green ✓', animated: true },
+            { id: 'e5', source: 'tests',    target: 'refactor', label: 'red → fix' },
+          ],
+        },
+        {
           type: 'text',
           content: `## Names are documentation
 
@@ -12901,6 +13028,22 @@ const query = new QueryBuilder()
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Decorator pattern: wrap objects to add behaviour at runtime',
+          nodes: [
+            { id: 'client', position: { x: 0,   y: 140 }, label: 'Client\ncalls send()', type: 'input' },
+            { id: 'log',    position: { x: 220, y: 60  }, label: 'LoggingDecorator\nlogs request + response', type: 'default' },
+            { id: 'retry',  position: { x: 220, y: 220 }, label: 'RetryDecorator\nretries on 5xx (max 3)', type: 'default' },
+            { id: 'core',   position: { x: 440, y: 140 }, label: 'HttpClient\n(core implementation)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'client', target: 'log',   label: 'wraps' },
+            { id: 'e2', source: 'client', target: 'retry', label: 'wraps' },
+            { id: 'e3', source: 'log',    target: 'core',  label: 'delegates', animated: true },
+            { id: 'e4', source: 'retry',  target: 'core',  label: 'delegates', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: `## Adapter — bridge incompatible interfaces
 
@@ -13038,6 +13181,21 @@ await orderFacade.placeOrder(userId, cart);
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Observer pattern: subject notifies all registered observers',
+          nodes: [
+            { id: 'subject', position: { x: 0,   y: 140 }, label: 'Subject\n(EventEmitter)', type: 'input' },
+            { id: 'obs1',    position: { x: 260, y: 40  }, label: 'Observer 1\nLogger.onEvent()', type: 'default' },
+            { id: 'obs2',    position: { x: 260, y: 140 }, label: 'Observer 2\nAnalytics.onEvent()', type: 'default' },
+            { id: 'obs3',    position: { x: 260, y: 240 }, label: 'Observer 3\nUI.refresh()', type: 'default' },
+          ],
+          edges: [
+            { id: 'e1', source: 'subject', target: 'obs1', label: 'notify(event)', animated: true },
+            { id: 'e2', source: 'subject', target: 'obs2', label: 'notify(event)', animated: true },
+            { id: 'e3', source: 'subject', target: 'obs3', label: 'notify(event)', animated: true },
+          ],
+        },
         {
           type: 'text',
           content: `## Observer — react to events without coupling
@@ -16421,6 +16579,24 @@ function VirtualCourseList({ courses }: { courses: Course[] }) {
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Protobuf codegen: .proto → generated code → type-safe RPC',
+          nodes: [
+            { id: 'proto',   position: { x: 0,   y: 140 }, label: 'user.proto\n(schema source of truth)', type: 'input' },
+            { id: 'protoc',  position: { x: 220, y: 140 }, label: 'protoc compiler\n+ grpc plugin', type: 'default' },
+            { id: 'server',  position: { x: 440, y: 60  }, label: 'Server stub\n(implement ServiceBase)', type: 'default' },
+            { id: 'client',  position: { x: 440, y: 220 }, label: 'Client stub\n(call generated methods)', type: 'default' },
+            { id: 'wire',    position: { x: 660, y: 140 }, label: 'Binary wire format\n(binary, not JSON)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'proto',  target: 'protoc', label: 'input' },
+            { id: 'e2', source: 'protoc', target: 'server', label: 'generates', animated: true },
+            { id: 'e3', source: 'protoc', target: 'client', label: 'generates', animated: true },
+            { id: 'e4', source: 'client', target: 'wire',   label: 'encode & send' },
+            { id: 'e5', source: 'wire',   target: 'server', label: 'decode & serve' },
+          ],
+        },
         {
           type: 'text',
           content: `## What is gRPC?
