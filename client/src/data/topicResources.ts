@@ -86,6 +86,15 @@ const RESOURCES: Record<string, TopicResource[]> = {
     { title: 'Azure Weekly Newsletter', type: 'blog', description: 'Curated weekly digest of Azure announcements, tutorials, and community posts.', url: 'https://azureweekly.info' },
   ],
 
+  // ── Cloud / Docker ───────────────────────────────────────────────────────
+  'Cloud::Docker': [
+    { title: 'Docker Deep Dive', author: 'Nigel Poulton', type: 'book', description: 'The most concise, accurate Docker book available. Updated regularly. Covers images, containers, Compose, and Swarm.', url: 'https://www.amazon.com/Docker-Deep-Dive-Nigel-Poulton/dp/1521822808' },
+    { title: 'Play with Docker', type: 'tool', description: 'Free in-browser Docker environment from Docker. Run containers, practice commands, and try labs without installing anything.', url: 'https://labs.play-with-docker.com' },
+    { title: 'Docker Official Docs', type: 'docs', description: 'The official Docker documentation — the reference chapters on Dockerfiles, networking, and volumes are excellent.', url: 'https://docs.docker.com' },
+    { title: 'Dive — Image Layer Explorer', type: 'tool', description: 'CLI tool for exploring a Docker image layer by layer. Shows exactly what each layer adds and identifies wasted space.', url: 'https://github.com/wagoodman/dive' },
+    { title: 'Trivy — Container Security Scanner', type: 'tool', description: 'Open-source vulnerability scanner for container images. Finds CVEs in OS packages and language dependencies.', url: 'https://github.com/aquasecurity/trivy' },
+  ],
+
   // ── Cloud / Kubernetes ───────────────────────────────────────────────────
   'Cloud::Kubernetes': [
     { title: 'Kubernetes in Action', author: 'Marko Lukša', type: 'book', description: 'The most thorough and accessible Kubernetes book. Covers pods, controllers, networking, and storage with great examples.', url: 'https://www.manning.com/books/kubernetes-in-action' },
@@ -147,11 +156,96 @@ const RESOURCES: Record<string, TopicResource[]> = {
     { title: 'Head First Design Patterns', type: 'book', description: 'Visual, story-driven intro to design patterns — great if the GoF book feels too abstract at first.', url: 'https://www.oreilly.com/library/view/head-first-design/9781492077992/' },
   ],
 
+  // ── Engineering / Python ─────────────────────────────────────────────────
+  'Engineering::Python': [
+    { title: 'Fluent Python', author: 'Luciano Ramalho', type: 'book', description: 'The definitive advanced Python book. Covers data model, iterators, closures, concurrency, and metaprogramming in depth.', url: 'https://www.oreilly.com/library/view/fluent-python-2nd/9781492056348/' },
+    { title: 'Real Python', type: 'blog', description: 'High-quality tutorials on every Python topic — from basics to async, type hints, packaging, and testing.', url: 'https://realpython.com' },
+    { title: 'Python Docs — Standard Library', type: 'docs', description: 'The official Python standard library reference. The itertools and functools modules alone are worth hours of study.', url: 'https://docs.python.org/3/library/' },
+    { title: 'Effective Python', author: 'Brett Slatkin', type: 'book', description: '90 specific, actionable tips for writing Pythonic, idiomatic, and maintainable Python code.', url: 'https://effectivepython.com' },
+    { title: 'Python Type Checking Guide (mypy)', type: 'docs', description: 'The mypy documentation explains Python\'s gradual type system and how to annotate code effectively.', url: 'https://mypy.readthedocs.io/en/stable/' },
+  ],
+
   // ── Engineering / Testing ────────────────────────────────────────────────
   'Engineering::Testing': [
     { title: 'Testing Microservices, the sane way', type: 'blog', description: 'Vladislav Supalov\'s landmark post on the testing pyramid and why unit/integration/e2e should be balanced differently than people think.', url: 'https://saucelabs.com/blog/testing-microservices-the-sane-way' },
     { title: 'Kent C. Dodds Blog', type: 'blog', description: 'Kent\'s writing on testing philosophy — "Testing Trophy", implementation detail testing, and why test behaviour not code.', url: 'https://kentcdodds.com/blog' },
     { title: 'The Art of Unit Testing', author: 'Roy Osherove', type: 'book', description: 'Practical guidance on writing maintainable, trustworthy unit tests with real code examples.', url: 'https://www.artofunittesting.com' },
+  ],
+
+  // ── Engineering / Git ────────────────────────────────────────────────────
+  'Engineering::Git': [
+    { title: 'Pro Git', author: 'Scott Chacon & Ben Straub', type: 'book', description: 'The definitive, free Git book. Covers everything from basics to internals. Available at git-scm.com.', url: 'https://git-scm.com/book/en/v2' },
+    { title: 'Oh Shit, Git!', type: 'blog', description: 'Practical guide to fixing Git mistakes. Every command is a real-life rescue scenario. Bookmarkable.', url: 'https://ohshitgit.com' },
+    { title: 'Conventional Commits', type: 'docs', description: 'A specification for adding structured meaning to commit messages. Enables automatic changelog generation and semantic versioning.', url: 'https://www.conventionalcommits.org' },
+    { title: 'Visualizing Git', type: 'tool', description: 'Interactive browser-based tool for visualising what Git commands do to the commit graph. Great for understanding rebase and merge.', url: 'https://git-school.github.io/visualizing-git/' },
+  ],
+
+  // ── Engineering / Code Quality ───────────────────────────────────────────
+  'Engineering::Code Quality': [
+    { title: 'Clean Code', author: 'Robert C. Martin', type: 'book', description: 'The classic text on writing readable, maintainable code. Covers naming, functions, comments, and formatting with concrete before/after examples.', url: 'https://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882' },
+    { title: 'A Philosophy of Software Design', author: 'John Ousterhout', type: 'book', description: 'A fresh perspective on software complexity — what it is, where it comes from, and how to fight it. More concise and contrarian than Clean Code.', url: 'https://www.amazon.com/Philosophy-Software-Design-John-Ousterhout/dp/1732102201' },
+    { title: 'ESLint', type: 'tool', description: 'The standard JavaScript/TypeScript linter. Pluggable rules catch common bugs and enforce style. Integrates with every editor.', url: 'https://eslint.org' },
+    { title: 'SonarQube Community Edition', type: 'tool', description: 'Open-source static analysis platform that catches bugs, code smells, and security hotspots across many languages.', url: 'https://www.sonarsource.com/open-source/' },
+  ],
+
+  // ── Cloud / AWS ──────────────────────────────────────────────────────────
+  'Cloud::AWS': [
+    { title: 'AWS Well-Architected Framework', type: 'docs', description: 'AWS\'s official guide to building reliable, secure, efficient, and cost-effective systems. The six pillars are essential reading for any AWS architect.', url: 'https://aws.amazon.com/architecture/well-architected/' },
+    { title: 'AWS in Plain English', type: 'blog', description: 'Humorous but accurate one-sentence descriptions of what every AWS service actually does, in plain language.', url: 'https://expeditedsecurity.com/aws-in-plain-english/' },
+    { title: 'The Open Guide to Amazon Web Services', type: 'docs', description: 'Community-maintained, opinionated guide with hard-won practical advice on every major AWS service.', url: 'https://github.com/open-guides/og-aws' },
+    { title: 'AWS Skill Builder', type: 'course', description: 'AWS\'s free official learning platform with digital courses, labs, and exam prep for all AWS certifications.', url: 'https://explore.skillbuilder.aws' },
+  ],
+
+  // ── Cloud / CI/CD ────────────────────────────────────────────────────────
+  'Cloud::CI/CD': [
+    { title: 'GitHub Actions Documentation', type: 'docs', description: 'The official reference for GitHub Actions — workflows, triggers, jobs, steps, and marketplace actions.', url: 'https://docs.github.com/en/actions' },
+    { title: 'Continuous Delivery', author: 'Jez Humble & David Farley', type: 'book', description: 'The foundational text on CD pipelines, deployment automation, and the practices that enable frequent, reliable releases.', url: 'https://continuousdelivery.com' },
+    { title: 'The DORA Metrics', type: 'blog', description: 'Four metrics (deployment frequency, lead time, MTTR, change failure rate) that predict software delivery and organizational performance.', url: 'https://dora.dev/guides/dora-metrics-four/' },
+    { title: 'Act — Run GitHub Actions locally', type: 'tool', description: 'Run your GitHub Actions workflows locally before pushing. Catches syntax errors and dependency issues without burning CI minutes.', url: 'https://github.com/nektos/act' },
+  ],
+
+  // ── Databases / Data Modeling ────────────────────────────────────────────
+  'Databases::Data Modeling': [
+    { title: 'Database Design for Mere Mortals', author: 'Michael J. Hernandez', type: 'book', description: 'The most accessible introduction to relational database design — entity-relationship modeling, normalization, and indexing explained clearly.', url: 'https://www.amazon.com/Database-Design-Mere-Mortals-Hands/dp/0136788041' },
+    { title: 'dbdiagram.io', type: 'tool', description: 'Free online tool for drawing ER diagrams using a simple DSL. Great for documenting schemas and sharing with teams.', url: 'https://dbdiagram.io' },
+    { title: 'The Data Warehouse Toolkit', author: 'Ralph Kimball', type: 'book', description: 'The definitive guide to dimensional modeling for analytics. Covers star schemas, slowly changing dimensions, and fact tables.', url: 'https://www.amazon.com/Data-Warehouse-Toolkit-Definitive-Dimensional/dp/1118530802' },
+  ],
+
+  // ── Databases / Performance ──────────────────────────────────────────────
+  'Databases::Performance': [
+    { title: 'Use The Index, Luke', type: 'blog', description: 'The best free resource for SQL performance. Explains B-tree indexes, composite indexes, and query execution plans in a database-agnostic way.', url: 'https://use-the-index-luke.com' },
+    { title: 'Explain by Depesz', type: 'tool', description: 'Paste a PostgreSQL EXPLAIN ANALYZE output and get a human-readable analysis of slow nodes in the query plan.', url: 'https://explain.depesz.com' },
+    { title: 'Database Internals', author: 'Alex Petrov', type: 'book', description: 'How databases work under the hood — storage engines, B-trees, LSM trees, distributed transactions, and consensus. Essential for advanced performance tuning.', url: 'https://www.databass.dev' },
+  ],
+
+  // ── Systems / Networking ─────────────────────────────────────────────────
+  'Systems::Networking': [
+    { title: 'Computer Networks: A Top-Down Approach', author: 'Kurose & Ross', type: 'book', description: 'The standard university networking textbook — covers HTTP, TCP/IP, DNS, routing, and security from the application layer down.', url: 'https://gaia.cs.umass.edu/kurose_ross/index.php' },
+    { title: 'Julia Evans\' Networking Zines', type: 'blog', description: 'Visual, hand-drawn explanations of networking concepts — DNS, TCP, HTTP, TLS. Perfect for building mental models quickly.', url: 'https://jvns.ca/zines/' },
+    { title: 'Wireshark', type: 'tool', description: 'Capture and analyse actual network traffic. Nothing builds networking intuition faster than seeing real packets.', url: 'https://www.wireshark.org' },
+    { title: 'Cloudflare Learning Center', type: 'blog', description: 'Free, beautifully illustrated explanations of networking topics: DNS, CDN, DDoS, BGP, zero trust, and more.', url: 'https://www.cloudflare.com/en-gb/learning/' },
+  ],
+
+  // ── Systems / Performance ────────────────────────────────────────────────
+  'Systems::Performance': [
+    { title: 'Systems Performance', author: 'Brendan Gregg', type: 'book', description: 'The definitive reference on Linux systems performance. Covers CPU, memory, I/O, networking, and cloud with methodology and tools.', url: 'https://www.brendangregg.com/systems-performance-2nd-edition-book.html' },
+    { title: 'Brendan Gregg\'s Blog', type: 'blog', description: 'Flame graphs, eBPF, perf, dtrace — the source. Gregg\'s tutorials on profiling Linux systems are unmatched.', url: 'https://www.brendangregg.com/blog/index.html' },
+    { title: 'Pyroscope — Continuous Profiling', type: 'tool', description: 'Open-source continuous profiling platform. Profile production systems over time rather than taking one-off snapshots.', url: 'https://pyroscope.io' },
+  ],
+
+  // ── AI & ML / Computer Vision ────────────────────────────────────────────
+  'AI & ML::Computer Vision': [
+    { title: 'CS231n — Convolutional Neural Networks for Visual Recognition', type: 'course', description: 'Stanford\'s legendary computer vision course. Free lectures and notes covering CNNs, object detection, and image segmentation.', url: 'http://cs231n.stanford.edu' },
+    { title: 'Roboflow Blog', type: 'blog', description: 'Practical articles on training object detection models, building datasets, and deploying vision models to production.', url: 'https://blog.roboflow.com' },
+    { title: 'Ultralytics YOLO Docs', type: 'docs', description: 'The go-to real-time object detection model. The docs include training guides, deployment examples, and benchmarks.', url: 'https://docs.ultralytics.com' },
+  ],
+
+  // ── AI & ML / Data Science ───────────────────────────────────────────────
+  'AI & ML::Data Science': [
+    { title: 'Python for Data Analysis', author: 'Wes McKinney', type: 'book', description: 'The pandas creator\'s own book on data wrangling. The authoritative reference for pandas, NumPy, and Jupyter.', url: 'https://wesmckinney.com/book/' },
+    { title: 'Kaggle Learn', type: 'course', description: 'Free micro-courses on pandas, SQL, ML, and data visualization with interactive notebooks. Great for hands-on practice.', url: 'https://www.kaggle.com/learn' },
+    { title: 'Towards Data Science', type: 'blog', description: 'Community-curated Medium publication with practical articles on data science, ML, and visualization techniques.', url: 'https://towardsdatascience.com' },
+    { title: 'Streamlit', type: 'tool', description: 'Build and share data apps in pure Python. The fastest way to turn a data analysis script into an interactive web app.', url: 'https://streamlit.io' },
   ],
 };
 
