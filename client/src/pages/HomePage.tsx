@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpen, Flame, Trophy, ArrowRight, Clock, Star, Gift, CheckCircle2, Shuffle, Bookmark } from 'lucide-react';
+import { BookOpen, Trophy, ArrowRight, Clock, Star, CheckCircle2, Shuffle, Bookmark, GraduationCap } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { TAXONOMY } from '../data/taxonomy';
 import { cn } from '../lib/utils';
@@ -26,21 +26,23 @@ export default function HomePage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const toast = useToast();
-  const [loginClaimed, setLoginClaimed] = useState<DailyLoginResult | null>(null);
 
   const dailyLoginMutation = useMutation({
     mutationFn: () => apiClient.post<{ data: DailyLoginResult }>('/progress/daily-login'),
     onSuccess: (res) => {
       const data = res.data.data;
-      setLoginClaimed(data);
       if (!data.alreadyClaimed) {
         qc.invalidateQueries({ queryKey: ['me'] });
-        toast.success(`+${data.xpAwarded} XP claimed!`, `🔥 ${data.streak}-day streak — keep it going`);
-      } else {
-        toast.info('Already claimed today', 'Come back tomorrow for more XP');
+        toast.success(`+${data.xpAwarded} XP earned`, `Day ${data.streak} streak`);
       }
     },
   });
+
+  // Fire daily login silently on mount — XP and streak still accrue
+  useEffect(() => {
+    dailyLoginMutation.mutate();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { data: user } = useQuery<UserProfile>({
     queryKey: ['me'],
@@ -66,7 +68,6 @@ export default function HomePage() {
   const inProgress = courseProgress?.filter(c => c.completedCount > 0 && c.completedCount < c.totalLessons) ?? [];
   const completedCourses = courseProgress?.filter(c => c.completedCount >= c.totalLessons && c.totalLessons > 0) ?? [];
   const totalLessonsCompleted = courseProgress?.reduce((s, p) => s + p.completedCount, 0) ?? 0;
-  const completedIdSet = (cp: CourseProgress) => new Set(cp.completedLessonIds);
   const startedCourseIds = new Set(courseProgress?.map(p => p.course.id) ?? []);
 
   const activeTaxonomies = new Set(inProgress.map(p => p.course.taxonomy.l1));
@@ -117,19 +118,15 @@ export default function HomePage() {
         <div className="pointer-events-none absolute -bottom-12 left-1/3 h-64 w-64 rounded-full bg-amber-100/30 blur-3xl" />
 
         <div className="relative max-w-4xl">
-          {(user?.streak ?? 0) > 0 && (
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-medium text-orange-600">
-              <Flame className="h-3 w-3" />
-              {user?.streak}-day streak — keep it going!
-            </div>
-          )}
           <h1 className="mb-3 font-display text-3xl font-bold text-slate-900 lg:text-5xl">
             Welcome back,{' '}
             <span className="text-gradient">{user?.displayName?.split(' ')[0] ?? 'Guildmate'}</span>
           </h1>
           <p className="mb-8 max-w-lg text-base text-slate-500 lg:text-lg">
-            {totalLessonsCompleted > 0
-              ? `You've completed ${totalLessonsCompleted} lesson${totalLessonsCompleted !== 1 ? 's' : ''}. Keep the momentum going.`
+            {inProgress.length > 0
+              ? `You have ${inProgress.length} course${inProgress.length !== 1 ? 's' : ''} in progress. Keep the momentum going.`
+              : totalLessonsCompleted > 0
+              ? `You've completed ${totalLessonsCompleted} lesson${totalLessonsCompleted !== 1 ? 's' : ''}. Ready to learn more?`
               : 'Pick a course and start learning with your guild.'}
           </p>
           <div className="flex flex-wrap gap-3">
@@ -164,9 +161,9 @@ export default function HomePage() {
         {/* Stats row */}
         <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard icon={Trophy} color="amber" label="Guild Rank" value={user?.rank ?? '—'} />
-          <StatCard icon={Flame} color="orange" label="Day Streak" value={`${user?.streak ?? 0} days`} />
+          <StatCard icon={GraduationCap} color="violet" label="In progress" value={inProgress.length} />
           <StatCard icon={BookOpen} color="emerald" label="Lessons done" value={totalLessonsCompleted} />
-          <StatCard icon={Trophy} color="violet" label="Completed" value={completedCourses.length} />
+          <StatCard icon={CheckCircle2} color="emerald" label="Completed" value={completedCourses.length} />
         </section>
 
         {/* New user onboarding */}
@@ -192,63 +189,28 @@ export default function HomePage() {
           </section>
         )}
 
-        {/* Daily login XP */}
-        {user && !loginClaimed && (
-          <section>
-            <button
-              onClick={() => dailyLoginMutation.mutate()}
-              disabled={dailyLoginMutation.isPending}
-              className="group flex w-full items-center gap-4 rounded-2xl border border-violet-200 bg-violet-50 px-5 py-4 text-left transition-all hover:border-violet-300 hover:bg-violet-100 disabled:opacity-60"
-            >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 transition group-hover:bg-violet-200">
-                <Gift className="h-5 w-5 text-violet-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-violet-700">Claim your daily XP</p>
-                <p className="text-xs text-slate-500">+5 XP · Extends your streak</p>
-              </div>
-              <span className="shrink-0 rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">
-                {dailyLoginMutation.isPending ? 'Claiming…' : '+5 XP'}
-              </span>
-            </button>
-          </section>
-        )}
-
-        {/* Daily login claimed confirmation */}
-        {loginClaimed && (
-          <section>
-            <div className={cn(
-              'flex items-center gap-4 rounded-2xl border px-5 py-4',
-              loginClaimed.alreadyClaimed
-                ? 'border-slate-200 bg-slate-50'
-                : 'border-emerald-200 bg-emerald-50'
-            )}>
-              <CheckCircle2 className={cn('h-5 w-5 shrink-0', loginClaimed.alreadyClaimed ? 'text-slate-400' : 'text-emerald-600')} />
-              <div>
-                <p className={cn('text-sm font-medium', loginClaimed.alreadyClaimed ? 'text-slate-500' : 'text-emerald-700')}>
-                  {loginClaimed.alreadyClaimed ? 'Already claimed today' : `+${loginClaimed.xpAwarded} XP claimed!`}
-                </p>
-                <p className="text-xs text-slate-400">{loginClaimed.streak}-day streak · Come back tomorrow</p>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Continue Learning */}
+        {/* Jump back in — primary in-progress course */}
         {inProgress.length > 0 && (
           <section>
+            <JumpBackInCard cp={inProgress[0]} />
+          </section>
+        )}
+
+        {/* Also in progress — additional courses */}
+        {inProgress.length > 1 && (
+          <section>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">Continue Learning</h2>
+              <h2 className="text-base font-semibold text-slate-700">Also in progress</h2>
               <Link to="/profile" className="flex items-center gap-1 text-sm text-slate-400 hover:text-slate-600 transition">
                 All progress <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              {inProgress.slice(0, 2).map((cp) => {
+              {inProgress.slice(1, 3).map((cp) => {
                 const { course, completedCount, totalLessons } = cp;
                 const pct = Math.round((completedCount / totalLessons) * 100);
                 const cat = TAXONOMY.find(c => c.l1 === course.taxonomy.l1);
-                const done = completedIdSet(cp);
+                const done = new Set(cp.completedLessonIds);
                 const nextLessonId = course.lessonIds.find(id => !done.has(id));
                 const to = nextLessonId ? `/courses/${course.id}/lessons/${nextLessonId}` : `/courses/${course.id}`;
                 return (
@@ -257,8 +219,8 @@ export default function HomePage() {
                     to={to}
                     className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 transition-all hover:border-violet-300 hover:bg-violet-50 shadow-sm"
                   >
-                    <div className={cn('flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl', cat?.bgColor ?? 'bg-slate-100')}>
-                      {cat ? <cat.icon className={cn('h-6 w-6', cat.color)} /> : <BookOpen className="h-6 w-6 text-slate-400" />}
+                    <div className={cn('flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl', cat?.bgColor ?? 'bg-slate-100')}>
+                      {cat ? <cat.icon className={cn('h-5 w-5', cat.color)} /> : <BookOpen className="h-5 w-5 text-slate-400" />}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-slate-800 group-hover:text-violet-700 transition">{course.title}</p>
@@ -433,6 +395,63 @@ export default function HomePage() {
         )}
       </div>
     </div>
+  );
+}
+
+function JumpBackInCard({ cp }: { cp: CourseProgress }) {
+  const { course, completedCount, totalLessons } = cp;
+  const pct = Math.round((completedCount / totalLessons) * 100);
+  const cat = TAXONOMY.find(c => c.l1 === course.taxonomy.l1);
+  const done = new Set(cp.completedLessonIds);
+  const nextLessonId = course.lessonIds.find(id => !done.has(id));
+  const to = nextLessonId ? `/courses/${course.id}/lessons/${nextLessonId}` : `/courses/${course.id}`;
+  const remainingLessons = totalLessons - completedCount;
+  const avgMin = course.totalLessons > 0 ? Math.round(course.estimatedMinutes / course.totalLessons) : 0;
+  const remainingMin = remainingLessons * avgMin;
+
+  return (
+    <Link
+      to={to}
+      className="group flex items-center gap-5 rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50 to-white p-5 shadow-sm transition-all duration-200 hover:border-violet-300 hover:shadow-md hover:shadow-violet-100"
+    >
+      <div className={cn(
+        'flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl shadow-sm',
+        cat?.bgColor ?? 'bg-slate-100'
+      )}>
+        {cat ? <cat.icon className={cn('h-8 w-8', cat.color)} /> : <BookOpen className="h-8 w-8 text-slate-400" />}
+      </div>
+
+      <div className="min-w-0 flex-1 space-y-2.5">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-violet-500 mb-1">Continue where you left off</p>
+          <p className="text-base font-semibold text-slate-900 group-hover:text-violet-700 transition truncate">{course.title}</p>
+        </div>
+        <div className="space-y-1.5">
+          <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+            <div
+              className="h-2 rounded-full bg-gradient-to-r from-violet-500 to-violet-400 transition-all duration-500"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between text-xs text-slate-500">
+            <span>{completedCount} of {totalLessons} lessons complete · {pct}%</span>
+            {remainingMin > 0 && (
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                ~{remainingMin} min left
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="shrink-0">
+        <span className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-violet-200 transition group-hover:bg-violet-500">
+          Resume
+          <ArrowRight className="h-4 w-4" />
+        </span>
+      </div>
+    </Link>
   );
 }
 
