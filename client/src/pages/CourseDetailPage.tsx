@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Share2, Star, Clock, CheckCircle, Circle, ChevronLeft, BookOpen, ArrowRight, Code2, HelpCircle, GitFork, Award, Download, X } from 'lucide-react';
+import { Share2, Star, Clock, CheckCircle, Circle, ChevronLeft, BookOpen, ArrowRight, Code2, HelpCircle, GitFork, Award, Download, X, ExternalLink } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { TAXONOMY } from '../data/taxonomy';
 import { cn } from '../lib/utils';
 import { useToast } from '../contexts/ToastContext';
+import { getTopicResources, RESOURCE_TYPE_LABELS, RESOURCE_TYPE_COLORS } from '../data/topicResources';
 import type { Course, Lesson, UserCourseProgress } from '@study-guild/shared';
 
 export default function CourseDetailPage() {
@@ -341,6 +342,39 @@ export default function CourseDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Further Reading */}
+        {(() => {
+          const resources = getTopicResources(course.taxonomy.l1, course.taxonomy.l2);
+          if (resources.length === 0) return null;
+          return (
+            <div className="mb-8">
+              <h2 className="mb-1 text-base font-semibold text-slate-900">Further Reading</h2>
+              <p className="mb-4 text-xs text-slate-500">Curated resources to go deeper on {course.taxonomy.l2}</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {resources.map(r => (
+                  <a
+                    key={r.url}
+                    href={r.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-violet-300 hover:shadow-md"
+                  >
+                    <div className="mb-2 flex items-start justify-between gap-2">
+                      <span className={cn('inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide', RESOURCE_TYPE_COLORS[r.type])}>
+                        {RESOURCE_TYPE_LABELS[r.type]}
+                      </span>
+                      <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-300 group-hover:text-violet-400 transition" />
+                    </div>
+                    <p className="mb-0.5 text-sm font-semibold text-slate-800 group-hover:text-violet-700 transition leading-snug">{r.title}</p>
+                    {r.author && <p className="mb-1.5 text-xs text-slate-400">{r.author}</p>}
+                    <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">{r.description}</p>
+                  </a>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Related courses */}
         {relatedCourses && relatedCourses.length > 0 && (
