@@ -2224,6 +2224,25 @@ Always send tokens in the \`Authorization: Bearer <token>\` header — never as 
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'How a JWT is created and verified',
+          nodes: [
+            { id: 'claims',  position: { x: 0,   y: 80  }, label: 'Claims object\n{ sub, exp, roles }', type: 'input' },
+            { id: 'header',  position: { x: 0,   y: 220 }, label: 'Header\n{ alg: "RS256", typ: "JWT" }', type: 'input' },
+            { id: 'encode',  position: { x: 240, y: 150 }, label: 'Base64url\nencode each part', type: 'default' },
+            { id: 'sign',    position: { x: 480, y: 150 }, label: 'Sign with\nprivate key\n→ Signature', type: 'default' },
+            { id: 'jwt',     position: { x: 720, y: 150 }, label: 'header.payload\n.signature', type: 'default' },
+            { id: 'verify',  position: { x: 720, y: 290 }, label: 'Recipient verifies\nwith public key', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'claims',  target: 'encode', label: 'payload' },
+            { id: 'e2', source: 'header',  target: 'encode', label: 'header' },
+            { id: 'e3', source: 'encode',  target: 'sign',   label: 'encoded parts', animated: true },
+            { id: 'e4', source: 'sign',    target: 'jwt',    label: 'combine', animated: true },
+            { id: 'e5', source: 'jwt',     target: 'verify', label: 'sent over wire' },
+          ],
+        },
+        {
           type: 'text',
           content: `## What is a JWT?
 
@@ -2598,6 +2617,23 @@ This hybrid approach gives you the key distribution convenience of asymmetric cr
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Certificate trust chain: Root CA → Intermediate → Leaf',
+          nodes: [
+            { id: 'root',   position: { x: 280, y: 0   }, label: 'Root CA\n(self-signed, in OS trust store)', type: 'input' },
+            { id: 'int',    position: { x: 280, y: 130 }, label: 'Intermediate CA\n(signed by Root)', type: 'default' },
+            { id: 'leaf',   position: { x: 280, y: 260 }, label: 'Leaf Certificate\nexample.com (signed by Intermediate)', type: 'default' },
+            { id: 'browser',position: { x: 0,   y: 260 }, label: 'Browser checks:\nchain valid?', type: 'decision' },
+            { id: 'ok',     position: { x: 0,   y: 380 }, label: 'HTTPS padlock ✓\nconnection trusted', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'root',    target: 'int',     label: 'signs' },
+            { id: 'e2', source: 'int',     target: 'leaf',    label: 'signs' },
+            { id: 'e3', source: 'leaf',    target: 'browser', label: 'presented to' },
+            { id: 'e4', source: 'browser', target: 'ok',      label: 'valid chain', animated: true },
+          ],
+        },
         {
           type: 'text',
           content: `## What's in a certificate?
@@ -5700,6 +5736,23 @@ cat .git/refs/heads/main           # the SHA of latest commit`,
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Feature branch workflow: branch → develop → PR → merge',
+          nodes: [
+            { id: 'main',    position: { x: 0,   y: 140 }, label: 'main branch\n(stable, deployable)', type: 'input' },
+            { id: 'branch',  position: { x: 220, y: 0   }, label: 'feature/my-feature\n(git checkout -b)', type: 'default' },
+            { id: 'commits', position: { x: 440, y: 0   }, label: 'Commits\n(iterative work)', type: 'default' },
+            { id: 'pr',      position: { x: 660, y: 0   }, label: 'Pull Request\n(code review)', type: 'decision' },
+            { id: 'merged',  position: { x: 660, y: 140 }, label: 'Merged to main\n(squash or merge commit)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'main',    target: 'branch',  label: 'branch off' },
+            { id: 'e2', source: 'branch',  target: 'commits', label: 'develop' },
+            { id: 'e3', source: 'commits', target: 'pr',      label: 'push + open PR', animated: true },
+            { id: 'e4', source: 'pr',      target: 'merged',  label: 'approved', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: `## Merge: preserve history as-is
 
@@ -8801,6 +8854,23 @@ spec:
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Config injection: ConfigMap & Secret → Pod environment',
+          nodes: [
+            { id: 'cm',      position: { x: 0,   y: 80  }, label: 'ConfigMap\n(non-sensitive config)', type: 'input' },
+            { id: 'sec',     position: { x: 0,   y: 220 }, label: 'Secret\n(base64 encoded, RBAC-gated)', type: 'input' },
+            { id: 'pod',     position: { x: 260, y: 150 }, label: 'Pod spec\n(envFrom / volumeMount)', type: 'default' },
+            { id: 'env',     position: { x: 500, y: 80  }, label: 'Env vars\nprocess.env.DB_HOST', type: 'output' },
+            { id: 'vol',     position: { x: 500, y: 220 }, label: 'Volume file\n/etc/secrets/api-key', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'cm',  target: 'pod', label: 'envFrom' },
+            { id: 'e2', source: 'sec', target: 'pod', label: 'secretRef' },
+            { id: 'e3', source: 'pod', target: 'env', label: 'injected at startup', animated: true },
+            { id: 'e4', source: 'pod', target: 'vol', label: 'mounted as file', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: `## ConfigMaps — injecting non-sensitive configuration
 
@@ -11411,6 +11481,25 @@ HMAC is used in JWT signatures (HS256), webhook verification, and API request si
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Asymmetric encryption: encrypt with public, decrypt with private',
+          nodes: [
+            { id: 'plain',    position: { x: 0,   y: 140 }, label: 'Plaintext message\n"Hello Alice"', type: 'input' },
+            { id: 'pubkey',   position: { x: 0,   y: 280 }, label: "Alice's public key\n(shared openly)", type: 'input' },
+            { id: 'encrypt',  position: { x: 260, y: 200 }, label: 'Encrypt\n(RSA / ECDH)', type: 'default' },
+            { id: 'cipher',   position: { x: 500, y: 200 }, label: 'Ciphertext\n(unreadable)', type: 'default' },
+            { id: 'privkey',  position: { x: 500, y: 340 }, label: "Alice's private key\n(secret, never shared)", type: 'input' },
+            { id: 'decrypt',  position: { x: 740, y: 260 }, label: 'Decrypt\n→ original plaintext', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'plain',   target: 'encrypt', label: 'input' },
+            { id: 'e2', source: 'pubkey',  target: 'encrypt', label: 'used to encrypt' },
+            { id: 'e3', source: 'encrypt', target: 'cipher',  label: 'produces', animated: true },
+            { id: 'e4', source: 'cipher',  target: 'decrypt', label: 'sent over network' },
+            { id: 'e5', source: 'privkey', target: 'decrypt', label: 'only Alice can decrypt' },
+          ],
+        },
+        {
           type: 'text',
           content: `## Symmetric encryption — one shared key
 
@@ -12000,6 +12089,26 @@ eas submit --platform android
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'GitHub Actions: event triggers workflow → jobs run in parallel',
+          nodes: [
+            { id: 'push',   position: { x: 0,   y: 140 }, label: 'git push\n(trigger event)', type: 'input' },
+            { id: 'wf',     position: { x: 220, y: 140 }, label: 'Workflow\n(.github/workflows/*.yml)', type: 'default' },
+            { id: 'test',   position: { x: 440, y: 40  }, label: 'Job: test\n(unit + integration)', type: 'default' },
+            { id: 'lint',   position: { x: 440, y: 140 }, label: 'Job: lint\n(ESLint / tsc)', type: 'default' },
+            { id: 'build',  position: { x: 440, y: 240 }, label: 'Job: build\n(docker build)', type: 'default' },
+            { id: 'deploy', position: { x: 660, y: 140 }, label: 'Job: deploy\n(needs: test, build)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'push',  target: 'wf',     label: 'on: push' },
+            { id: 'e2', source: 'wf',    target: 'test',   label: 'parallel' },
+            { id: 'e3', source: 'wf',    target: 'lint',   label: 'parallel' },
+            { id: 'e4', source: 'wf',    target: 'build',  label: 'parallel' },
+            { id: 'e5', source: 'test',  target: 'deploy', label: 'needs', animated: true },
+            { id: 'e6', source: 'build', target: 'deploy', label: 'needs', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: `## How GitHub Actions is structured
 
@@ -12128,6 +12237,25 @@ jobs:
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Promotion pipeline: staging → production gate',
+          nodes: [
+            { id: 'pr',      position: { x: 0,   y: 140 }, label: 'PR merged\nto main', type: 'input' },
+            { id: 'stage',   position: { x: 220, y: 140 }, label: 'Deploy to\nstaging env', type: 'default' },
+            { id: 'smoke',   position: { x: 440, y: 140 }, label: 'Smoke tests\n+ health check', type: 'decision' },
+            { id: 'approve', position: { x: 660, y: 60  }, label: 'Manual approval\n(environment protection)', type: 'decision' },
+            { id: 'prod',    position: { x: 880, y: 60  }, label: 'Deploy to\nproduction', type: 'output' },
+            { id: 'rollback',position: { x: 660, y: 240 }, label: 'Rollback /\nfix forward', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'pr',      target: 'stage',    label: 'trigger' },
+            { id: 'e2', source: 'stage',   target: 'smoke',    label: 'run tests' },
+            { id: 'e3', source: 'smoke',   target: 'approve',  label: 'pass', animated: true },
+            { id: 'e4', source: 'smoke',   target: 'rollback', label: 'fail' },
+            { id: 'e5', source: 'approve', target: 'prod',     label: 'approved', animated: true },
+          ],
+        },
         {
           type: 'text',
           content: `## Secrets — never hardcode credentials
@@ -13992,6 +14120,23 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Scope-based access: token carries scopes, API enforces them',
+          nodes: [
+            { id: 'user',   position: { x: 0,   y: 140 }, label: 'User grants\nscopes at login', type: 'input' },
+            { id: 'server', position: { x: 240, y: 140 }, label: 'Auth Server\nissues scoped token', type: 'default' },
+            { id: 'token',  position: { x: 480, y: 140 }, label: 'Access Token\n{ scope: "read:files write:files" }', type: 'default' },
+            { id: 'api',    position: { x: 720, y: 80  }, label: 'API: read /files\n(requires read:files ✓)', type: 'output' },
+            { id: 'deny',   position: { x: 720, y: 220 }, label: 'API: delete /files\n(requires admin ✗ 403)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'user',   target: 'server', label: 'consent screen' },
+            { id: 'e2', source: 'server', target: 'token',  label: 'issued', animated: true },
+            { id: 'e3', source: 'token',  target: 'api',    label: 'Bearer token', animated: true },
+            { id: 'e4', source: 'token',  target: 'deny',   label: 'scope missing' },
+          ],
+        },
+        {
           type: 'text',
           content: '## OAuth 2.0 Scopes\n\nScopes are strings that represent specific access grants. When a client requests an access token, it specifies scopes. The authorization server may grant all, some, or none:\n\n```\nGitHub scopes: repo, read:user, write:packages, admin:org\nGoogle scopes: https://www.googleapis.com/auth/gmail.readonly\nCustom API:    courses:read, courses:write, users:admin\n```\n\nThe access token carries the granted scopes. Your API validates them:\n\n```typescript\n// Middleware to require a specific scope\nfunction requireScope(scope: string) {\n  return (req: Request, res: Response, next: NextFunction) => {\n    const scopes: string[] = req.user?.scp?.split(\' \') ?? [];\n    if (!scopes.includes(scope)) {\n      return res.status(403).json({ error: `Scope ${scope} required` });\n    }\n    next();\n  };\n}\n\nrouter.post(\'/courses\', authenticate, requireScope(\'courses:write\'), createCourse);\n```',
         },
@@ -14039,6 +14184,29 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'ABAC decision: subject + resource + environment → allow/deny',
+          nodes: [
+            { id: 'req',     position: { x: 0,   y: 160 }, label: 'Access request\nUser wants to DELETE /report', type: 'input' },
+            { id: 'subject', position: { x: 260, y: 60  }, label: 'Subject attrs\nrole=editor, dept=finance', type: 'default' },
+            { id: 'resource',position: { x: 260, y: 160 }, label: 'Resource attrs\nowner=finance, sensitivity=high', type: 'default' },
+            { id: 'env',     position: { x: 260, y: 280 }, label: 'Environment\ntime=business hours, IP=internal', type: 'default' },
+            { id: 'policy',  position: { x: 520, y: 160 }, label: 'Policy engine\nevaluates all attributes', type: 'decision' },
+            { id: 'allow',   position: { x: 760, y: 80  }, label: 'ALLOW ✓', type: 'output' },
+            { id: 'deny',    position: { x: 760, y: 260 }, label: 'DENY ✗\n(403 Forbidden)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'req',      target: 'subject',  label: 'who?' },
+            { id: 'e2', source: 'req',      target: 'resource', label: 'what?' },
+            { id: 'e3', source: 'req',      target: 'env',      label: 'context?' },
+            { id: 'e4', source: 'subject',  target: 'policy',   label: 'evaluated' },
+            { id: 'e5', source: 'resource', target: 'policy',   label: 'evaluated' },
+            { id: 'e6', source: 'env',      target: 'policy',   label: 'evaluated' },
+            { id: 'e7', source: 'policy',   target: 'allow',    label: 'match', animated: true },
+            { id: 'e8', source: 'policy',   target: 'deny',     label: 'no match' },
+          ],
+        },
         {
           type: 'text',
           content: '## Attribute-Based Access Control (ABAC)\n\nRBAC binds permissions to roles. ABAC is more fine-grained — access decisions are based on **attributes** of the user, resource, and environment:\n\n```\nAllow if:\n  user.department == resource.department\n  AND user.clearanceLevel >= resource.classificationLevel\n  AND environment.time is within business hours\n```\n\nABAC enables policies like "a user can only edit their own posts" or "managers can approve requests only within their team." RBAC alone can\'t express these without creating an explosion of roles.\n\n```typescript\n// Resource-based check: can this user edit this course?\nfunction canEditCourse(user: User, course: Course): boolean {\n  if (user.role === \'admin\') return true;\n  if (user.role === \'teacher\' && course.authorId === user.id) return true;\n  return false;\n}\n\n// In the route handler\nif (!canEditCourse(req.user, course)) {\n  return res.status(403).json({ error: \'Forbidden\' });\n}\n```',
@@ -15149,6 +15317,25 @@ async function updateUserXP(userId: string, xpDelta: number) {
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'VM vs Container: layers of abstraction',
+          nodes: [
+            { id: 'hw',        position: { x: 200, y: 0   }, label: 'Physical Hardware', type: 'input' },
+            { id: 'hostos',    position: { x: 200, y: 100 }, label: 'Host OS / Kernel',  type: 'default' },
+            { id: 'hyperv',    position: { x: 0,   y: 220 }, label: 'Hypervisor\n(VMware / KVM)', type: 'default' },
+            { id: 'runtime',   position: { x: 400, y: 220 }, label: 'Container Runtime\n(Docker / containerd)', type: 'default' },
+            { id: 'guestos',   position: { x: 0,   y: 340 }, label: 'Guest OS\n(full kernel copy)', type: 'default' },
+            { id: 'container', position: { x: 400, y: 340 }, label: 'Container\n(process + libs only)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'hw',      target: 'hostos',    label: 'runs on' },
+            { id: 'e2', source: 'hostos',  target: 'hyperv',    label: 'VM path' },
+            { id: 'e3', source: 'hostos',  target: 'runtime',   label: 'container path', animated: true },
+            { id: 'e4', source: 'hyperv',  target: 'guestos',   label: 'emulates' },
+            { id: 'e5', source: 'runtime', target: 'container', label: 'isolates', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: `## The Container Revolution
 
@@ -15236,6 +15423,23 @@ This makes containers start in milliseconds and use megabytes instead of gigabyt
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Docker image lifecycle: build → push → pull → run',
+          nodes: [
+            { id: 'df',       position: { x: 0,   y: 140 }, label: 'Dockerfile', type: 'input' },
+            { id: 'build',    position: { x: 200, y: 140 }, label: 'docker build\n→ Image', type: 'default' },
+            { id: 'registry', position: { x: 400, y: 140 }, label: 'Registry\n(Docker Hub / ECR)', type: 'default' },
+            { id: 'pull',     position: { x: 600, y: 140 }, label: 'docker pull\n(on target host)', type: 'default' },
+            { id: 'run',      position: { x: 600, y: 280 }, label: 'docker run\n→ Container', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'df',       target: 'build',    label: 'reads layers' },
+            { id: 'e2', source: 'build',    target: 'registry', label: 'docker push', animated: true },
+            { id: 'e3', source: 'registry', target: 'pull',     label: 'image stored' },
+            { id: 'e4', source: 'pull',     target: 'run',      label: 'start container', animated: true },
+          ],
+        },
         {
           type: 'text',
           content: `## Docker Images are Built in Layers
@@ -15341,6 +15545,23 @@ The \`-p 3000:3000\` flag maps **host port 3000** to **container port 3000**. Wi
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Docker Compose: services communicate via internal network',
+          nodes: [
+            { id: 'nginx',  position: { x: 0,   y: 140 }, label: 'nginx\n(port 80:80)', type: 'input' },
+            { id: 'api',    position: { x: 280, y: 140 }, label: 'api\n(Node.js :3000)', type: 'default' },
+            { id: 'db',     position: { x: 560, y: 60  }, label: 'postgres\n(:5432)', type: 'default' },
+            { id: 'redis',  position: { x: 560, y: 240 }, label: 'redis\n(:6379)', type: 'default' },
+            { id: 'volume', position: { x: 560, y: 380 }, label: 'Named volume\ndb-data (persisted)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'nginx', target: 'api',    label: 'proxy_pass :3000' },
+            { id: 'e2', source: 'api',   target: 'db',     label: 'sql queries', animated: true },
+            { id: 'e3', source: 'api',   target: 'redis',  label: 'cache', animated: true },
+            { id: 'e4', source: 'db',    target: 'volume', label: 'mounts /var/lib/postgresql' },
+          ],
+        },
         {
           type: 'text',
           content: `## Real Apps Need Multiple Containers
@@ -16663,6 +16884,25 @@ Note: gRPC-Web does **not** support client streaming or bidirectional streaming 
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Three pillars: logs → metrics → traces → actionable insight',
+          nodes: [
+            { id: 'app',     position: { x: 280, y: 0   }, label: 'Running Application', type: 'input' },
+            { id: 'logs',    position: { x: 0,   y: 160 }, label: 'Logs\n(what happened?)', type: 'default' },
+            { id: 'metrics', position: { x: 280, y: 160 }, label: 'Metrics\n(how much / how fast?)', type: 'default' },
+            { id: 'traces',  position: { x: 560, y: 160 }, label: 'Traces\n(where did latency go?)', type: 'default' },
+            { id: 'insight', position: { x: 280, y: 320 }, label: 'Observability Platform\n(Datadog / Grafana / Honeycomb)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'app',     target: 'logs',    label: 'stdout / log.info()' },
+            { id: 'e2', source: 'app',     target: 'metrics', label: 'counters / gauges' },
+            { id: 'e3', source: 'app',     target: 'traces',  label: 'spans / trace IDs', animated: true },
+            { id: 'e4', source: 'logs',    target: 'insight', label: 'shipped' },
+            { id: 'e5', source: 'metrics', target: 'insight', label: 'scraped', animated: true },
+            { id: 'e6', source: 'traces',  target: 'insight', label: 'exported' },
+          ],
+        },
+        {
           type: 'text',
           content: `## What is Observability?
 
@@ -16842,6 +17082,23 @@ An average latency of 50ms looks fine — until you realize 1% of users experien
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Prometheus scrape → TSDB → Grafana → Alert pipeline',
+          nodes: [
+            { id: 'app',   position: { x: 0,   y: 140 }, label: 'App exposes\n/metrics endpoint', type: 'input' },
+            { id: 'prom',  position: { x: 220, y: 140 }, label: 'Prometheus\nscrapes every 15s', type: 'default' },
+            { id: 'tsdb',  position: { x: 440, y: 140 }, label: 'Time-series DB\n(local TSDB)', type: 'default' },
+            { id: 'graf',  position: { x: 660, y: 80  }, label: 'Grafana\n(dashboards)', type: 'output' },
+            { id: 'alert', position: { x: 660, y: 220 }, label: 'Alertmanager\n(PagerDuty / Slack)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'app',  target: 'prom',  label: 'pull /metrics', animated: true },
+            { id: 'e2', source: 'prom', target: 'tsdb',  label: 'store samples' },
+            { id: 'e3', source: 'tsdb', target: 'graf',  label: 'PromQL queries', animated: true },
+            { id: 'e4', source: 'tsdb', target: 'alert', label: 'rule evaluation' },
+          ],
+        },
         {
           type: 'text',
           content: `## Prometheus
