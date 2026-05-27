@@ -3946,6 +3946,29 @@ HAVING COUNT(*) > 10
 ORDER BY learner_count DESC;`,
         },
         {
+          type: 'flowDiagram',
+          title: 'SQL logical execution order (not writing order)',
+          nodes: [
+            { id: 'from', position: { x: 0, y: 160 }, label: '1. FROM\n(identify tables)', type: 'input' },
+            { id: 'join', position: { x: 140, y: 160 }, label: '2. JOIN\n(combine rows)', type: 'default' },
+            { id: 'where', position: { x: 280, y: 160 }, label: '3. WHERE\n(filter rows)', type: 'default' },
+            { id: 'group', position: { x: 420, y: 160 }, label: '4. GROUP BY\n(aggregate)', type: 'default' },
+            { id: 'having', position: { x: 560, y: 160 }, label: '5. HAVING\n(filter groups)', type: 'default' },
+            { id: 'select', position: { x: 420, y: 60 }, label: '6. SELECT\n(project cols)', type: 'default' },
+            { id: 'order', position: { x: 280, y: 60 }, label: '7. ORDER BY\n(sort)', type: 'default' },
+            { id: 'limit', position: { x: 140, y: 60 }, label: '8. LIMIT\n(paginate)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'from', target: 'join' },
+            { id: 'e2', source: 'join', target: 'where' },
+            { id: 'e3', source: 'where', target: 'group' },
+            { id: 'e4', source: 'group', target: 'having' },
+            { id: 'e5', source: 'having', target: 'select' },
+            { id: 'e6', source: 'select', target: 'order' },
+            { id: 'e7', source: 'order', target: 'limit' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'Execution order is not reading order',
@@ -8738,6 +8761,24 @@ Each entry is 10 characters:
 | 8-10 | **Others** permissions |
 
 So \`-rwxr-xr--\` means: file, owner can read/write/execute, group can read/execute, others can only read.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Linux permission bits: -rwxr-xr-- decoded',
+          nodes: [
+            { id: 'type', position: { x: 0, y: 80 }, label: 'Type\n- (file)\nd (dir)\nl (link)', type: 'input' },
+            { id: 'owner', position: { x: 180, y: 80 }, label: 'Owner\nrwx = 7\nr/w/execute', type: 'default' },
+            { id: 'group', position: { x: 360, y: 80 }, label: 'Group\nr-x = 5\nread/execute', type: 'default' },
+            { id: 'others', position: { x: 540, y: 80 }, label: 'Others\nr-- = 4\nread only', type: 'output' },
+            { id: 'example', position: { x: 270, y: 200 }, label: '-rwxr-xr--\n→ chmod 754', type: 'default' },
+          ],
+          edges: [
+            { id: 'e1', source: 'type', target: 'owner' },
+            { id: 'e2', source: 'owner', target: 'group' },
+            { id: 'e3', source: 'group', target: 'others' },
+            { id: 'e4', source: 'type', target: 'example' },
+            { id: 'e5', source: 'others', target: 'example' },
+          ],
         },
         {
           type: 'text',
@@ -15598,6 +15639,25 @@ The difference matters in microservices: a cascading failure might not trip any 
           variant: 'info',
           title: 'Monitoring vs Observability',
           content: 'Monitoring answers "is this service up?" — a yes/no question. Observability answers "what is this service doing, and why is it behaving that way?" The first tells you something is wrong; the second helps you understand what.',
+        },
+        {
+          type: 'flowDiagram',
+          title: 'The three pillars: what each tells you about a failing request',
+          nodes: [
+            { id: 'incident', position: { x: 240, y: 280 }, label: 'Production Incident\n"checkout is slow"', type: 'input' },
+            { id: 'metrics', position: { x: 60, y: 140 }, label: 'Metrics\n"p99 = 3.2s, spike at 14:23"', type: 'default' },
+            { id: 'traces', position: { x: 240, y: 140 }, label: 'Traces\n"DB query takes 2.8s"', type: 'default' },
+            { id: 'logs', position: { x: 420, y: 140 }, label: 'Logs\n"Pool exhausted: queue=32"', type: 'default' },
+            { id: 'fix', position: { x: 240, y: 20 }, label: 'Root Cause\nDB connection pool too small', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'incident', target: 'metrics', label: 'when?' },
+            { id: 'e2', source: 'incident', target: 'traces', label: 'where?' },
+            { id: 'e3', source: 'incident', target: 'logs', label: 'why?' },
+            { id: 'e4', source: 'metrics', target: 'fix' },
+            { id: 'e5', source: 'traces', target: 'fix' },
+            { id: 'e6', source: 'logs', target: 'fix' },
+          ],
         },
         {
           type: 'text',
