@@ -1,6 +1,7 @@
 import ReactFlow, {
-  Background, Controls,
-  type Node, type Edge,
+  Background, Controls, EdgeLabelRenderer, BaseEdge,
+  getSmoothStepPath,
+  type Node, type EdgeProps,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import type { FlowDiagramSection as FlowDiagramSectionType } from '@study-guild/shared';
@@ -8,6 +9,44 @@ import type { FlowDiagramSection as FlowDiagramSectionType } from '@study-guild/
 interface Props {
   section: FlowDiagramSectionType;
 }
+
+function LabeledEdge({
+  id, sourceX, sourceY, targetX, targetY,
+  sourcePosition, targetPosition, label, data, style,
+}: EdgeProps) {
+  const [edgePath, labelX, labelY] = getSmoothStepPath({
+    sourceX, sourceY, sourcePosition,
+    targetX, targetY, targetPosition,
+  });
+
+  return (
+    <>
+      <BaseEdge
+        id={id}
+        path={edgePath}
+        style={style}
+        className={data?.animated ? 'react-flow__edge-path animated' : undefined}
+      />
+      {label && (
+        <EdgeLabelRenderer>
+          <div
+            style={{
+              position: 'absolute',
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+              pointerEvents: 'all',
+              zIndex: 10,
+            }}
+            className="nodrag nopan text-xs font-medium text-slate-200 bg-slate-800 px-2 py-0.5 rounded border border-slate-600 whitespace-pre-line text-center leading-tight"
+          >
+            {label as string}
+          </div>
+        </EdgeLabelRenderer>
+      )}
+    </>
+  );
+}
+
+const edgeTypes = { labeled: LabeledEdge };
 
 export default function FlowDiagramSection({ section }: Props) {
   const nodes: Node[] = section.nodes.map(n => ({
@@ -18,14 +57,14 @@ export default function FlowDiagramSection({ section }: Props) {
     style: nodeStyle(n.type),
   }));
 
-  const edges: Edge[] = section.edges.map(e => ({
+  const edges = section.edges.map(e => ({
     id: e.id,
     source: e.source,
     target: e.target,
     label: e.label,
-    animated: e.animated ?? false,
-    style: { stroke: '#7C3AED' },
-    labelStyle: { fill: '#94a3b8', fontSize: 11 },
+    type: 'labeled',
+    style: { stroke: '#7C3AED', strokeWidth: 1.5 },
+    data: { animated: e.animated ?? false },
   }));
 
   return (
@@ -35,10 +74,11 @@ export default function FlowDiagramSection({ section }: Props) {
           {section.title}
         </div>
       )}
-      <div style={{ height: 320 }} className="bg-slate-950">
+      <div style={{ height: 360 }} className="bg-slate-950">
         <ReactFlow
           nodes={nodes}
           edges={edges}
+          edgeTypes={edgeTypes}
           fitView
           nodesDraggable={false}
           nodesConnectable={false}
