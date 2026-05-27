@@ -23,7 +23,7 @@ function ok(data: unknown) {
   return Promise.resolve({ data: { data }, status: 200, statusText: 'OK', headers: {}, config: {} });
 }
 
-function resolveMock(url: string, method: string, body?: string) {
+export function resolveMock(url: string, method: string, body?: string) {
   const parsed = (() => { try { return JSON.parse(body ?? '{}'); } catch { return {}; } })();
 
   // Users
