@@ -34,11 +34,12 @@ interface Props {
   rankUp?: { from: GuildRank; to: GuildRank };
   newAchievements?: string[];
   onDismiss: () => void;
+  onViewCertificate?: () => void;
 }
 
 const AUTO_DISMISS_SECONDS = 6;
 
-export default function XPRewardOverlay({ xpGained, breakdown, newXP, courseComplete, rankUp, newAchievements, onDismiss }: Props) {
+export default function XPRewardOverlay({ xpGained, breakdown, newXP, courseComplete, rankUp, newAchievements, onDismiss, onViewCertificate }: Props) {
   const [displayXP, setDisplayXP] = useState(0);
   const [xpPopped, setXpPopped] = useState(false);
   const [countdown, setCountdown] = useState(AUTO_DISMISS_SECONDS);
@@ -225,6 +226,16 @@ export default function XPRewardOverlay({ xpGained, breakdown, newXP, courseComp
             />
           </div>
         </div>
+
+        {/* Certificate button for course completion */}
+        {isCourseComplete && onViewCertificate && (
+          <button
+            onClick={() => { onDismiss(); setTimeout(onViewCertificate, 50); }}
+            className="mb-3 w-full rounded-xl border border-amber-300/50 bg-amber-500/10 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-500/20"
+          >
+            View Certificate
+          </button>
+        )}
 
         {/* Continue button with countdown */}
         <button

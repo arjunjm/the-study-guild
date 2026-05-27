@@ -485,6 +485,7 @@ function LessonPageContent({
         <XPRewardOverlay
           {...reward}
           onDismiss={onDismissReward}
+          onViewCertificate={reward.courseComplete ? () => navigate(`/courses/${courseId}?cert=1`) : undefined}
         />
       )}
     </>

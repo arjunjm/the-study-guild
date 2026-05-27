@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Share2, Star, Clock, CheckCircle, Circle, ChevronLeft, BookOpen, ArrowRight, Code2, HelpCircle, GitFork, Award, Download, X, ExternalLink, Bookmark } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
@@ -7,15 +7,16 @@ import { TAXONOMY } from '../data/taxonomy';
 import { cn } from '../lib/utils';
 import { useToast } from '../contexts/ToastContext';
 import { getTopicResources, RESOURCE_TYPE_LABELS, RESOURCE_TYPE_COLORS } from '../data/topicResources';
-import type { Course, Lesson, UserCourseProgress } from '@study-guild/shared';
+import type { Course, Lesson, UserCourseProgress, UserProfile } from '@study-guild/shared';
 
 export default function CourseDetailPage() {
   const { courseId } = useParams<{ courseId: string }>();
+  const [searchParams] = useSearchParams();
   const qc = useQueryClient();
   const toast = useToast();
   const [hoveredRating, setHoveredRating] = useState(0);
   const [submittedRating, setSubmittedRating] = useState(0);
-  const [showCert, setShowCert] = useState(false);
+  const [showCert, setShowCert] = useState(() => searchParams.get('cert') === '1');
   const [bookmarked, setBookmarked] = useState(() => {
     try { return new Set<string>(JSON.parse(localStorage.getItem('sg-bookmarks') ?? '[]')).has(courseId ?? ''); }
     catch { return false; }
@@ -53,6 +54,10 @@ export default function CourseDetailPage() {
     },
     enabled: !!course,
     select: (data) => data.filter(c => c.id !== courseId).slice(0, 3),
+  });
+  const { data: me } = useQuery<UserProfile>({
+    queryKey: ['me'],
+    queryFn: async () => (await apiClient.get<{ data: UserProfile }>('/users/me')).data.data,
   });
   const rateMutation = useMutation({
     mutationFn: (rating: number) => apiClient.post(`/courses/${courseId}/rate`, { rating }),
@@ -480,7 +485,7 @@ export default function CourseDetailPage() {
 
             <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">Certificate of Completion</p>
             <p className="mb-1 text-sm text-slate-500">This certifies that</p>
-            <p className="mb-3 font-display text-2xl font-bold text-slate-900">Guild Member</p>
+            <p className="mb-3 font-display text-2xl font-bold text-slate-900">{me?.displayName || 'Guild Member'}</p>
             <p className="mb-1 text-sm text-slate-500">has successfully completed</p>
             <p className="mb-6 font-display text-xl font-bold text-amber-600 leading-snug">{course.title}</p>
 
@@ -507,15 +512,24 @@ export default function CourseDetailPage() {
 
             <p className="mb-6 text-xs text-slate-400">The Study Guild · {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(`I just completed "${course.title}" on The Study Guild! 🎓`).then(() => toast.success('Copied to clipboard!', 'Share your achievement'));
-              }}
-              className="flex items-center gap-2 mx-auto rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
-            >
-              <Download className="h-4 w-4" />
-              Share achievement
-            </button>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={() => window.print()}
+                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+              >
+                <Download className="h-4 w-4" />
+                Print
+              </button>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`I just completed "${course.title}" on The Study Guild! 🎓`).then(() => toast.success('Copied to clipboard!', 'Share your achievement'));
+                }}
+                className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+              >
+                <Share2 className="h-4 w-4" />
+                Share
+              </button>
+            </div>
           </div>
         </div>
       </div>
