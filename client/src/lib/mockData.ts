@@ -9736,6 +9736,25 @@ sudo visudo                   # safely edit sudoers
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Shell script execution: exit codes control flow',
+          nodes: [
+            { id: 'script', position: { x: 0, y: 100 }, label: 'Shell script\n(set -euo pipefail)', type: 'input' },
+            { id: 'cmd1', position: { x: 200, y: 100 }, label: 'npm run build', type: 'default' },
+            { id: 'ok', position: { x: 400, y: 40 }, label: 'Exit code 0\n(success)', type: 'default' },
+            { id: 'fail', position: { x: 400, y: 180 }, label: 'Exit code ≠ 0\n(failure)', type: 'default' },
+            { id: 'next', position: { x: 600, y: 40 }, label: 'Next command\n(rsync deploy)', type: 'output' },
+            { id: 'abort', position: { x: 600, y: 180 }, label: 'Script exits\n(with error code)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'script', target: 'cmd1', label: 'runs' },
+            { id: 'e2', source: 'cmd1', target: 'ok', label: 'build succeeds' },
+            { id: 'e3', source: 'cmd1', target: 'fail', label: 'build fails' },
+            { id: 'e4', source: 'ok', target: 'next', label: 'set -e: continue' },
+            { id: 'e5', source: 'fail', target: 'abort', label: 'set -e: abort' },
+          ],
+        },
+        {
           type: 'text',
           content: `## Writing your first shell script
 
@@ -10631,6 +10650,27 @@ app.get('/users', asyncHandler(async (req, res) => {
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Express middleware pipeline: next() passes control forward',
+          nodes: [
+            { id: 'req', position: { x: 0, y: 100 }, label: 'HTTP Request', type: 'input' },
+            { id: 'json', position: { x: 180, y: 100 }, label: 'express.json()\n(parse body)', type: 'default' },
+            { id: 'cors', position: { x: 340, y: 100 }, label: 'cors()\n(CORS headers)', type: 'default' },
+            { id: 'auth', position: { x: 500, y: 100 }, label: 'authenticate()\n(verify JWT)', type: 'default' },
+            { id: 'handler', position: { x: 660, y: 100 }, label: 'Route handler\n(business logic)', type: 'default' },
+            { id: 'res', position: { x: 820, y: 100 }, label: 'HTTP Response', type: 'output' },
+            { id: 'err', position: { x: 500, y: 240 }, label: 'Error handler\n(4-arg middleware)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'req', target: 'json', label: 'next()' },
+            { id: 'e2', source: 'json', target: 'cors', label: 'next()' },
+            { id: 'e3', source: 'cors', target: 'auth', label: 'next()' },
+            { id: 'e4', source: 'auth', target: 'handler', label: 'next()' },
+            { id: 'e5', source: 'handler', target: 'res', label: 'res.json()' },
+            { id: 'e6', source: 'auth', target: 'err', label: 'next(error)' },
+          ],
+        },
         {
           type: 'text',
           content: `## Express request lifecycle
