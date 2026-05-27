@@ -6325,6 +6325,25 @@ TypeScript is a **superset of JavaScript** — all valid JavaScript is valid Typ
 The key insight: TypeScript types exist **only at compile time**. At runtime, your code is JavaScript. TypeScript gives you a safety net during development, not a runtime validator.`,
         },
         {
+          type: 'flowDiagram',
+          title: 'TypeScript toolchain: from .ts source to browser',
+          nodes: [
+            { id: 'ts', position: { x: 0, y: 80 }, label: '.ts source\n(your code)', type: 'input' },
+            { id: 'check', position: { x: 180, y: 80 }, label: 'tsc type checker\n(errors if wrong)', type: 'default' },
+            { id: 'js', position: { x: 360, y: 80 }, label: '.js output\n(types erased)', type: 'default' },
+            { id: 'bundle', position: { x: 540, y: 80 }, label: 'Bundler\n(Vite / esbuild)', type: 'default' },
+            { id: 'browser', position: { x: 720, y: 80 }, label: 'Browser\n(runs JS only)', type: 'output' },
+            { id: 'fail', position: { x: 180, y: 200 }, label: 'Type Error\n(build fails)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'ts', target: 'check' },
+            { id: 'e2', source: 'check', target: 'js', label: 'types OK' },
+            { id: 'e3', source: 'check', target: 'fail', label: 'type error' },
+            { id: 'e4', source: 'js', target: 'bundle' },
+            { id: 'e5', source: 'bundle', target: 'browser' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'Type inference is powerful — annotate at boundaries only',
@@ -6499,6 +6518,21 @@ interface ApiResponse<T> {
 
 type CourseResponse = ApiResponse<Course>;       // { data: Course, status: number, ... }
 type CoursesResponse = ApiResponse<Course[]>;    // { data: Course[], ... }`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Generic type resolution: T flows from call site to return type',
+          nodes: [
+            { id: 'call', position: { x: 0, y: 80 }, label: 'first([1, 2, 3])\ncall site', type: 'input' },
+            { id: 'infer', position: { x: 220, y: 80 }, label: 'TypeScript infers\nT = number', type: 'default' },
+            { id: 'sig', position: { x: 440, y: 80 }, label: 'first<number>(arr: number[])\n: number | undefined', type: 'default' },
+            { id: 'result', position: { x: 660, y: 80 }, label: 'const n: number | undefined\n(fully typed!)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'call', target: 'infer', label: 'argument type' },
+            { id: 'e2', source: 'infer', target: 'sig', label: 'T bound' },
+            { id: 'e3', source: 'sig', target: 'result', label: 'return type' },
+          ],
         },
         {
           type: 'text',
