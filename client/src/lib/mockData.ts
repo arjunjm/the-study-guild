@@ -13573,6 +13573,27 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
           content: '## Measure, Don\'t Guess\n\nPerformance intuition is notoriously wrong. The bottleneck is almost never where you think it is. The first rule: **profile before optimising**. Optimising unmeasured code is premature — you\'ll spend time on code that isn\'t the bottleneck.\n\n## The USE Method\n\nFor every resource in your system, check three metrics:\n- **Utilisation** — how busy is it? (CPU %, disk %, network %)\n- **Saturation** — is it overloaded? (queue depth, context switches, disk I/O wait)\n- **Errors** — is it failing? (packet drops, disk errors, segfaults)\n\n```bash\n# CPU utilisation and load average\ntop -bn1\nmpstat -P ALL 1\n\n# Memory — free, cached, swap usage\nfree -h\nvmstat 1 5\n\n# Disk I/O\niostat -xz 1\n\n# Network\nss -s               # socket statistics\nsar -n DEV 1       # network interface stats\n```',
         },
         {
+          type: 'flowDiagram',
+          title: 'Memory hierarchy: latency from CPU to disk',
+          nodes: [
+            { id: 'l1', position: { x: 240, y: 0 }, label: 'L1 Cache\n~1ns, 32–64KB', type: 'input' },
+            { id: 'l2', position: { x: 240, y: 70 }, label: 'L2 Cache\n~4ns, 256KB–1MB', type: 'default' },
+            { id: 'l3', position: { x: 240, y: 140 }, label: 'L3 Cache\n~15ns, 4–32MB', type: 'default' },
+            { id: 'dram', position: { x: 240, y: 210 }, label: 'DRAM (RAM)\n~60ns', type: 'default' },
+            { id: 'ssd', position: { x: 240, y: 280 }, label: 'SSD (NVMe)\n~100µs (100,000ns)', type: 'default' },
+            { id: 'net', position: { x: 240, y: 350 }, label: 'Network (same DC)\n~0.5ms', type: 'default' },
+            { id: 'disk', position: { x: 240, y: 420 }, label: 'HDD / Remote DB\n10ms–100ms', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'l1', target: 'l2', label: '4×' },
+            { id: 'e2', source: 'l2', target: 'l3', label: '4×' },
+            { id: 'e3', source: 'l3', target: 'dram', label: '4×' },
+            { id: 'e4', source: 'dram', target: 'ssd', label: '1,600×' },
+            { id: 'e5', source: 'ssd', target: 'net', label: '5×' },
+            { id: 'e6', source: 'net', target: 'disk', label: '100×' },
+          ],
+        },
+        {
           type: 'text',
           content: '## Latency Percentiles\n\nAverage latency hides the tail. A 99th percentile (p99) of 2s means 1% of users wait over 2 seconds — that\'s 1 in 100 requests.\n\n```\np50 (median): 12ms  — half of requests faster\np90:          45ms  — 90% of requests faster\np99:         230ms  — 99% of requests faster\np99.9:      1800ms  — 0.1% of requests take 1.8s\n```\n\nFor user-facing services, optimise the tail (p99, p99.9) not just the median. Tail latency often comes from GC pauses, lock contention, cold caches, or slow DNS.\n\n## Flame Graphs\n\nFlame graphs visualise where CPU time is spent across all stack frames. The x-axis is time (not order); the y-axis is stack depth. Wide bars at the top of the flame are your hotspots.\n\n```bash\n# Profile a Node.js process\nnode --prof app.js &\nnpm run loadtest\nkill %1\nnode --prof-process isolate-*.log > profile.txt\n\n# Linux perf (system-wide)\nperf record -F 99 -p <pid> -g -- sleep 30\nperf script | stackcollapse-perf.pl | flamegraph.pl > flame.svg\n```',
         },
