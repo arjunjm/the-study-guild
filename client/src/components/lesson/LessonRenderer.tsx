@@ -12,6 +12,23 @@ import QuizSection from './QuizSection';
 // Match the oneDark background so the header blends in
 const CODE_BG = '#282c34';
 
+function InlineMarkdown({ text, className }: { text: string; className?: string }) {
+  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
+  return (
+    <span className={className}>
+      {parts.map((part, i) => {
+        if (part.startsWith('`') && part.endsWith('`')) {
+          return <code key={i} className="rounded bg-black/10 px-1 py-0.5 font-mono text-[0.85em]">{part.slice(1, -1)}</code>;
+        }
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
+        }
+        return part;
+      })}
+    </span>
+  );
+}
+
 interface Props {
   content: LessonContent;
   onComplete: (quizScore?: number) => void;
@@ -146,7 +163,7 @@ function SectionRenderer({ section, onQuizDone }: { section: LessonSection; onQu
               <p className={`text-xs font-semibold uppercase tracking-wide ${styles.label}`}>{section.title}</p>
             </div>
           )}
-          <p className={`text-sm leading-relaxed ${styles.text}`}>{section.content}</p>
+          <InlineMarkdown text={section.content} className={`text-sm leading-relaxed ${styles.text}`} />
         </div>
       );
     }

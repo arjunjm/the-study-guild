@@ -2,6 +2,20 @@ import { useState } from 'react';
 import { CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 import type { QuizSection as QuizSectionType } from '@study-guild/shared';
 
+function InlineCode({ text }: { text: string }) {
+  const parts = text.split(/(`[^`]+`)/g);
+  if (parts.length === 1) return <>{text}</>;
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.startsWith('`') && part.endsWith('`')
+          ? <code key={i} className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[0.85em] text-slate-700">{part.slice(1, -1)}</code>
+          : part
+      )}
+    </>
+  );
+}
+
 interface Props {
   section: QuizSectionType;
   onDone: (score: number) => void;
@@ -40,11 +54,26 @@ export default function QuizSection({ section, onDone }: Props) {
       </div>
 
       <div className="p-5 space-y-7">
+        {!submitted && section.questions.length > 1 && (
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1">
+              {section.questions.map(q => (
+                <div
+                  key={q.id}
+                  className={`h-1.5 w-4 rounded-full transition-colors ${answers[q.id] !== undefined ? 'bg-violet-500' : 'bg-slate-200'}`}
+                />
+              ))}
+            </div>
+            <span className="text-[11px] text-slate-400">
+              {Object.keys(answers).length}/{section.questions.length} answered
+            </span>
+          </div>
+        )}
         {section.questions.map((q, qi) => (
           <div key={q.id}>
             <p className="mb-3 text-sm font-medium text-slate-800">
               <span className="mr-2 text-xs text-slate-400">{String(qi + 1).padStart(2, '0')}.</span>
-              {q.question}
+              <InlineCode text={q.question} />
             </p>
             <div className="space-y-2">
               {q.options.map((opt, oi) => {
@@ -67,7 +96,7 @@ export default function QuizSection({ section, onDone }: Props) {
                         : 'border-slate-200 bg-white text-slate-600 hover:border-violet-300 hover:bg-white hover:text-slate-800'}`}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <span>{opt}</span>
+                      <InlineCode text={opt} />
                       {isCorrect && <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600" />}
                       {isWrong && <XCircle className="h-4 w-4 shrink-0 text-red-600" />}
                     </div>
@@ -77,7 +106,7 @@ export default function QuizSection({ section, onDone }: Props) {
             </div>
             {submitted && q.explanation && (
               <div className="mt-2 rounded-lg bg-white border border-slate-200 px-3 py-2 text-xs text-slate-500 leading-relaxed">
-                💡 {q.explanation}
+                💡 <InlineCode text={q.explanation} />
               </div>
             )}
           </div>
