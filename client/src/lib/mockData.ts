@@ -3050,6 +3050,26 @@ clearTimeout(timerRef.current);
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Custom hook: shared logic extracted from two components',
+          nodes: [
+            { id: 'compA', position: { x: 0, y: 40 }, label: 'ComponentA\n(needs fetched data)', type: 'input' },
+            { id: 'compB', position: { x: 0, y: 160 }, label: 'ComponentB\n(needs same data)', type: 'input' },
+            { id: 'hook', position: { x: 280, y: 100 }, label: 'useFetchUser(id)\ncustom hook', type: 'default' },
+            { id: 'state', position: { x: 500, y: 60 }, label: 'useState\n(data, loading, error)', type: 'default' },
+            { id: 'effect', position: { x: 500, y: 160 }, label: 'useEffect\n(fetch on id change)', type: 'default' },
+            { id: 'api', position: { x: 720, y: 100 }, label: 'GET /api/users/:id', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'compA', target: 'hook', label: 'calls' },
+            { id: 'e2', source: 'compB', target: 'hook', label: 'calls' },
+            { id: 'e3', source: 'hook', target: 'state' },
+            { id: 'e4', source: 'hook', target: 'effect' },
+            { id: 'e5', source: 'effect', target: 'api', label: 'fetch' },
+            { id: 'e6', source: 'api', target: 'state', label: 'setData()', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: `## What is a custom hook?
 
@@ -3326,6 +3346,25 @@ LLMs don't "understand" your intent — they predict the most probable next toke
 The difference between a mediocre and excellent prompt for the same task is rarely about the model — it's about **context, constraints, and format instructions**.`,
         },
         {
+          type: 'flowDiagram',
+          title: 'Four layers of a well-structured prompt',
+          nodes: [
+            { id: 'role', position: { x: 0, y: 100 }, label: 'Role\n"You are a …"', type: 'input' },
+            { id: 'context', position: { x: 200, y: 100 }, label: 'Context\n(background info)', type: 'default' },
+            { id: 'task', position: { x: 400, y: 100 }, label: 'Task\n(specific request)', type: 'default' },
+            { id: 'format', position: { x: 600, y: 100 }, label: 'Format\n(length, structure,\nconstraints)', type: 'default' },
+            { id: 'model', position: { x: 800, y: 100 }, label: 'LLM\n(token prediction)', type: 'default' },
+            { id: 'output', position: { x: 1000, y: 100 }, label: 'Aligned\noutput', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'role', target: 'context' },
+            { id: 'e2', source: 'context', target: 'task' },
+            { id: 'e3', source: 'task', target: 'format' },
+            { id: 'e4', source: 'format', target: 'model', label: 'shapes token\nprobabilities' },
+            { id: 'e5', source: 'model', target: 'output' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'The four elements of a strong prompt',
@@ -3448,6 +3487,25 @@ When reviewing code, always:
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Chain-of-thought: reasoning steps improve final accuracy',
+          nodes: [
+            { id: 'q', position: { x: 0, y: 100 }, label: 'User question\n(complex reasoning)', type: 'input' },
+            { id: 'direct', position: { x: 220, y: 40 }, label: 'Direct answer\n(no CoT)', type: 'default' },
+            { id: 'cot', position: { x: 220, y: 160 }, label: '"Think step by step"\n(CoT)', type: 'default' },
+            { id: 'wrong', position: { x: 440, y: 40 }, label: 'Often wrong\n(single-step guess)', type: 'output' },
+            { id: 'steps', position: { x: 440, y: 160 }, label: 'Intermediate\nreasoning steps', type: 'default' },
+            { id: 'correct', position: { x: 660, y: 160 }, label: 'More accurate\nfinal answer', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'q', target: 'direct', label: 'zero-shot' },
+            { id: 'e2', source: 'q', target: 'cot', label: 'with CoT trigger' },
+            { id: 'e3', source: 'direct', target: 'wrong' },
+            { id: 'e4', source: 'cot', target: 'steps', label: 'generates context' },
+            { id: 'e5', source: 'steps', target: 'correct', label: 'grounds final answer' },
+          ],
+        },
         {
           type: 'text',
           content: `## Chain-of-thought (CoT) prompting
@@ -3579,6 +3637,26 @@ const response = await client.messages.create({
           content: `## Why "it works in the playground" isn't enough
 
 Prompts behave differently across model versions, temperatures, and user inputs you didn't test. Before shipping to production, you need a systematic way to measure quality — an **eval suite**.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'LLM eval pipeline: measure quality before shipping',
+          nodes: [
+            { id: 'prompt', position: { x: 0, y: 100 }, label: 'Prompt change\n(new version)', type: 'input' },
+            { id: 'cases', position: { x: 200, y: 100 }, label: 'Eval dataset\n(inputs + criteria)', type: 'default' },
+            { id: 'llm', position: { x: 400, y: 100 }, label: 'LLM API\n(generates outputs)', type: 'default' },
+            { id: 'grader', position: { x: 600, y: 100 }, label: 'Grader\n(rule-based or LLM-as-judge)', type: 'default' },
+            { id: 'pass', position: { x: 800, y: 40 }, label: 'Pass ✓\nDeploy to prod', type: 'output' },
+            { id: 'fail', position: { x: 800, y: 160 }, label: 'Fail ✗\nIterate on prompt', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'prompt', target: 'cases', label: 'run against' },
+            { id: 'e2', source: 'cases', target: 'llm', label: 'each input' },
+            { id: 'e3', source: 'llm', target: 'grader', label: 'output' },
+            { id: 'e4', source: 'grader', target: 'pass', label: 'score ≥ threshold' },
+            { id: 'e5', source: 'grader', target: 'fail', label: 'score < threshold' },
+            { id: 'e6', source: 'fail', target: 'prompt', label: 'fix & retry', animated: true },
+          ],
         },
         {
           type: 'callout',
