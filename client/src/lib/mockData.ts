@@ -5986,6 +5986,23 @@ The six constraints:
 6. **Code on Demand** (optional) — server can send executable code`,
         },
         {
+          type: 'flowDiagram',
+          title: 'REST request lifecycle: stateless, layered, cacheable',
+          nodes: [
+            { id: 'client', position: { x: 0, y: 100 }, label: 'Client\n(browser, mobile, service)', type: 'input' },
+            { id: 'cache', position: { x: 220, y: 100 }, label: 'CDN / Reverse Proxy\n(cache layer)', type: 'default' },
+            { id: 'server', position: { x: 440, y: 100 }, label: 'API Server\n(stateless handler)', type: 'default' },
+            { id: 'db', position: { x: 660, y: 100 }, label: 'Database\n(state lives here)', type: 'output' },
+            { id: 'hit', position: { x: 220, y: 220 }, label: 'Cache hit\n(no server request)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'client', target: 'cache', label: 'GET /courses\n(with cache headers)' },
+            { id: 'e2', source: 'cache', target: 'server', label: 'cache miss\n(proxy to origin)' },
+            { id: 'e3', source: 'server', target: 'db', label: 'query' },
+            { id: 'e4', source: 'cache', target: 'hit', label: 'cache hit\n(200 + cached body)' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'REST vs. HTTP verbs',
@@ -9984,6 +10001,28 @@ echo "Deploy complete: $TIMESTAMP"`,
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Training loop: forward pass → loss → gradient → update',
+          nodes: [
+            { id: 'data', position: { x: 0, y: 100 }, label: 'Training batch\n(features + labels)', type: 'input' },
+            { id: 'model', position: { x: 200, y: 100 }, label: 'Model\n(parameters W, b)', type: 'default' },
+            { id: 'pred', position: { x: 400, y: 100 }, label: 'Predictions\nforward pass', type: 'default' },
+            { id: 'loss', position: { x: 600, y: 100 }, label: 'Loss function\n(MSE / cross-entropy)', type: 'default' },
+            { id: 'grad', position: { x: 600, y: 220 }, label: 'Gradients\n(backpropagation)', type: 'default' },
+            { id: 'update', position: { x: 200, y: 220 }, label: 'Parameter update\nW = W − lr * ∇W', type: 'default' },
+            { id: 'converge', position: { x: 0, y: 220 }, label: 'Loss → minimum\n(model trained)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'data', target: 'model', label: 'input x' },
+            { id: 'e2', source: 'model', target: 'pred', label: 'ŷ = f(x, W)' },
+            { id: 'e3', source: 'pred', target: 'loss', label: 'compare to y' },
+            { id: 'e4', source: 'loss', target: 'grad', label: '∂L/∂W' },
+            { id: 'e5', source: 'grad', target: 'update' },
+            { id: 'e6', source: 'update', target: 'model', label: 'new W', animated: true },
+            { id: 'e7', source: 'update', target: 'converge', label: 'over epochs' },
+          ],
+        },
+        {
           type: 'text',
           content: `## What is machine learning?
 
@@ -11156,6 +11195,27 @@ A hash function takes arbitrary input and produces a **fixed-length output** (th
 | **Pre-image resistant** | Can't reverse the digest back to input |
 | **Collision resistant** | Extremely hard to find two inputs with the same digest |
 | **Avalanche effect** | Tiny input change → completely different digest |`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Hashing vs password hashing: different algorithms for different purposes',
+          nodes: [
+            { id: 'input', position: { x: 0, y: 100 }, label: 'Input data\n(any length)', type: 'input' },
+            { id: 'sha', position: { x: 220, y: 40 }, label: 'SHA-256\n(fast, deterministic)', type: 'default' },
+            { id: 'bcrypt', position: { x: 220, y: 160 }, label: 'bcrypt / Argon2\n(slow, salted)', type: 'default' },
+            { id: 'digest', position: { x: 440, y: 40 }, label: '256-bit digest\n(microseconds)', type: 'output' },
+            { id: 'phash', position: { x: 440, y: 160 }, label: 'Password hash\n(100ms+ intentional)', type: 'output' },
+            { id: 'usecase_sha', position: { x: 660, y: 40 }, label: 'File integrity\nDigital signatures\nHMAC', type: 'output' },
+            { id: 'usecase_pw', position: { x: 660, y: 160 }, label: 'User passwords\n(brute-force resistant)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'input', target: 'sha', label: 'general' },
+            { id: 'e2', source: 'input', target: 'bcrypt', label: 'passwords' },
+            { id: 'e3', source: 'sha', target: 'digest' },
+            { id: 'e4', source: 'bcrypt', target: 'phash' },
+            { id: 'e5', source: 'digest', target: 'usecase_sha' },
+            { id: 'e6', source: 'phash', target: 'usecase_pw' },
+          ],
         },
         {
           type: 'callout',
@@ -16019,6 +16079,26 @@ Under the hood, gRPC uses:
 | Type safety | Generated client optional | Always generated, always typed |
 | Browser support | Native | Needs grpc-web proxy |
 | Best for | Public APIs, browser clients | Internal service-to-service |`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'gRPC request flow: proto schema drives code generation',
+          nodes: [
+            { id: 'proto', position: { x: 0, y: 100 }, label: 'service.proto\n(schema source of truth)', type: 'input' },
+            { id: 'gen_client', position: { x: 220, y: 40 }, label: 'Generated client stub\n(TypeScript / Go / Python)', type: 'default' },
+            { id: 'gen_server', position: { x: 220, y: 160 }, label: 'Generated server interface\n(implement your logic)', type: 'default' },
+            { id: 'protobuf', position: { x: 440, y: 100 }, label: 'Binary protobuf\n(3-10× smaller than JSON)', type: 'default' },
+            { id: 'h2', position: { x: 440, y: 200 }, label: 'HTTP/2 transport\n(multiplexed)', type: 'default' },
+            { id: 'server', position: { x: 660, y: 100 }, label: 'gRPC Server\n(typed handler)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'proto', target: 'gen_client', label: 'protoc generates' },
+            { id: 'e2', source: 'proto', target: 'gen_server', label: 'protoc generates' },
+            { id: 'e3', source: 'gen_client', target: 'protobuf', label: 'serializes' },
+            { id: 'e4', source: 'protobuf', target: 'h2' },
+            { id: 'e5', source: 'h2', target: 'server', label: 'delivers' },
+            { id: 'e6', source: 'server', target: 'gen_client', label: 'response stream', animated: true },
+          ],
         },
         {
           type: 'callout',
