@@ -380,6 +380,25 @@ export const MOCK_COURSES: Course[] = [
     updatedAt: '2025-05-26T00:00:00.000Z',
   },
   {
+    id: 'course-docker',
+    title: 'Docker & Containers',
+    description: 'Master containerization from first principles. Build images, manage volumes, compose multi-service apps, and understand what actually runs inside a container — not just the commands.',
+    taxonomy: { l1: 'Cloud', l2: 'CI/CD' },
+    difficulty: 'beginner',
+    authorId: 'teacher-001',
+    authorName: 'The Guild',
+    published: true,
+    publishedAt: '2025-05-27T00:00:00.000Z',
+    tags: ['docker', 'containers', 'devops', 'deployment', 'docker-compose'],
+    lessonIds: ['lesson-docker-1', 'lesson-docker-2', 'lesson-docker-3', 'lesson-docker-4'],
+    totalLessons: 4,
+    estimatedMinutes: 56,
+    ratingAverage: 4.8,
+    ratingCount: 41,
+    createdAt: '2025-05-27T00:00:00.000Z',
+    updatedAt: '2025-05-27T00:00:00.000Z',
+  },
+  {
     id: 'course-data-modeling',
     title: 'Database Design & Data Modeling',
     description: 'Design databases that are correct, efficient, and maintainable. Entity-relationship modeling, normalization, indexing strategies, and when to denormalize.',
@@ -2253,6 +2272,67 @@ The resource server **verifies** the signature using the corresponding public ke
           title: 'The "alg: none" attack',
           content: 'Early JWT libraries trusted the "alg" header from the token itself. An attacker could set alg to "none", strip the signature, and the library would accept it as valid. Always specify the expected algorithm in your verification config — never accept whatever the token claims.',
         },
+        {
+          type: 'flowDiagram',
+          title: 'JWT Verification Flow',
+          nodes: [
+            { id: 'recv', label: 'Receive JWT\n(3 dot-separated parts)', type: 'input', position: { x: 30, y: 40 } },
+            { id: 'split', label: 'Split into\nHeader · Payload · Sig', position: { x: 30, y: 130 } },
+            { id: 'alg', label: 'Check alg\nagainst allowlist', type: 'decision', position: { x: 30, y: 220 } },
+            { id: 'verify', label: 'Verify signature\nusing public key', type: 'decision', position: { x: 30, y: 320 } },
+            { id: 'claims', label: 'Check iss, aud,\nexp, nbf claims', type: 'decision', position: { x: 30, y: 420 } },
+            { id: 'accept', label: 'Token accepted\n→ extract user', type: 'output', position: { x: 240, y: 420 } },
+            { id: 'reject', label: 'Reject\n401', type: 'output', position: { x: 240, y: 270 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'recv', target: 'split' },
+            { id: 'e2', source: 'split', target: 'alg' },
+            { id: 'e3', source: 'alg', target: 'reject', label: 'not in allowlist' },
+            { id: 'e4', source: 'alg', target: 'verify', label: 'pass' },
+            { id: 'e5', source: 'verify', target: 'reject', label: 'mismatch' },
+            { id: 'e6', source: 'verify', target: 'claims', label: 'pass' },
+            { id: 'e7', source: 'claims', target: 'reject', label: 'expired / wrong aud' },
+            { id: 'e8', source: 'claims', target: 'accept', label: 'pass', animated: true },
+          ],
+        },
+        {
+          type: 'quiz',
+          title: 'JWT Structure Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'jwt1-q1',
+              question: 'A colleague base64-decodes a JWT payload and reads the user\'s email address. Should this be possible?',
+              options: [
+                'No — JWTs are encrypted so the payload should be unreadable',
+                'Yes — JWTs are encoded, not encrypted. The payload is readable by anyone who has the token',
+                'Only if they know the signing key',
+                'Only in development; production JWTs are always encrypted',
+              ],
+              correctIndex: 1,
+              explanation: 'Base64url encoding is just encoding, not encryption — it\'s trivially reversible. Anyone who possesses the token can decode and read the payload. Never put sensitive data (passwords, card numbers, PII you want hidden) in a JWT unless you use JWE (JSON Web Encryption) on top.',
+            },
+            {
+              id: 'jwt1-q2',
+              question: 'Which part of a JWT proves it hasn\'t been tampered with?',
+              options: ['The header', 'The payload', 'The signature', 'The Base64url encoding'],
+              correctIndex: 2,
+              explanation: 'The signature is computed over base64url(header) + "." + base64url(payload) using the private key. Any change to header or payload — even a single character — produces a completely different signature that won\'t match the public key verification.',
+            },
+            {
+              id: 'jwt1-q3',
+              question: 'What is the "aud" claim used for?',
+              options: [
+                'Identifies who issued the token',
+                'Identifies the user (subject)',
+                'Identifies the intended recipient — the resource server that should accept this token',
+                'Audio codec used to encode the payload',
+              ],
+              correctIndex: 2,
+              explanation: '"aud" (audience) declares which service the token is meant for. Your API should reject any token where aud doesn\'t match your own identifier. Without this check, a token issued for Service A could be replayed at Service B if both verify the same issuer.',
+            },
+          ],
+        },
       ],
     },
   },
@@ -2315,6 +2395,27 @@ Public key pairs are rotated periodically (Azure AD rotates every 6 weeks). Your
 1. **Cache** the JWKS response (avoid fetching on every request)
 2. **Retry with a fresh fetch** when verification fails with an unknown key ID
 3. **Never hard-code** the public key — always resolve from the JWKS endpoint`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Asymmetric JWT: Sign Once, Verify Anywhere',
+          nodes: [
+            { id: 'idp', label: 'Identity Provider\n(Azure AD / Auth0)', type: 'input', position: { x: 30, y: 160 } },
+            { id: 'sign', label: 'Signs JWT with\nprivate key', position: { x: 200, y: 80 } },
+            { id: 'jwks', label: 'Publishes public keys\nat /.well-known/jwks.json', position: { x: 200, y: 240 } },
+            { id: 'client', label: 'Client receives\nJWT', position: { x: 390, y: 80 } },
+            { id: 'api1', label: 'API A\nverifies', type: 'output', position: { x: 390, y: 200 } },
+            { id: 'api2', label: 'API B\nverifies', type: 'output', position: { x: 390, y: 300 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'idp', target: 'sign', label: 'private key' },
+            { id: 'e2', source: 'idp', target: 'jwks' },
+            { id: 'e3', source: 'sign', target: 'client', label: 'JWT', animated: true },
+            { id: 'e4', source: 'client', target: 'api1', label: 'Bearer token', animated: true },
+            { id: 'e5', source: 'client', target: 'api2', label: 'Bearer token', animated: true },
+            { id: 'e6', source: 'jwks', target: 'api1', label: 'public key' },
+            { id: 'e7', source: 'jwks', target: 'api2', label: 'public key' },
+          ],
         },
         {
           type: 'quiz',
@@ -2698,13 +2799,36 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
           type: 'text',
           content: `## Why hooks?
 
-Before hooks (React 16.8), stateful logic lived in class components. Sharing it between components meant render props or HOCs — patterns that created deeply nested "wrapper hell." Hooks let you **extract stateful logic into reusable functions** without restructuring your component tree.`,
+Before hooks (React 16.8), stateful logic lived in **class components**. Sharing it between components required render props or Higher-Order Components — patterns that created deeply nested "wrapper hell." Hooks let you **extract stateful logic into reusable functions** without restructuring your component tree.
+
+The key mental model: a React component is just a **function that runs on every render**. Hooks let that function remember things between calls.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'The React Render Cycle — how useState and useEffect fit in',
+          nodes: [
+            { id: 'rc1', label: 'setState() called\nor props change', type: 'input', position: { x: 30, y: 40 } },
+            { id: 'rc2', label: 'React schedules\na re-render', position: { x: 30, y: 130 } },
+            { id: 'rc3', label: 'Component function\nruns again', position: { x: 30, y: 220 } },
+            { id: 'rc4', label: 'React diffs new VDOM\nvs previous VDOM', position: { x: 280, y: 220 } },
+            { id: 'rc5', label: 'Minimal DOM\nupdates applied', position: { x: 280, y: 130 } },
+            { id: 'rc6', label: 'useEffect cleanup\nruns (if deps changed)', position: { x: 280, y: 40 } },
+            { id: 'rc7', label: 'useEffect\ncallback runs', type: 'output', position: { x: 155, y: 310 } },
+          ],
+          edges: [
+            { id: 'erc1', source: 'rc1', target: 'rc2', label: 'batched' },
+            { id: 'erc2', source: 'rc2', target: 'rc3' },
+            { id: 'erc3', source: 'rc3', target: 'rc4', label: 'new JSX' },
+            { id: 'erc4', source: 'rc4', target: 'rc5', animated: true },
+            { id: 'erc5', source: 'rc5', target: 'rc6' },
+            { id: 'erc6', source: 'rc6', target: 'rc7', animated: true },
+          ],
         },
         {
           type: 'callout',
           variant: 'info',
           title: 'useState in a nutshell',
-          content: 'useState returns [currentValue, setter]. React re-renders the component whenever the setter is called with a new value. Unlike regular variables, state survives re-renders.',
+          content: 'useState returns [currentValue, setter]. React re-renders the component whenever the setter is called with a new value. Unlike regular variables, state survives re-renders — React stores it outside your function, keyed to the component instance.',
         },
         {
           type: 'codeBlock',
@@ -2727,13 +2851,15 @@ const [data, setData] = useState(() =>
           type: 'text',
           content: `## useEffect and the dependency array
 
-useEffect runs **after** the component renders. The second argument controls when it re-runs:
+useEffect runs **after** the component renders and the DOM has been updated. The second argument controls when it re-runs:
 
-| Deps argument | When it runs |
-|---|---|
-| Omitted | After every render |
-| \`[]\` | Once on mount |
-| \`[a, b]\` | When a or b changes |`,
+| Deps argument | When it runs | Use case |
+|---|---|---|
+| Omitted | After every render | Rarely useful — usually a bug |
+| \`[]\` | Once on mount | Initial data fetch, event listener |
+| \`[a, b]\` | When a or b changes | React to a specific value changing |
+
+The key rule: **everything your effect uses should be in the deps array.** If you omit a dependency, you have a stale closure. ESLint's \`react-hooks/exhaustive-deps\` rule enforces this — treat it as an error.`,
         },
         {
           type: 'codeBlock',
@@ -3257,6 +3383,25 @@ When reviewing code, always:
           content: "Negative constraints are as powerful as positive ones. \"Do not include preamble or sign-off.\" \"Never use bullet points — write in prose.\" \"Do not apologise.\" These directly prune token paths the model would otherwise explore.",
         },
         {
+          type: 'flowDiagram',
+          title: 'The Four Elements of a Strong Prompt',
+          nodes: [
+            { id: 'role', label: 'Role\n"You are a senior\nDevOps engineer"', type: 'input', position: { x: 30, y: 40 } },
+            { id: 'ctx', label: 'Context\n"This service runs\non K8s in prod"', type: 'input', position: { x: 30, y: 130 } },
+            { id: 'task', label: 'Task\n"Review this\nDockerfile"', type: 'input', position: { x: 30, y: 220 } },
+            { id: 'fmt', label: 'Format\n"3 bullets, severity\nlevel per issue"', type: 'input', position: { x: 30, y: 310 } },
+            { id: 'model', label: 'LLM\n(system + user\nmessages)', type: 'decision', position: { x: 260, y: 175 } },
+            { id: 'output', label: 'Structured,\nrelevant output', type: 'output', position: { x: 430, y: 175 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'role', target: 'model', label: 'system' },
+            { id: 'e2', source: 'ctx', target: 'model' },
+            { id: 'e3', source: 'task', target: 'model', label: 'user' },
+            { id: 'e4', source: 'fmt', target: 'model', label: 'system' },
+            { id: 'e5', source: 'model', target: 'output', animated: true },
+          ],
+        },
+        {
           type: 'quiz',
           title: 'Prompt Anatomy Quiz',
           passingScore: 67,
@@ -3395,6 +3540,25 @@ const response = await client.messages.create({
           content: "LLMs hallucinate when asked about facts they're uncertain about but the probability distribution prefers a confident-sounding answer. Mitigations: (1) Provide source documents and ask the model to cite them. (2) Ask the model to say \"I don't know\" when uncertain. (3) Use Retrieval-Augmented Generation (RAG) to ground answers in real data. (4) Never use LLM output for safety-critical decisions without human review.",
         },
         {
+          type: 'flowDiagram',
+          title: 'Direct Answer vs. Chain-of-Thought',
+          nodes: [
+            { id: 'q', label: 'Hard reasoning\nquestion', type: 'input', position: { x: 30, y: 160 } },
+            { id: 'direct', label: 'Direct answer\n(no CoT)', type: 'decision', position: { x: 200, y: 80 } },
+            { id: 'cot', label: '"Think step\nby step"', type: 'decision', position: { x: 200, y: 250 } },
+            { id: 'wrong', label: 'Often incorrect\non multi-step tasks', type: 'output', position: { x: 390, y: 80 } },
+            { id: 'steps', label: 'Step 1 → Step 2\n→ Step 3…', position: { x: 390, y: 200 } },
+            { id: 'right', label: 'Accurate answer\n(steps = context)', type: 'output', position: { x: 390, y: 310 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'q', target: 'direct' },
+            { id: 'e2', source: 'q', target: 'cot' },
+            { id: 'e3', source: 'direct', target: 'wrong' },
+            { id: 'e4', source: 'cot', target: 'steps' },
+            { id: 'e5', source: 'steps', target: 'right', animated: true },
+          ],
+        },
+        {
           type: 'quiz',
           title: 'Advanced Prompting Quiz',
           passingScore: 60,
@@ -3499,6 +3663,28 @@ async function runEvals() {
           variant: 'warning',
           title: 'Hallucination mitigation: ground the model in facts',
           content: 'LLMs confabulate (make up plausible-sounding facts). The most effective mitigation is RAG (Retrieval-Augmented Generation): fetch relevant documents at query time and include them in the context window with an instruction like "Answer only from the provided documents. If the answer is not present, say so."',
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Retrieval-Augmented Generation (RAG) Pipeline',
+          nodes: [
+            { id: 'q', label: 'User query', type: 'input', position: { x: 30, y: 160 } },
+            { id: 'embed', label: 'Embed query\n(vector)', position: { x: 180, y: 80 } },
+            { id: 'db', label: 'Vector DB\n(embeddings)', type: 'decision', position: { x: 330, y: 80 } },
+            { id: 'docs', label: 'Top-K\nrelevant docs', position: { x: 480, y: 80 } },
+            { id: 'aug', label: 'Augment prompt:\nsystem + docs + query', position: { x: 330, y: 250 } },
+            { id: 'llm', label: 'LLM\ngenerates answer', position: { x: 180, y: 250 } },
+            { id: 'ans', label: 'Grounded\nanswer', type: 'output', position: { x: 30, y: 340 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'q', target: 'embed' },
+            { id: 'e2', source: 'embed', target: 'db', label: 'similarity search' },
+            { id: 'e3', source: 'db', target: 'docs', animated: true },
+            { id: 'e4', source: 'docs', target: 'aug' },
+            { id: 'e5', source: 'q', target: 'aug' },
+            { id: 'e6', source: 'aug', target: 'llm', animated: true },
+            { id: 'e7', source: 'llm', target: 'ans', animated: true },
+          ],
         },
         {
           type: 'callout',
@@ -5678,6 +5864,25 @@ TypeScript is a **superset of JavaScript** — all valid JavaScript is valid Typ
 The key insight: TypeScript types exist **only at compile time**. At runtime, your code is JavaScript. TypeScript gives you a safety net during development, not a runtime validator.`,
         },
         {
+          type: 'flowDiagram',
+          title: 'The TypeScript Type Hierarchy — from widest to narrowest',
+          nodes: [
+            { id: 'ts1', label: 'unknown\n(widest — must narrow\nbefore use)', type: 'input', position: { x: 200, y: 20 } },
+            { id: 'ts2', label: 'any\n(opt-out of\ntype checking)', position: { x: 30, y: 100 } },
+            { id: 'ts3', label: 'object types\nstring, number,\nboolean, ...', position: { x: 230, y: 100 } },
+            { id: 'ts4', label: 'Union types\nstring | number\n"a" | "b" | "c"', position: { x: 230, y: 190 } },
+            { id: 'ts5', label: 'Literal types\n"beginner"\n42', position: { x: 230, y: 280 } },
+            { id: 'ts6', label: 'never\n(narrowest — empty set,\nimpossible type)', type: 'output', position: { x: 200, y: 370 } },
+          ],
+          edges: [
+            { id: 'ets1', source: 'ts1', target: 'ts2', label: 'unsafe' },
+            { id: 'ets2', source: 'ts1', target: 'ts3', label: 'narrows to' },
+            { id: 'ets3', source: 'ts3', target: 'ts4' },
+            { id: 'ets4', source: 'ts4', target: 'ts5', animated: true },
+            { id: 'ets5', source: 'ts5', target: 'ts6' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'Type inference is powerful — annotate at boundaries only',
@@ -7121,6 +7326,29 @@ spec:
   type: ClusterIP             # internal only; use LoadBalancer for external`,
         },
         {
+          type: 'flowDiagram',
+          title: 'Kubernetes Object Hierarchy',
+          nodes: [
+            { id: 'dep', label: 'Deployment\n(desired state)', type: 'input', position: { x: 200, y: 20 } },
+            { id: 'rs', label: 'ReplicaSet\n(owns N pods)', position: { x: 200, y: 110 } },
+            { id: 'p1', label: 'Pod 1\n:3001', position: { x: 60, y: 200 } },
+            { id: 'p2', label: 'Pod 2\n:3001', position: { x: 200, y: 200 } },
+            { id: 'p3', label: 'Pod 3\n:3001', position: { x: 340, y: 200 } },
+            { id: 'svc', label: 'Service\n(label selector)', type: 'decision', position: { x: 200, y: 300 } },
+            { id: 'ext', label: 'External\ntraffic', type: 'output', position: { x: 200, y: 390 } },
+          ],
+          edges: [
+            { id: 'e-dep-rs', source: 'dep', target: 'rs', label: 'manages' },
+            { id: 'e-rs-p1', source: 'rs', target: 'p1' },
+            { id: 'e-rs-p2', source: 'rs', target: 'p2' },
+            { id: 'e-rs-p3', source: 'rs', target: 'p3' },
+            { id: 'e-p1-svc', source: 'p1', target: 'svc', animated: true },
+            { id: 'e-p2-svc', source: 'p2', target: 'svc', animated: true },
+            { id: 'e-p3-svc', source: 'p3', target: 'svc', animated: true },
+            { id: 'e-svc-ext', source: 'svc', target: 'ext', label: 'round-robin', animated: true },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'warning',
           title: 'Always set resource requests and limits',
@@ -7215,6 +7443,27 @@ readinessProbe:          # Is the container ready for traffic? Remove from Servi
 - **Readiness**: "Can this pod serve requests?" — fail → K8s removes it from Service endpoints (no restart)
 
 Your \`/health\` endpoint should return 200 if the app is running. Your \`/ready\` should also verify DB connectivity, caches, and dependencies.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Liveness vs Readiness Probe Behaviour',
+          nodes: [
+            { id: 'start', label: 'Pod starts', type: 'input', position: { x: 200, y: 20 } },
+            { id: 'delay', label: 'initialDelaySeconds\nwait', position: { x: 200, y: 100 } },
+            { id: 'live', label: 'Liveness\nprobe runs', type: 'decision', position: { x: 60, y: 200 } },
+            { id: 'ready', label: 'Readiness\nprobe runs', type: 'decision', position: { x: 340, y: 200 } },
+            { id: 'restart', label: 'Container\nrestarted', type: 'output', position: { x: 60, y: 320 } },
+            { id: 'remove', label: 'Removed from\nService endpoints', type: 'output', position: { x: 340, y: 320 } },
+            { id: 'traffic', label: 'Receives\ntraffic', type: 'output', position: { x: 200, y: 320 } },
+          ],
+          edges: [
+            { id: 'e-s-d', source: 'start', target: 'delay' },
+            { id: 'e-d-l', source: 'delay', target: 'live' },
+            { id: 'e-d-r', source: 'delay', target: 'ready' },
+            { id: 'e-l-restart', source: 'live', target: 'restart', label: 'fail × 3' },
+            { id: 'e-r-remove', source: 'ready', target: 'remove', label: 'fail' },
+            { id: 'e-r-traffic', source: 'ready', target: 'traffic', label: 'pass', animated: true },
+          ],
         },
         {
           type: 'quiz',
@@ -7322,6 +7571,25 @@ helm upgrade --install studyguild ./helm/chart \\
 helm list -A
 helm rollback studyguild 1    # rollback to revision 1
 \`\`\``,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Rolling Update — Zero-Downtime Deploy',
+          nodes: [
+            { id: 'old1', label: 'Pod v1', type: 'input', position: { x: 30, y: 40 } },
+            { id: 'old2', label: 'Pod v1', type: 'input', position: { x: 30, y: 120 } },
+            { id: 'old3', label: 'Pod v1', type: 'input', position: { x: 30, y: 200 } },
+            { id: 'surge', label: '+Pod v2\n(maxSurge=1)', type: 'decision', position: { x: 200, y: 40 } },
+            { id: 'term', label: 'Terminate\n1× Pod v1', position: { x: 200, y: 140 } },
+            { id: 'repeat', label: 'Repeat until\nall pods = v2', position: { x: 200, y: 230 } },
+            { id: 'done', label: 'All 3× Pod v2\nrunning', type: 'output', position: { x: 370, y: 140 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'old1', target: 'surge', label: 'trigger' },
+            { id: 'e2', source: 'surge', target: 'term', label: 'new pod ready' },
+            { id: 'e3', source: 'term', target: 'repeat' },
+            { id: 'e4', source: 'repeat', target: 'done', animated: true },
+          ],
         },
         {
           type: 'callout',
@@ -7487,6 +7755,536 @@ spec:
               ],
               correctIndex: 1,
               explanation: 'Kubernetes Secrets are stored in etcd with base64 encoding — not encryption. Anyone with etcd access can decode them trivially. Enable Encryption at Rest (EncryptionConfiguration) or integrate with a secret manager (Vault, Azure Key Vault, AWS Secrets Manager) for production security.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── Docker Lesson 1: Containers from First Principles ───────────────────────
+  {
+    id: 'lesson-docker-1',
+    courseId: 'course-docker',
+    order: 0,
+    title: 'What is a Container? VMs vs Containers',
+    estimatedMinutes: 13,
+    createdAt: '2025-05-27T00:00:00.000Z',
+    updatedAt: '2025-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## The problem Docker solves
+
+"It works on my machine" is the oldest excuse in software. Developers have different OS versions, library versions, environment variables. Testers have different setups. Production is different from both.
+
+Docker solves this with **containers** — portable, self-contained units that bundle your app with everything it needs to run. A container on your laptop behaves identically to a container in production.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'VMs vs Containers — the key architectural difference',
+          nodes: [
+            { id: 'vm1', label: 'Physical Server', type: 'input', position: { x: 60, y: 20 } },
+            { id: 'vm2', label: 'Hypervisor\n(VMware, VirtualBox)', position: { x: 60, y: 110 } },
+            { id: 'vm3', label: 'Guest OS #1\n(full Linux kernel)', position: { x: 20, y: 200 } },
+            { id: 'vm4', label: 'Guest OS #2\n(full Linux kernel)', position: { x: 120, y: 200 } },
+            { id: 'vm5', label: 'App A\n(+ all libs)', position: { x: 20, y: 290 } },
+            { id: 'vm6', label: 'App B\n(+ all libs)', position: { x: 120, y: 290 } },
+            { id: 'c1', label: 'Physical Server', type: 'input', position: { x: 430, y: 20 } },
+            { id: 'c2', label: 'Host OS\n(shared Linux kernel)', position: { x: 430, y: 110 } },
+            { id: 'c3', label: 'Docker Engine\n(container runtime)', position: { x: 430, y: 200 } },
+            { id: 'c4', label: 'Container A\n(just your app + libs)', position: { x: 370, y: 290 } },
+            { id: 'c5', label: 'Container B\n(just your app + libs)', position: { x: 490, y: 290 } },
+          ],
+          edges: [
+            { id: 'evm1', source: 'vm1', target: 'vm2' },
+            { id: 'evm2', source: 'vm2', target: 'vm3' },
+            { id: 'evm3', source: 'vm2', target: 'vm4' },
+            { id: 'evm4', source: 'vm3', target: 'vm5' },
+            { id: 'evm5', source: 'vm4', target: 'vm6' },
+            { id: 'ec1', source: 'c1', target: 'c2' },
+            { id: 'ec2', source: 'c2', target: 'c3', animated: true },
+            { id: 'ec3', source: 'c3', target: 'c4', animated: true },
+            { id: 'ec4', source: 'c3', target: 'c5', animated: true },
+          ],
+        },
+        {
+          type: 'text',
+          content: `## How containers actually work
+
+Containers aren't magic — they're processes on the host OS with enforced isolation using two Linux kernel features:
+
+- **namespaces** — each container gets its own view of the process tree, filesystem, network interfaces, and users. Processes in a container think they're the only ones running.
+- **cgroups** (control groups) — limits how much CPU, memory, and I/O a container can use. No container can starve others.
+
+Docker is a wrapper that makes namespaces and cgroups easy to work with. The container itself is just a process — not a VM, not a virtual kernel.`,
+        },
+        {
+          type: 'callout',
+          variant: 'info',
+          title: 'Images vs Containers',
+          content: "An **image** is a snapshot — a read-only blueprint with everything your app needs (OS layer, runtime, app code, config). A **container** is a running instance of an image. You can run 10 containers from one image. Delete a container and the image is untouched — it's the same relationship as a class vs an object instance.",
+        },
+        {
+          type: 'codeBlock',
+          language: 'bash',
+          caption: 'Your first Docker commands',
+          code: `# Pull an image from Docker Hub
+docker pull node:20-alpine
+
+# Run a container (creates + starts)
+docker run -it node:20-alpine node --version
+
+# Run a web server in the background, map port 8080 → 80
+docker run -d -p 8080:80 --name my-nginx nginx
+
+# List running containers
+docker ps
+
+# See logs
+docker logs my-nginx
+
+# Stop and remove
+docker stop my-nginx
+docker rm my-nginx
+
+# List all images
+docker images`,
+        },
+        {
+          type: 'quiz',
+          title: 'Containers Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'docker-q1',
+              question: 'What is the key difference between a Docker image and a container?',
+              options: [
+                'Images run on Linux only; containers run on any OS',
+                'An image is a static blueprint; a container is a running instance of it',
+                'Images include the OS kernel; containers do not',
+                'A container is larger than an image because it includes logs',
+              ],
+              correctIndex: 1,
+              explanation: 'An image is a read-only snapshot — like a class definition. A container is a live, running instance of that image — like an object. You can run multiple containers from the same image, and removing a container leaves the image intact.',
+            },
+            {
+              id: 'docker-q2',
+              question: 'Which Linux kernel features provide container isolation?',
+              options: [
+                'Docker Engine and containerd',
+                'Namespaces (process/network/filesystem isolation) and cgroups (resource limits)',
+                'VirtualBox hypervisor and VMware kernel modules',
+                'iptables and systemd',
+              ],
+              correctIndex: 1,
+              explanation: 'Containers use namespaces to isolate what a process can see (its own PID tree, network, filesystem), and cgroups to limit what it can consume (CPU, memory, I/O). Docker wraps these kernel features in a user-friendly CLI — there\'s no hypervisor involved.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── Docker Lesson 2: Writing Dockerfiles ─────────────────────────────────────
+  {
+    id: 'lesson-docker-2',
+    courseId: 'course-docker',
+    order: 1,
+    title: 'Writing Good Dockerfiles',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-27T00:00:00.000Z',
+    updatedAt: '2025-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## The Dockerfile
+
+A Dockerfile is a script of instructions to build an image. Each instruction creates a **layer** — a cached snapshot of the filesystem at that point. Layers are the key to fast builds.
+
+Docker caches each layer. If nothing above a layer changed, Docker reuses the cache. **Layer order matters**: put frequently-changing instructions (your code) at the bottom, and rarely-changing ones (installing dependencies) near the top.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'dockerfile',
+          caption: 'A well-structured Node.js Dockerfile',
+          code: `# ── Stage 1: base ──
+FROM node:20-alpine AS base
+# Alpine is ~5 MB vs ~900 MB for Ubuntu-based node images
+WORKDIR /app
+
+# ── Install dependencies separately from copying code ──
+# This layer is cached as long as package*.json doesn't change
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev   # clean install, no devDependencies
+
+# ── Copy source code ──
+# This layer changes on every code change — keep it last
+COPY . .
+
+# ── Runtime config ──
+EXPOSE 3000
+USER node          # don't run as root
+CMD ["node", "dist/server.js"]`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Multi-stage builds — keep production images small',
+          content: 'Use multi-stage builds to compile your app in one stage (with build tools) and copy only the output into a minimal runtime image. A TypeScript app compiled in a Node+tsc stage can run in a plain alpine+node image with zero dev dependencies.',
+        },
+        {
+          type: 'codeBlock',
+          language: 'dockerfile',
+          caption: 'Multi-stage build — TypeScript app compiled in builder, run in minimal image',
+          code: `# Stage 1: build
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci                    # includes devDependencies for build
+COPY . .
+RUN npm run build             # tsc → dist/
+
+# Stage 2: runtime (no build tools, no devDeps)
+FROM node:20-alpine AS runtime
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev         # production deps only
+COPY --from=builder /app/dist ./dist  # only the compiled output
+
+EXPOSE 3000
+USER node
+CMD ["node", "dist/server.js"]
+
+# Result: ~120 MB vs ~600 MB for a single-stage build`,
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'Always use .dockerignore',
+          content: "Without .dockerignore, `COPY . .` copies your entire project including node_modules (hundreds of MB), .git history, .env files, and test fixtures into the image. Create .dockerignore with at minimum: node_modules, .git, .env*, dist, coverage.",
+        },
+        {
+          type: 'codeBlock',
+          language: 'text',
+          caption: '.dockerignore file',
+          code: `node_modules
+.git
+.env
+.env.*
+dist
+coverage
+*.log
+.DS_Store
+README.md`,
+        },
+        {
+          type: 'quiz',
+          title: 'Dockerfile Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'dockerfile-q1',
+              question: 'Why should COPY package.json come before COPY . . in a Dockerfile?',
+              options: [
+                'package.json must be present before source files for Node.js',
+                'So the npm install layer is cached separately and not invalidated on every code change',
+                'Docker requires files to be copied in alphabetical order',
+                'To ensure the WORKDIR is set correctly',
+              ],
+              correctIndex: 1,
+              explanation: 'If you copy package.json and run npm install as separate layers before copying your source code, Docker caches the npm install layer. It only reinstalls when package.json changes — not every time you edit a TypeScript file. Without this, every build reinstalls all dependencies.',
+            },
+            {
+              id: 'dockerfile-q2',
+              question: 'What is the purpose of multi-stage builds?',
+              options: [
+                'To run multiple services in one container',
+                'To separate build and runtime environments, producing smaller production images',
+                'To speed up builds by running stages in parallel',
+                'To support both Linux and Windows in one Dockerfile',
+              ],
+              correctIndex: 1,
+              explanation: 'Multi-stage builds let you use a full build environment (with compilers, devDependencies) to produce artifacts, then copy only the artifacts into a minimal runtime image. The final image has no build tools or devDependencies — only what\'s needed to run.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── Docker Lesson 3: Docker Compose ──────────────────────────────────────────
+  {
+    id: 'lesson-docker-3',
+    courseId: 'course-docker',
+    order: 2,
+    title: 'Docker Compose — Multi-Container Apps',
+    estimatedMinutes: 15,
+    createdAt: '2025-05-27T00:00:00.000Z',
+    updatedAt: '2025-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Real apps need multiple containers
+
+Most apps aren't a single process — they need a database, a cache, maybe a queue. Docker Compose lets you define a **multi-container application** in a single YAML file and start everything with one command.
+
+\`\`\`bash
+docker compose up      # start all services
+docker compose down    # stop and remove containers
+docker compose logs -f # stream all logs
+\`\`\``,
+        },
+        {
+          type: 'codeBlock',
+          language: 'yaml',
+          caption: 'docker-compose.yml for a Node.js API + PostgreSQL + Redis',
+          code: `services:
+  api:
+    build: .                   # use our Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgres://user:pass@postgres:5432/studyguild
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./src:/app/src          # live-reload in development
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: studyguild
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # persist data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user"]
+      interval: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Docker Compose Network — services communicate by name',
+          nodes: [
+            { id: 'dc1', label: 'Client Browser\nlocalhost:3001', type: 'input', position: { x: 30, y: 120 } },
+            { id: 'dc2', label: 'api container\nNode.js :3001', position: { x: 230, y: 120 } },
+            { id: 'dc3', label: 'postgres container\n:5432', position: { x: 430, y: 50 } },
+            { id: 'dc4', label: 'redis container\n:6379', position: { x: 430, y: 190 } },
+            { id: 'dc5', label: 'Docker virtual\nnetwork', position: { x: 330, y: 120 } },
+          ],
+          edges: [
+            { id: 'edc1', source: 'dc1', target: 'dc2', label: 'port mapping\n3001:3001', animated: true },
+            { id: 'edc2', source: 'dc2', target: 'dc5', label: 'internal network' },
+            { id: 'edc3', source: 'dc5', target: 'dc3', label: 'postgres:5432', animated: true },
+            { id: 'edc4', source: 'dc5', target: 'dc4', label: 'redis:6379', animated: true },
+          ],
+        },
+        {
+          type: 'callout',
+          variant: 'info',
+          title: 'Services find each other by service name',
+          content: 'In Docker Compose, services on the same network resolve each other by their service name. Your API connects to `postgres:5432` (not `localhost:5432`) because "postgres" is the service name. Docker\'s internal DNS handles the resolution — no hardcoded IPs needed.',
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Use named volumes for data that should persist',
+          content: "Bind mounts (`./src:/app/src`) are great for development hot-reload. For database data, use named volumes (`postgres_data:/var/lib/postgresql/data`) — they persist across `docker compose down` and aren't tied to a specific host path. `docker compose down -v` removes them when you want a clean slate.",
+        },
+        {
+          type: 'quiz',
+          title: 'Docker Compose Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'compose-q1',
+              question: 'How does the "api" service connect to "postgres" in Docker Compose?',
+              options: [
+                'Using the host machine\'s IP address',
+                'Using "localhost:5432" since all services share the network',
+                'Using the service name "postgres:5432" as the hostname',
+                'Docker Compose injects the IP address as an environment variable',
+              ],
+              correctIndex: 2,
+              explanation: 'Docker Compose creates an internal virtual network and provides DNS resolution by service name. The api service reaches postgres at "postgres:5432" because Docker DNS maps the service name to its container IP. This works regardless of what port the host exposes externally.',
+            },
+            {
+              id: 'compose-q2',
+              question: 'What is the difference between a bind mount and a named volume?',
+              options: [
+                'Bind mounts are encrypted; named volumes are not',
+                'Bind mounts link to a specific host path (good for dev); named volumes are managed by Docker (good for data persistence)',
+                'Named volumes are faster because they use RAM',
+                'There is no practical difference',
+              ],
+              correctIndex: 1,
+              explanation: 'Bind mounts (`./src:/app/src`) map a host directory into the container — ideal for development hot-reload. Named volumes are managed by Docker and stored in Docker\'s area on the host, persisting across container restarts and teardowns. Use named volumes for databases and other persistent data.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── Docker Lesson 4: Deployment & Production Patterns ────────────────────────
+  {
+    id: 'lesson-docker-4',
+    courseId: 'course-docker',
+    order: 3,
+    title: 'Production Patterns & CI/CD Integration',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-27T00:00:00.000Z',
+    updatedAt: '2025-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Tagging and pushing images
+
+In production, images live in a **container registry** — Docker Hub, GitHub Container Registry (GHCR), Azure Container Registry (ACR), or AWS ECR. Your CI pipeline builds, tags, and pushes; your server pulls and runs.
+
+Image tags should be immutable: once you push \`my-app:1.2.3\`, that tag always refers to that build. Using \`latest\` as your only tag is an antipattern — it makes rollback impossible and audit trails meaningless.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'bash',
+          caption: 'Tag and push to GitHub Container Registry',
+          code: `# Build with a semantic version tag
+docker build -t ghcr.io/my-org/my-app:1.2.3 .
+docker build -t ghcr.io/my-org/my-app:latest .   # also tag as latest
+
+# Push both tags
+docker push ghcr.io/my-org/my-app:1.2.3
+docker push ghcr.io/my-org/my-app:latest
+
+# Production server: pull and run a specific version
+docker pull ghcr.io/my-org/my-app:1.2.3
+docker run -d -p 3001:3001 --name my-app ghcr.io/my-org/my-app:1.2.3
+
+# Rollback: just run the previous version
+docker run -d -p 3001:3001 --name my-app ghcr.io/my-org/my-app:1.2.2`,
+        },
+        {
+          type: 'text',
+          content: `## GitHub Actions CI/CD pipeline
+
+Here's a complete pipeline: test → build → push → deploy.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'yaml',
+          caption: '.github/workflows/deploy.yml',
+          code: `name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: \${{ github.actor }}
+          password: \${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/\${{ github.repository }}:\${{ github.sha }}
+            ghcr.io/\${{ github.repository }}:latest
+          cache-from: type=registry,ref=ghcr.io/\${{ github.repository }}:buildcache
+          cache-to: type=registry,ref=ghcr.io/\${{ github.repository }}:buildcache,mode=max
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: \${{ secrets.SERVER_HOST }}
+          username: deploy
+          key: \${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker pull ghcr.io/\${{ github.repository }}:\${{ github.sha }}
+            docker stop my-app || true
+            docker rm my-app || true
+            docker run -d -p 3001:3001 \\
+              --name my-app \\
+              --restart unless-stopped \\
+              ghcr.io/\${{ github.repository }}:\${{ github.sha }}`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Use build cache in CI to cut build times dramatically',
+          content: 'The `cache-from` and `cache-to` options in docker/build-push-action store layer cache in the registry. First build: cold (slow). Every subsequent build only rebuilds layers that changed. A well-structured Dockerfile with stable layers near the top can cut a 10-minute build to under 2 minutes.',
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'Never bake secrets into images',
+          content: 'Any file or environment variable present during `docker build` can end up in the image layers — even if you delete it in a later RUN command. Use Docker build secrets (`--secret`), environment variables at runtime (`-e`), or a secrets manager (Azure Key Vault, AWS Secrets Manager). Running `docker history my-image` can reveal what was in previous layers.',
+        },
+        {
+          type: 'quiz',
+          title: 'Production Docker Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'prod-docker-q1',
+              question: 'Why is using only the "latest" tag in production considered an antipattern?',
+              options: [
+                '"latest" is slower to pull than versioned tags',
+                '"latest" cannot be pushed to private registries',
+                'It makes rollback impossible and breaks audit trails since "latest" always means the most recent push',
+                '"latest" is only valid for official Docker Hub images',
+              ],
+              correctIndex: 2,
+              explanation: '"latest" is overwritten every push. If a bad deployment goes to production and you need to roll back, "latest" already points to the broken version. Immutable versioned tags (git commit SHA or semantic version) let you reliably deploy any previous version without rebuilding.',
+            },
+            {
+              id: 'prod-docker-q2',
+              question: 'An ENV instruction in your Dockerfile sets a database password. What is the risk?',
+              options: [
+                'It works correctly — environment variables are the recommended way to pass secrets',
+                'The password is visible in the image history and can be extracted by anyone with the image',
+                'ENV variables are overridden at runtime so the build-time value doesn\'t matter',
+                'Docker encrypts ENV values automatically before writing to the image',
+              ],
+              correctIndex: 1,
+              explanation: 'Any value baked into an image layer via ENV, RUN, or COPY can be retrieved from the image with `docker history`. Even if you delete a file or unset a variable in a subsequent layer, the previous layer is still in the image. Pass secrets at runtime with `-e` flags or read them from a mounted secrets store.',
             },
           ],
         },
