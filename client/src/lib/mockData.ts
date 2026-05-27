@@ -2437,24 +2437,80 @@ Always send tokens in the \`Authorization: Bearer <token>\` header — never as 
           content: 'If your API validates a JWT\'s signature and expiry but not its `aud` (audience) claim, a token issued for service A could be replayed against service B — if both services trust the same authorization server. Always validate `aud` matches your specific API client ID.',
         },
         {
+          type: 'callout',
+          variant: 'danger',
+          title: 'Attack 6: Insufficient Logout — tokens still valid after sign-out',
+          content: 'When a user "logs out" of your SPA, clearing the in-memory access token only prevents your app from using it — the token is still cryptographically valid until it expires. If an attacker exfiltrated it earlier (e.g. via XSS), it works until expiry. Short access token lifetimes (< 15 min) reduce the window. Refresh tokens must be explicitly revoked.',
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'Proper logout: revoke the refresh token (RFC 7009)',
+          code: `// On logout — call the revocation endpoint BEFORE clearing local state
+async function logout() {
+  try {
+    // Revoke the refresh token — stored in httpOnly cookie, sent automatically
+    await fetch('/auth/revoke', {
+      method: 'POST',
+      credentials: 'include', // sends the httpOnly cookie
+    });
+  } catch {
+    // Best effort — still clear local state even if revocation fails
+  }
+
+  // Clear in-memory state
+  accessToken = null;
+
+  // MSAL / OIDC provider logout (clears their session too)
+  msalInstance.logoutPopup();
+}
+
+// Server-side /auth/revoke handler
+app.post('/auth/revoke', async (req, res) => {
+  const refreshToken = req.cookies.refresh_token;
+  if (refreshToken) {
+    // Call the Authorization Server's revocation endpoint (RFC 7009)
+    await fetch(\`\${AUTH_SERVER}/oauth2/v2.0/revoke\`, {
+      method: 'POST',
+      body: new URLSearchParams({
+        token: refreshToken,
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+      }),
+    });
+  }
+  // Clear the httpOnly cookie
+  res.clearCookie('refresh_token', { httpOnly: true, secure: true, sameSite: 'strict', path: '/auth' });
+  res.json({ ok: true });
+});`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Short access token lifetimes are your best defence',
+          content: 'Keep access tokens short-lived (5–15 minutes). This limits the damage window if a token is stolen. The refresh token, stored in an httpOnly cookie, allows seamless re-authentication without the user noticing. If the refresh token is revoked (on logout or compromise), the attacker loses access at the next expiry.',
+        },
+        {
           type: 'flowDiagram',
           title: 'Security Checklist — Your OAuth2 Defence Layers',
           nodes: [
             { id: 'sec1', label: 'PKCE\n(code interception)', type: 'input', position: { x: 30, y: 30 } },
-            { id: 'sec2', label: 'State parameter\n(CSRF)', position: { x: 30, y: 110 } },
-            { id: 'sec3', label: 'Exact redirect URI\n(open redirect)', position: { x: 30, y: 190 } },
-            { id: 'sec4', label: 'Bearer header only\n(token leakage)', position: { x: 260, y: 30 } },
-            { id: 'sec5', label: 'Validate aud claim\n(confused deputy)', position: { x: 260, y: 110 } },
-            { id: 'sec6', label: 'httpOnly cookies\nfor refresh tokens\n(XSS)', position: { x: 260, y: 190 } },
-            { id: 'sec7', label: '✅ Secured OAuth2\nImplementation', type: 'output', position: { x: 145, y: 280 } },
+            { id: 'sec2', label: 'State parameter\n(CSRF)', type: 'input', position: { x: 30, y: 110 } },
+            { id: 'sec3', label: 'Exact redirect URI\n(open redirect)', type: 'input', position: { x: 30, y: 190 } },
+            { id: 'sec4', label: 'Bearer header only\n(token leakage)', type: 'input', position: { x: 30, y: 270 } },
+            { id: 'sec5', label: 'Validate aud claim\n(confused deputy)', type: 'input', position: { x: 290, y: 30 } },
+            { id: 'sec6', label: 'httpOnly cookies\nfor refresh tokens\n(XSS)', type: 'input', position: { x: 290, y: 130 } },
+            { id: 'sec7r', label: 'Revoke on logout\n(token persistence)', type: 'input', position: { x: 290, y: 230 } },
+            { id: 'sec8', label: '✅ Secured OAuth2\nImplementation', type: 'output', position: { x: 160, y: 360 } },
           ],
           edges: [
-            { id: 'esec1', source: 'sec1', target: 'sec7', animated: true },
-            { id: 'esec2', source: 'sec2', target: 'sec7', animated: true },
-            { id: 'esec3', source: 'sec3', target: 'sec7', animated: true },
-            { id: 'esec4', source: 'sec4', target: 'sec7', animated: true },
-            { id: 'esec5', source: 'sec5', target: 'sec7', animated: true },
-            { id: 'esec6', source: 'sec6', target: 'sec7', animated: true },
+            { id: 'esec1', source: 'sec1', target: 'sec8', animated: true },
+            { id: 'esec2', source: 'sec2', target: 'sec8', animated: true },
+            { id: 'esec3', source: 'sec3', target: 'sec8', animated: true },
+            { id: 'esec4', source: 'sec4', target: 'sec8', animated: true },
+            { id: 'esec5', source: 'sec5', target: 'sec8', animated: true },
+            { id: 'esec6', source: 'sec6', target: 'sec8', animated: true },
+            { id: 'esec7', source: 'sec7r', target: 'sec8', animated: true },
           ],
         },
         {
@@ -2521,6 +2577,18 @@ Always send tokens in the \`Authorization: Bearer <token>\` header — never as 
               ],
               correctIndex: 1,
               explanation: 'Any JavaScript running on your page — including XSS payloads from injected content or compromised third-party scripts — can read localStorage. A single XSS vulnerability means token theft. The safer alternative: keep tokens in memory (for access tokens) and use httpOnly cookies (which JS cannot read) for refresh tokens.',
+            },
+            {
+              id: 'sec-q6',
+              question: 'A user clicks "Log Out" in your SPA. You clear the in-memory access token. Is the user fully logged out?',
+              options: [
+                'Yes — once the token is removed from memory, it cannot be used',
+                'No — the token is still cryptographically valid until its expiry, and any attacker who exfiltrated it earlier can still use it',
+                'Yes — the Authorization Server invalidates the token when logout is detected',
+                'No — but this only matters if the token has more than 24 hours remaining',
+              ],
+              correctIndex: 1,
+              explanation: 'Clearing local state only prevents your app from sending the token. The JWT itself remains valid at the Authorization Server until its `exp` claim. An attacker who stole it earlier still has a working token. The fix: (1) keep access tokens short-lived (< 15 min), and (2) explicitly revoke the refresh token via the RFC 7009 revocation endpoint on logout.',
             },
           ],
         },
