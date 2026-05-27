@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import confetti from 'canvas-confetti';
 import { CheckCircle, Trophy, Star, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { rankProgressInfo } from '../lib/xpUtils';
@@ -41,6 +42,18 @@ export default function XPRewardOverlay({ xpGained, breakdown, newXP, courseComp
   const [displayXP, setDisplayXP] = useState(0);
   const [xpPopped, setXpPopped] = useState(false);
   const [countdown, setCountdown] = useState(AUTO_DISMISS_SECONDS);
+
+  // Confetti burst on course complete or rank-up
+  useEffect(() => {
+    if (courseComplete) {
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.55 }, colors: ['#7c3aed', '#8b5cf6', '#a78bfa', '#34d399', '#6ee7b7'] });
+    } else if (rankUp) {
+      confetti({ particleCount: 150, spread: 100, origin: { y: 0.55 }, colors: ['#f59e0b', '#fbbf24', '#fcd34d', '#7c3aed', '#ffffff'] });
+      setTimeout(() => confetti({ particleCount: 50, spread: 60, origin: { y: 0.4 }, angle: 60, colors: ['#f59e0b', '#fbbf24'] }), 300);
+      setTimeout(() => confetti({ particleCount: 50, spread: 60, origin: { y: 0.4 }, angle: 120, colors: ['#f59e0b', '#fbbf24'] }), 300);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Animate XP counter
   useEffect(() => {

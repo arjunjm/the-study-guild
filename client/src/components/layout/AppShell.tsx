@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation, Link } from 'react-router-do
 import { useQuery } from '@tanstack/react-query';
 import {
   Home, BookOpen, GraduationCap, Sword, Flame, Trophy,
-  ChevronDown, ChevronRight, LogOut, User, Shield, Search, X, Clock, Keyboard,
+  ChevronDown, ChevronRight, LogOut, User, Shield, Search, X, Clock, Keyboard, PenLine,
 } from 'lucide-react';
 import { apiClient } from '../../lib/apiClient';
 import { useAuth } from '../../contexts/AuthContext';
@@ -315,6 +315,14 @@ function ProfileDropdown({ user }: { user: UserProfile }) {
               <GraduationCap className="h-4 w-4 text-slate-400" />
               Teach
             </Link>
+            <Link
+              to="/notes"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+            >
+              <PenLine className="h-4 w-4 text-slate-400" />
+              My Notes
+            </Link>
           </div>
 
           <div className="border-t border-slate-100 p-1">
@@ -337,12 +345,27 @@ const QUICK_ACTIONS = [
   { label: 'Browse', path: '/courses', icon: BookOpen },
   { label: 'Leaderboard', path: '/leaderboard', icon: Trophy },
   { label: 'Profile', path: '/profile', icon: User },
-  { label: 'Teach', path: '/teach', icon: GraduationCap },
+  { label: 'Notes', path: '/notes', icon: PenLine },
 ] as const;
+
+const SEARCH_HISTORY_KEY = 'sg-search-history';
+
+function getSearchHistory(): string[] {
+  try { return JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) ?? '[]') as string[]; }
+  catch { return []; }
+}
+
+function addSearchHistory(query: string) {
+  const trimmed = query.trim();
+  if (!trimmed) return;
+  const prev = getSearchHistory().filter(q => q !== trimmed);
+  localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify([trimmed, ...prev].slice(0, 6)));
+}
 
 function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate: (path: string) => void }) {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => getSearchHistory());
   const inputRef = useRef<HTMLInputElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const { data: courses } = useQuery<Course[]>({
@@ -374,6 +397,14 @@ function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate:
 
   useEffect(() => { setSelectedIndex(-1); }, [filtered.length, query]);
 
+  function navigateToCourse(courseId: string) {
+    if (query.trim()) {
+      addSearchHistory(query.trim());
+      setSearchHistory(getSearchHistory());
+    }
+    onNavigate(`/courses/${courseId}`);
+  }
+
   const handleKey = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Escape') { onClose(); return; }
     if (e.key === 'ArrowDown') {
@@ -384,9 +415,10 @@ function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate:
       setSelectedIndex(i => { const next = i > 0 ? i - 1 : filtered.length - 1; itemRefs.current[next]?.scrollIntoView({ block: 'nearest' }); return next; });
     } else if (e.key === 'Enter' && selectedIndex >= 0 && filtered[selectedIndex]) {
       e.preventDefault();
-      onNavigate(`/courses/${filtered[selectedIndex].id}`);
+      navigateToCourse(filtered[selectedIndex].id);
     }
-  }, [onClose, onNavigate, filtered, selectedIndex]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onClose, onNavigate, filtered, selectedIndex, query]);
 
   return (
     <div
@@ -445,6 +477,33 @@ function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate:
             </>
           )}
 
+          {!hasQuery && searchHistory.length > 0 && (
+            <div className="mb-2">
+              <div className="flex items-center justify-between px-3 pb-1">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Recent searches</p>
+                <button
+                  onClick={() => { localStorage.removeItem(SEARCH_HISTORY_KEY); setSearchHistory([]); }}
+                  className="text-[10px] text-slate-400 hover:text-slate-600 transition"
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1.5 px-3 pb-2">
+                {searchHistory.map(q => (
+                  <button
+                    key={q}
+                    onClick={() => setQuery(q)}
+                    className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700"
+                  >
+                    <Clock className="h-3 w-3 text-slate-400" />
+                    {q}
+                  </button>
+                ))}
+              </div>
+              <div className="mx-1 mb-2 border-t border-slate-100" />
+            </div>
+          )}
+
           {filtered.map((course, idx) => {
             const cat = TAXONOMY.find(c => c.l1 === course.taxonomy.l1);
             const isSelected = idx === selectedIndex;
@@ -452,7 +511,7 @@ function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate:
               <button
                 key={course.id}
                 ref={el => { itemRefs.current[idx] = el; }}
-                onClick={() => onNavigate(`/courses/${course.id}`)}
+                onClick={() => navigateToCourse(course.id)}
                 className={cn(
                   'group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition',
                   isSelected ? 'bg-violet-50 ring-1 ring-inset ring-violet-200' : 'hover:bg-slate-50'

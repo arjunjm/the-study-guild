@@ -14,6 +14,7 @@ const TeacherDashboard = lazy(() => import('./pages/TeacherDashboard'));
 const CourseEditorPage  = lazy(() => import('./pages/CourseEditorPage'));
 const LessonEditorPage  = lazy(() => import('./pages/LessonEditorPage'));
 const LeaderboardPage   = lazy(() => import('./pages/LeaderboardPage'));
+const NotesPage        = lazy(() => import('./pages/NotesPage'));
 const NotFoundPage     = lazy(() => import('./pages/NotFoundPage'));
 
 function PageLoader() {
@@ -46,6 +47,7 @@ export default function App() {
             <Route path="teach/courses/:courseId/edit" element={<CourseEditorPage />} />
             <Route path="teach/courses/:courseId/lessons/:lessonId/edit" element={<LessonEditorPage />} />
             <Route path="leaderboard" element={<LeaderboardPage />} />
+            <Route path="notes" element={<NotesPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

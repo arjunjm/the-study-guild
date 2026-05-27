@@ -9,6 +9,7 @@ import { computeRank, XP_REWARDS } from './xpUtils';
 let _xp = 575;
 let _displayName = 'Dev Guildmate';
 let _bio: string | undefined = undefined;
+let _role: UserProfile['role'] = 'learner';
 const _completedLessons = new Set<string>();
 const _achievements = new Set<string>(['first-lesson', 'seven-day-streak']);
 const _lessonOverrides = new Map<string, Partial<Lesson>>();
@@ -16,19 +17,19 @@ const _lessonOverrides = new Map<string, Partial<Lesson>>();
 const BASE_USER = {
   id: 'dev-user-001',
   email: 'dev@studyguild.local',
-  role: 'learner' as const,
   streak: 7,
   lastLoginDate: new Date().toISOString().split('T')[0],
   createdAt: '2025-01-01T00:00:00.000Z',
 };
 
 export function getMockUser(): UserProfile {
-  return { ...BASE_USER, displayName: _displayName, bio: _bio, xp: _xp, rank: computeRank(_xp), achievements: [..._achievements] };
+  return { ...BASE_USER, role: _role, displayName: _displayName, bio: _bio, xp: _xp, rank: computeRank(_xp), achievements: [..._achievements] };
 }
 
-export function patchMockUser(updates: { displayName?: string; bio?: string }): UserProfile {
+export function patchMockUser(updates: { displayName?: string; bio?: string; role?: UserProfile['role'] }): UserProfile {
   if (updates.displayName !== undefined) _displayName = updates.displayName;
   if (updates.bio !== undefined) _bio = updates.bio;
+  if (updates.role !== undefined) _role = updates.role;
   return getMockUser();
 }
 
@@ -128,7 +129,7 @@ export function putMockLesson(lessonId: string, updates: Partial<Lesson>): Lesso
 }
 
 // ---------------------------------------------------------------------------
-// Static course / lesson data
+// Static course / lesson data (mutable so teacher UI can create/edit/publish)
 // ---------------------------------------------------------------------------
 export const MOCK_COURSES: Course[] = [
   {
@@ -14605,6 +14606,40 @@ function connect(url: string) {
   },
 
 ];
+
+export function createMockCourse(data: Partial<Course>): Course {
+  const course: Course = {
+    id: `course-new-${Date.now()}`,
+    title: data.title ?? 'New Course',
+    description: data.description ?? '',
+    taxonomy: data.taxonomy ?? { l1: 'Security', l2: 'Authentication' },
+    difficulty: data.difficulty ?? 'beginner',
+    tags: data.tags ?? [],
+    authorId: getMockUser().id,
+    authorName: getMockUser().displayName,
+    published: false,
+    lessonIds: [],
+    totalLessons: 0,
+    estimatedMinutes: 0,
+    ratingAverage: 0,
+    ratingCount: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  MOCK_COURSES.push(course);
+  return course;
+}
+
+export function patchMockCourse(id: string, updates: Partial<Course>): Course | undefined {
+  const idx = MOCK_COURSES.findIndex(c => c.id === id);
+  if (idx === -1) return undefined;
+  MOCK_COURSES[idx] = { ...MOCK_COURSES[idx], ...updates, updatedAt: new Date().toISOString() };
+  return MOCK_COURSES[idx];
+}
+
+export function publishMockCourse(id: string): Course | undefined {
+  return patchMockCourse(id, { published: true, publishedAt: new Date().toISOString() });
+}
 
 export function getMockCourseProgress(): Array<{ course: Course; completedCount: number; totalLessons: number; completedLessonIds: string[] }> {
   return MOCK_COURSES.map(course => {
