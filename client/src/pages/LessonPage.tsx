@@ -215,7 +215,8 @@ function LessonPageContent({
               to={`/courses/${courseId}`}
               className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition shrink-0"
             >
-              <ChevronLeft className="h-3.5 w-3.5" /> Back to course
+              <ChevronLeft className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Back to course</span>
             </Link>
 
             {totalLessons > 0 && (
@@ -234,13 +235,13 @@ function LessonPageContent({
 
             <div className="flex items-center gap-3 ml-auto">
               {alreadyComplete && (
-                <span className="flex items-center gap-1 text-xs text-emerald-600">
+                <span className="hidden sm:flex items-center gap-1 text-xs text-emerald-600">
                   <CheckCircle className="h-3 w-3" /> Done
                 </span>
               )}
               <span className="flex items-center gap-1.5 text-xs text-slate-400">
                 <Clock className="h-3.5 w-3.5" />
-                {lesson.estimatedMinutes} min
+                <span className="hidden sm:inline">{lesson.estimatedMinutes} min</span>
               </span>
               {sections.length >= 3 && (
                 <div className="relative">
@@ -389,7 +390,7 @@ function LessonPageContent({
 
       {/* Sticky completion bar */}
       {alreadyComplete && !reward && (
-        <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-slate-200 bg-white/90 backdrop-blur-xl md:left-[68px] lg:left-[220px]">
+        <div className="fixed bottom-16 left-0 right-0 z-30 border-t border-slate-200 bg-white/90 backdrop-blur-xl md:bottom-0 md:left-[68px] lg:left-[220px]">
           <div className="mx-auto flex max-w-3xl items-center gap-4 px-4 py-3 lg:px-10">
             <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium shrink-0">
               <CheckCircle className="h-4 w-4" />
