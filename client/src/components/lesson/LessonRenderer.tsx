@@ -1,11 +1,16 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { CheckCircle, Copy, Check } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { LessonContent, LessonSection } from '@study-guild/shared';
 import FlowDiagramSection from './FlowDiagramSection';
 import QuizSection from './QuizSection';
+
+// Match the oneDark background so the header blends in
+const CODE_BG = '#282c34';
 
 interface Props {
   content: LessonContent;
@@ -66,12 +71,24 @@ function SectionRenderer({ section, onQuizDone }: { section: LessonSection; onQu
             remarkPlugins={[remarkGfm]}
             components={{
               code({ className, children }) {
-                const isBlock = Boolean(className);
-                if (isBlock) {
+                const match = /language-(\w+)/.exec(className ?? '');
+                if (match) {
                   return (
-                    <code className="font-mono text-[13px] text-slate-300 leading-relaxed before:content-none after:content-none">
-                      {children}
-                    </code>
+                    <SyntaxHighlighter
+                      language={match[1]}
+                      style={oneDark}
+                      customStyle={{
+                        margin: 0,
+                        borderRadius: '12px',
+                        fontSize: '13px',
+                        lineHeight: '1.65',
+                        border: '1px solid rgba(100,116,139,0.25)',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+                      }}
+                      PreTag="div"
+                    >
+                      {String(children).replace(/\n$/, '')}
+                    </SyntaxHighlighter>
                   );
                 }
                 return (
@@ -81,11 +98,8 @@ function SectionRenderer({ section, onQuizDone }: { section: LessonSection; onQu
                 );
               },
               pre({ children }) {
-                return (
-                  <pre className="overflow-x-auto rounded-xl bg-[#1e2433] border border-slate-700/40 p-4 my-4 text-[13px] leading-relaxed shadow-sm not-prose">
-                    {children}
-                  </pre>
-                );
+                // SyntaxHighlighter already wraps in a div; just pass children through
+                return <>{children}</>;
               },
               table({ children }) {
                 return (
@@ -170,11 +184,19 @@ function CodeBlock({ section }: { section: Extract<LessonSection, { type: 'codeB
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-700/40 bg-[#1e2433] shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-700/40 px-4 py-2.5">
+    <div className="overflow-hidden rounded-xl border border-slate-700/30 shadow-sm" style={{ background: CODE_BG }}>
+      {/* Header bar */}
+      <div
+        className="flex items-center justify-between border-b border-slate-700/40 px-4 py-2.5"
+        style={{ background: CODE_BG }}
+      >
         <div className="flex items-center gap-2">
-          <span className="rounded bg-slate-700/60 px-2 py-0.5 text-[11px] font-mono text-slate-400">{section.language}</span>
-          {section.caption && <span className="text-xs text-slate-500">{section.caption}</span>}
+          <span className="rounded bg-slate-700/50 px-2 py-0.5 text-[11px] font-mono text-slate-400">
+            {section.language}
+          </span>
+          {section.caption && (
+            <span className="text-xs text-slate-500">{section.caption}</span>
+          )}
         </div>
         <button
           onClick={copy}
@@ -189,9 +211,25 @@ function CodeBlock({ section }: { section: Extract<LessonSection, { type: 'codeB
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
-      <pre className="overflow-x-auto p-4 text-[13px] leading-relaxed text-slate-300">
-        <code className="font-mono">{section.code}</code>
-      </pre>
+
+      {/* Highlighted code */}
+      <SyntaxHighlighter
+        language={section.language}
+        style={oneDark}
+        customStyle={{
+          margin: 0,
+          borderRadius: 0,
+          fontSize: '13px',
+          lineHeight: '1.65',
+          background: CODE_BG,
+          padding: '1rem',
+        }}
+        PreTag="div"
+        showLineNumbers={section.code.split('\n').length > 6}
+        lineNumberStyle={{ color: '#4b5563', fontSize: '11px', minWidth: '2.5em' }}
+      >
+        {section.code}
+      </SyntaxHighlighter>
     </div>
   );
 }
