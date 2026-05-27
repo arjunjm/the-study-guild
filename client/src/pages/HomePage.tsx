@@ -457,17 +457,41 @@ const DEV_TIPS = [
   { tip: 'chmod 777 on a production file is never the solution. Understand permissions — it takes 10 minutes.', tag: 'Linux' },
   { tip: 'The second system is always over-engineered. Build the simplest thing that works, refactor when you understand the problem.', tag: 'Architecture' },
   { tip: 'SQL\'s EXPLAIN ANALYZE shows what the query planner actually does — not what you hoped it would do.', tag: 'Databases' },
+  { tip: 'Never store plaintext secrets in environment variables in CI. Use a secrets manager — rotate on any possible exposure.', tag: 'Security' },
+  { tip: 'async/await doesn\'t make I/O faster — it just frees the thread while waiting. Use Promise.all() for independent calls.', tag: 'Node.js' },
+  { tip: 'The OWASP Top 10 hasn\'t changed much in 20 years. Injection, broken auth, and misconfiguration still account for most breaches.', tag: 'Security' },
+  { tip: 'Prefer named exports over default exports in TypeScript. Refactoring tools can find and rename them reliably.', tag: 'TypeScript' },
+  { tip: 'A service with no health endpoint is unmonitorable. Add /health on day one — it costs nothing.', tag: 'APIs' },
+  { tip: 'In distributed systems, eventually consistent reads are usually fine. Require strong consistency only where it actually matters.', tag: 'Databases' },
+  { tip: 'Docker multi-stage builds can reduce image size 10x. Build in one stage, copy only the artifact to a minimal runtime image.', tag: 'DevOps' },
+  { tip: 'The Strangler Fig pattern: wrap the legacy system, route new traffic to the replacement, starve the old code of use.', tag: 'Architecture' },
+  { tip: 'Correlation IDs in logs are worth an hour\'s setup. Without them, debugging a failed distributed request is archaeology.', tag: 'Observability' },
+  { tip: 'CSS specificity wars are a sign of missing design tokens. Use a consistent naming system before the stylesheet grows.', tag: 'Frontend' },
+  { tip: 'Use `git bisect` to find the commit that introduced a bug in O(log n) steps — even in a repo with thousands of commits.', tag: 'Git' },
+  { tip: 'Column-level encryption at the database layer is simpler than application-layer encryption and survives SQL injection.', tag: 'Security' },
+  { tip: 'When you remove a NOT NULL column from a large table, use a default value to avoid a full table lock in production.', tag: 'Databases' },
+  { tip: 'Feature parity is a trap. Different clients (mobile vs. web) have different needs — design the API for the client, not for uniformity.', tag: 'APIs' },
+  { tip: 'Test flakiness compounds. One flaky test is annoying. Fifty flaky tests means CI is noise that engineers learn to ignore.', tag: 'Testing' },
 ];
 
 function DevTipCard() {
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86_400_000);
-  const tip = DEV_TIPS[dayOfYear % DEV_TIPS.length];
+  const [offset, setOffset] = useState(0);
+  const idx = (dayOfYear + offset) % DEV_TIPS.length;
+  const tip = DEV_TIPS[idx];
   return (
     <section className="rounded-2xl border border-cyan-200 bg-cyan-50 p-5">
       <div className="mb-2 flex items-center gap-2">
         <span className="text-base">💡</span>
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-cyan-700">Dev tip of the day</span>
-        <span className="ml-auto rounded-full border border-cyan-200 bg-white px-2 py-0.5 text-[10px] text-cyan-700">{tip.tag}</span>
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-cyan-700">Dev tip</span>
+        <span className="rounded-full border border-cyan-200 bg-white px-2 py-0.5 text-[10px] text-cyan-700">{tip.tag}</span>
+        <button
+          onClick={() => setOffset(o => (o + 1) % DEV_TIPS.length)}
+          className="ml-auto rounded-lg p-1 text-cyan-500 transition hover:bg-cyan-100 hover:text-cyan-700"
+          title="Next tip"
+        >
+          <Shuffle className="h-3.5 w-3.5" />
+        </button>
       </div>
       <p className="text-sm leading-relaxed text-slate-700">{tip.tip}</p>
     </section>
