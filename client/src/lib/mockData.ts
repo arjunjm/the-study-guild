@@ -2265,6 +2265,27 @@ Three Base64url-encoded segments separated by dots: **Header.Payload.Signature**
 }`,
         },
         {
+          type: 'flowDiagram',
+          title: 'JWT anatomy: three dot-separated Base64url segments',
+          nodes: [
+            { id: 'token', position: { x: 0, y: 100 }, label: 'Raw JWT string\nxxxxxx.yyyyyy.zzzzzz', type: 'input' },
+            { id: 'header', position: { x: 260, y: 20 }, label: 'Header\n{ alg, typ }', type: 'default' },
+            { id: 'payload', position: { x: 260, y: 100 }, label: 'Payload\n{ sub, exp, roles, … }', type: 'default' },
+            { id: 'sig', position: { x: 260, y: 180 }, label: 'Signature\nHMAC or RSA of\nheader + payload', type: 'default' },
+            { id: 'verify', position: { x: 520, y: 100 }, label: 'Verify signature\nwith secret / public key', type: 'default' },
+            { id: 'claims', position: { x: 760, y: 100 }, label: 'Trust claims\nsub, roles, exp', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'token', target: 'header', label: 'split on "."' },
+            { id: 'e2', source: 'token', target: 'payload' },
+            { id: 'e3', source: 'token', target: 'sig' },
+            { id: 'e4', source: 'header', target: 'verify', label: 'declares alg' },
+            { id: 'e5', source: 'payload', target: 'verify' },
+            { id: 'e6', source: 'sig', target: 'verify', label: 'must match' },
+            { id: 'e7', source: 'verify', target: 'claims', label: 'valid ✓' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'warning',
           title: 'JWTs are encoded, not encrypted',
@@ -2312,6 +2333,25 @@ The resource server **verifies** the signature using the corresponding public ke
           content: `## Symmetric vs asymmetric signing
 
 JWT supports two families of signing algorithms with very different trust models.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'HMAC (symmetric) vs RSA (asymmetric) trust models',
+          nodes: [
+            { id: 'idp', position: { x: 0, y: 100 }, label: 'Identity Provider\n(issues tokens)', type: 'input' },
+            { id: 'hmac_key', position: { x: 220, y: 40 }, label: 'Shared secret\n(HMAC)', type: 'default' },
+            { id: 'rsa_priv', position: { x: 220, y: 160 }, label: 'Private key\n(RSA / ECDSA)', type: 'default' },
+            { id: 'api1', position: { x: 440, y: 40 }, label: 'API Server A\n(must know secret)', type: 'default' },
+            { id: 'api2', position: { x: 440, y: 140 }, label: 'API Server B\n(verify via JWKS)', type: 'default' },
+            { id: 'jwks', position: { x: 440, y: 220 }, label: 'JWKS endpoint\n(public keys only)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'idp', target: 'hmac_key', label: 'signs with' },
+            { id: 'e2', source: 'idp', target: 'rsa_priv', label: 'signs with' },
+            { id: 'e3', source: 'hmac_key', target: 'api1', label: 'shared secret\n(sensitive!)' },
+            { id: 'e4', source: 'rsa_priv', target: 'jwks', label: 'public key published' },
+            { id: 'e5', source: 'jwks', target: 'api2', label: 'fetches public key\n(safe to expose)' },
+          ],
         },
         {
           type: 'callout',
@@ -2754,6 +2794,27 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 Before hooks (React 16.8), stateful logic lived in class components. Sharing it between components meant render props or HOCs — patterns that created deeply nested "wrapper hell." Hooks let you **extract stateful logic into reusable functions** without restructuring your component tree.`,
         },
         {
+          type: 'flowDiagram',
+          title: 'React render cycle: state change triggers re-render',
+          nodes: [
+            { id: 'event', position: { x: 0, y: 100 }, label: 'User event\n(click, input, …)', type: 'input' },
+            { id: 'handler', position: { x: 200, y: 100 }, label: 'Event handler\ncalls setState()', type: 'default' },
+            { id: 'queue', position: { x: 400, y: 100 }, label: 'React state\nupdate queue', type: 'default' },
+            { id: 'render', position: { x: 600, y: 100 }, label: 'Component\nre-renders', type: 'default' },
+            { id: 'vdom', position: { x: 800, y: 100 }, label: 'Virtual DOM\ndiff (reconcile)', type: 'default' },
+            { id: 'dom', position: { x: 1000, y: 100 }, label: 'Real DOM\nminimal patch', type: 'output' },
+            { id: 'effect', position: { x: 600, y: 220 }, label: 'useEffect runs\n(after paint)', type: 'default' },
+          ],
+          edges: [
+            { id: 'e1', source: 'event', target: 'handler' },
+            { id: 'e2', source: 'handler', target: 'queue', label: 'batched' },
+            { id: 'e3', source: 'queue', target: 'render', label: 'flush batch' },
+            { id: 'e4', source: 'render', target: 'vdom' },
+            { id: 'e5', source: 'vdom', target: 'dom', label: 'commit' },
+            { id: 'e6', source: 'dom', target: 'effect', label: 'after paint' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'useState in a nutshell',
@@ -2864,6 +2925,25 @@ useEffect runs **after** the component renders. The second argument controls whe
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'When to apply useMemo / useCallback',
+          nodes: [
+            { id: 'render', position: { x: 0, y: 100 }, label: 'Parent re-renders', type: 'input' },
+            { id: 'q1', position: { x: 220, y: 100 }, label: 'Is value/fn\npassed to memo child\nor in effect deps?', type: 'decision' },
+            { id: 'q2', position: { x: 440, y: 40 }, label: 'Is computation\nmeasurably expensive?', type: 'decision' },
+            { id: 'skip', position: { x: 440, y: 180 }, label: 'Skip memoization\n(overhead > gain)', type: 'output' },
+            { id: 'memo', position: { x: 660, y: 40 }, label: 'useMemo /\nuseCallback', type: 'output' },
+            { id: 'plain', position: { x: 660, y: 160 }, label: 'Plain value / fn\n(no memo needed)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'render', target: 'q1' },
+            { id: 'e2', source: 'q1', target: 'q2', label: 'yes' },
+            { id: 'e3', source: 'q1', target: 'skip', label: 'no' },
+            { id: 'e4', source: 'q2', target: 'memo', label: 'yes (measured)' },
+            { id: 'e5', source: 'q2', target: 'plain', label: 'no' },
+          ],
+        },
         {
           type: 'callout',
           variant: 'warning',
@@ -3760,6 +3840,26 @@ const { resources } = await container.items
     parameters: [{ name: '@role', value: 'teacher' }],
   })
   .fetchAll();`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Azure AD two-registration auth flow for SPA + API',
+          nodes: [
+            { id: 'user', position: { x: 0, y: 100 }, label: 'User / Browser\n(React SPA)', type: 'input' },
+            { id: 'aad', position: { x: 220, y: 100 }, label: 'Azure AD\n(Entra ID)', type: 'default' },
+            { id: 'spa_reg', position: { x: 220, y: 220 }, label: 'SPA App Registration\n(public client, PKCE)', type: 'default' },
+            { id: 'api_reg', position: { x: 440, y: 220 }, label: 'API App Registration\n(exposes access_as_user scope)', type: 'default' },
+            { id: 'access', position: { x: 440, y: 100 }, label: 'Access token\n(JWT, aud = API)', type: 'default' },
+            { id: 'api', position: { x: 660, y: 100 }, label: 'Express API\n(validates JWT via JWKS)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'user', target: 'aad', label: 'login + request\naccess_as_user scope' },
+            { id: 'e2', source: 'spa_reg', target: 'aad', label: 'registered redirect URI' },
+            { id: 'e3', source: 'api_reg', target: 'aad', label: 'scope definition' },
+            { id: 'e4', source: 'aad', target: 'access', label: 'issues token' },
+            { id: 'e5', source: 'access', target: 'user', label: 'returned to SPA' },
+            { id: 'e6', source: 'user', target: 'api', label: 'Authorization: Bearer <token>' },
+          ],
         },
         {
           type: 'text',
