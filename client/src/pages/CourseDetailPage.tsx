@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Share2, Star, Clock, CheckCircle, Circle, ChevronLeft, BookOpen, ArrowRight, Code2, HelpCircle, GitFork, Award, Download, X, ExternalLink } from 'lucide-react';
+import { Share2, Star, Clock, CheckCircle, Circle, ChevronLeft, BookOpen, ArrowRight, Code2, HelpCircle, GitFork, Award, Download, X, ExternalLink, Bookmark } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { TAXONOMY } from '../data/taxonomy';
 import { cn } from '../lib/utils';
@@ -16,6 +16,22 @@ export default function CourseDetailPage() {
   const [hoveredRating, setHoveredRating] = useState(0);
   const [submittedRating, setSubmittedRating] = useState(0);
   const [showCert, setShowCert] = useState(false);
+  const [bookmarked, setBookmarked] = useState(() => {
+    try { return new Set<string>(JSON.parse(localStorage.getItem('sg-bookmarks') ?? '[]')).has(courseId ?? ''); }
+    catch { return false; }
+  });
+
+  function toggleBookmark() {
+    setBookmarked(prev => {
+      const next = !prev;
+      try {
+        const saved = new Set<string>(JSON.parse(localStorage.getItem('sg-bookmarks') ?? '[]'));
+        if (next) saved.add(courseId!); else saved.delete(courseId!);
+        localStorage.setItem('sg-bookmarks', JSON.stringify([...saved]));
+      } catch { /* ignore */ }
+      return next;
+    });
+  }
 
   const { data: course } = useQuery<Course>({
     queryKey: ['course', courseId],
@@ -111,16 +127,31 @@ export default function CourseDetailPage() {
               ))}
             </div>
           )}
-          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
-            <span className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5" />{total} lessons</span>
-            <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{course.estimatedMinutes} min</span>
-            {course.ratingCount > 0 && (
-              <span className="flex items-center gap-1 text-amber-600">
-                <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
-                {course.ratingAverage.toFixed(1)} ({course.ratingCount} ratings)
-              </span>
-            )}
-            <span>by <span className="text-slate-700">{course.authorName}</span></span>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+              <span className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5" />{total} lessons</span>
+              <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{course.estimatedMinutes} min</span>
+              {course.ratingCount > 0 && (
+                <span className="flex items-center gap-1 text-amber-600">
+                  <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+                  {course.ratingAverage.toFixed(1)} ({course.ratingCount} ratings)
+                </span>
+              )}
+              <span>by <span className="text-slate-700">{course.authorName}</span></span>
+            </div>
+            <button
+              onClick={toggleBookmark}
+              title={bookmarked ? 'Remove from saved' : 'Save course'}
+              className={cn(
+                'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition',
+                bookmarked
+                  ? 'border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                  : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-700'
+              )}
+            >
+              <Bookmark className={cn('h-3.5 w-3.5', bookmarked && 'fill-amber-500 text-amber-500')} />
+              {bookmarked ? 'Saved' : 'Save'}
+            </button>
           </div>
         </div>
       </div>

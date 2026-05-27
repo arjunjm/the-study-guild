@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpen, Flame, Trophy, ArrowRight, Clock, Star, Gift, CheckCircle2, Shuffle } from 'lucide-react';
+import { BookOpen, Flame, Trophy, ArrowRight, Clock, Star, Gift, CheckCircle2, Shuffle, Bookmark } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { TAXONOMY } from '../data/taxonomy';
 import { cn } from '../lib/utils';
@@ -70,6 +70,12 @@ export default function HomePage() {
   const startedCourseIds = new Set(courseProgress?.map(p => p.course.id) ?? []);
 
   const activeTaxonomies = new Set(inProgress.map(p => p.course.taxonomy.l1));
+
+  const [bookmarkedIds] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('sg-bookmarks') ?? '[]')); }
+    catch { return new Set(); }
+  });
+  const savedCourses = courses?.filter(c => bookmarkedIds.has(c.id)) ?? [];
 
   const recommended = courses && activeTaxonomies.size > 0
     ? courses
@@ -310,6 +316,29 @@ export default function HomePage() {
                   </Link>
                 );
               })}
+            </div>
+          </section>
+        )}
+
+        {/* Saved for later */}
+        {savedCourses.length > 0 && (
+          <section>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+                <Bookmark className="h-4 w-4 text-amber-500 fill-amber-400" />
+                Saved for later
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                  {savedCourses.length}
+                </span>
+              </h2>
+              <Link to="/courses?saved=1" className="flex items-center gap-1 text-sm text-slate-400 hover:text-slate-600 transition">
+                View all saved <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {savedCourses.slice(0, 3).map(course => (
+                <CourseCard key={course.id} course={course} />
+              ))}
             </div>
           </section>
         )}
