@@ -309,33 +309,44 @@ export default function CoursesPage() {
         </div>
       )}
 
-      {/* Difficulty chips */}
-      <div className="mb-6 flex flex-wrap items-center gap-2">
-        <span className="text-xs text-slate-500 font-medium">Level:</span>
-        {DIFFICULTIES.map(d => {
-          const isActive = filterDiff === d;
-          const count = difficultyCounts[d] ?? 0;
-          return (
+      {/* Difficulty chips + sort */}
+      <div className="mb-6 space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-slate-500 font-medium">Level:</span>
+          {DIFFICULTIES.map(d => {
+            const isActive = filterDiff === d;
+            const count = difficultyCounts[d] ?? 0;
+            return (
+              <button
+                key={d}
+                onClick={() => setDifficulty(d)}
+                className={cn(
+                  'rounded-full border px-3 py-1 text-xs font-medium capitalize transition-all duration-150',
+                  isActive
+                    ? DIFFICULTY_STYLES[d].classes
+                    : 'border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700'
+                )}
+              >
+                {DIFFICULTY_STYLES[d].label}
+                {count > 0 && (
+                  <span className={cn('ml-1 font-normal', isActive ? 'opacity-70' : 'text-slate-400')}>
+                    ({count})
+                  </span>
+                )}
+              </button>
+            );
+          })}
+          {hasFilters && (
             <button
-              key={d}
-              onClick={() => setDifficulty(d)}
-              className={cn(
-                'rounded-full border px-3 py-1 text-xs font-medium capitalize transition-all duration-150',
-                isActive
-                  ? DIFFICULTY_STYLES[d].classes
-                  : 'border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700'
-              )}
+              onClick={clearAll}
+              className="flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-500 transition hover:border-red-200 hover:text-red-600"
             >
-              {DIFFICULTY_STYLES[d].label}
-              {count > 0 && (
-                <span className={cn('ml-1 font-normal', isActive ? 'opacity-70' : 'text-slate-400')}>
-                  ({count})
-                </span>
-              )}
+              <X className="h-3 w-3" />
+              Clear all
             </button>
-          );
-        })}
-        <div className="ml-auto flex items-center gap-2">
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           {bookmarks.size > 0 && (
             <button
               onClick={() => setSearchParams(prev => {
@@ -370,15 +381,6 @@ export default function CoursesPage() {
             </button>
           ))}
         </div>
-        {hasFilters && (
-          <button
-            onClick={clearAll}
-            className="flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-500 transition hover:border-red-200 hover:text-red-600"
-          >
-            <X className="h-3 w-3" />
-            Clear all
-          </button>
-        )}
       </div>
 
       {/* Recently viewed strip */}

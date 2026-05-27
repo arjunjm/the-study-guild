@@ -130,20 +130,22 @@ export default function CourseDetailPage() {
           <>
             <div className="mb-6 relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-white p-6 shadow-sm">
               <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-emerald-100 blur-2xl" />
-              <div className="relative flex items-center gap-5">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-100">
-                  <Award className="h-7 w-7 text-emerald-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600 mb-0.5">Course Complete</p>
-                  <h2 className="text-lg font-bold text-slate-900">{course.title}</h2>
-                  <p className="text-sm text-slate-500">
-                    You've completed all {total} lessons · {course.estimatedMinutes} min of learning
-                  </p>
+              <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-100">
+                    <Award className="h-7 w-7 text-emerald-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600 mb-0.5">Course Complete</p>
+                    <h2 className="text-lg font-bold text-slate-900">{course.title}</h2>
+                    <p className="text-sm text-slate-500">
+                      You've completed all {total} lessons · {course.estimatedMinutes} min of learning
+                    </p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setShowCert(true)}
-                  className="shrink-0 flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                  className="self-start sm:self-auto sm:shrink-0 flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
                 >
                   <Award className="h-4 w-4" />
                   Certificate
