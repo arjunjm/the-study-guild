@@ -51,9 +51,9 @@ export default function FlowDiagramSection({ section }: Props) {
   const nodes: Node[] = section.nodes.map(n => ({
     id: n.id,
     position: n.position,
-    data: { label: n.label },
+    data: { label: n.label ?? (n.data?.label as string | undefined) },
     type: n.type === 'decision' ? 'default' : (n.type ?? 'default'),
-    style: nodeStyle(n.type),
+    style: n.style ? { ...nodeStyle(n.type), ...n.style } : nodeStyle(n.type),
   }));
 
   const edges = section.edges.map(e => ({
@@ -62,7 +62,7 @@ export default function FlowDiagramSection({ section }: Props) {
     target: e.target,
     label: e.label,
     type: 'labeled',
-    style: { stroke: '#7C3AED', strokeWidth: 1.5 },
+    style: e.style ? { stroke: '#7C3AED', strokeWidth: 1.5, ...e.style } : { stroke: '#7C3AED', strokeWidth: 1.5 },
     data: { animated: e.animated ?? false },
   }));
 
