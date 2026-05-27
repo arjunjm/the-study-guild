@@ -2,7 +2,7 @@ import type { AxiosInstance } from 'axios';
 import {
   getMockUser, getMockProgress, getAllMockProgress, completeMockLesson, getMockCourseProgress, getMockLeaderboard,
   patchMockUser, getMockLesson, putMockLesson, MOCK_COURSES, MOCK_LESSONS, MOCK_TAXONOMIES,
-  createMockCourse, patchMockCourse, publishMockCourse,
+  createMockCourse, patchMockCourse, publishMockCourse, createMockLesson, deleteMockLesson,
 } from './mockData';
 
 export function installMockInterceptors(client: AxiosInstance) {
@@ -47,6 +47,8 @@ export function resolveMock(url: string, method: string, body?: string) {
     return lesson ? ok(lesson) : Promise.reject({ response: { status: 404 } });
   }
   if (url.match(/\/courses\/[^/]+\/lessons\/[^/]+$/) && method === 'delete') {
+    const lessonId = url.split('/').pop()!;
+    deleteMockLesson(lessonId);
     return ok({ deleted: true });
   }
   if (url.match(/\/courses\/[^/]+\/lessons/) && method === 'get') {
@@ -54,7 +56,8 @@ export function resolveMock(url: string, method: string, body?: string) {
     return ok(MOCK_LESSONS.filter(l => l.courseId === courseId).map(l => getMockLesson(l.id)!));
   }
   if (url.match(/\/courses\/[^/]+\/lessons/) && method === 'post') {
-    return ok({ ...parsed, id: `lesson-new-${Date.now()}`, courseId: url.split('/courses/')[1].split('/')[0] });
+    const courseId = url.split('/courses/')[1].split('/')[0];
+    return ok(createMockLesson(courseId, parsed));
   }
   if (url.match(/\/courses\/[^/]+\/publish/) && method === 'post') {
     const courseId = url.split('/courses/')[1].split('/')[0];

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Search, Star, Clock, X, BookOpen, ChevronRight, Bookmark } from 'lucide-react';
+import { Search, Star, Clock, X, BookOpen, ChevronRight, Bookmark, History } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { cn } from '../lib/utils';
 import { TAXONOMY } from '../data/taxonomy';
@@ -30,6 +30,26 @@ export default function CoursesPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestionIdx, setSuggestionIdx] = useState(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('sg-search-history') ?? '[]'); }
+    catch { return []; }
+  });
+
+  function saveSearch(term: string) {
+    const trimmed = term.trim();
+    if (!trimmed) return;
+    setSearchHistory(prev => {
+      const next = [trimmed, ...prev.filter(s => s !== trimmed)].slice(0, 8);
+      localStorage.setItem('sg-search-history', JSON.stringify(next));
+      return next;
+    });
+  }
+
+  function clearSearchHistory() {
+    localStorage.removeItem('sg-search-history');
+    setSearchHistory([]);
+  }
 
   const [recentCourses] = useState<Array<{ id: string; title: string; l1: string; l2: string; difficulty: string }>>(() => {
     try { return JSON.parse(localStorage.getItem('sg-recent-courses') ?? '[]'); }
@@ -225,17 +245,27 @@ export default function CoursesPage() {
           onFocus={() => setShowSuggestions(true)}
           onBlur={() => setTimeout(() => { setShowSuggestions(false); setSuggestionIdx(-1); }, 150)}
           onKeyDown={e => {
-            if (!showSuggestions || suggestions.length === 0) return;
+            const listLen = search.trim().length >= 2 ? suggestions.length : searchHistory.length;
             if (e.key === 'ArrowDown') {
               e.preventDefault();
-              setSuggestionIdx(i => Math.min(i + 1, suggestions.length - 1));
+              setSuggestionIdx(i => Math.min(i + 1, listLen - 1));
             } else if (e.key === 'ArrowUp') {
               e.preventDefault();
               setSuggestionIdx(i => Math.max(i - 1, -1));
-            } else if (e.key === 'Enter' && suggestionIdx >= 0) {
-              e.preventDefault();
-              navigate(`/courses/${suggestions[suggestionIdx].id}`);
-              setShowSuggestions(false);
+            } else if (e.key === 'Enter') {
+              if (search.trim().length >= 2 && suggestionIdx >= 0) {
+                e.preventDefault();
+                saveSearch(search.trim());
+                navigate(`/courses/${suggestions[suggestionIdx].id}`);
+                setShowSuggestions(false);
+              } else if (search.trim().length >= 2) {
+                saveSearch(search.trim());
+                setShowSuggestions(false);
+              } else if (suggestionIdx >= 0 && searchHistory[suggestionIdx]) {
+                e.preventDefault();
+                setSearch(searchHistory[suggestionIdx]);
+                setSuggestionIdx(-1);
+              }
             } else if (e.key === 'Escape') {
               setShowSuggestions(false);
               setSuggestionIdx(-1);
@@ -251,15 +281,15 @@ export default function CoursesPage() {
             <X className="h-4 w-4" />
           </button>
         )}
-        {/* Autocomplete dropdown */}
-        {showSuggestions && suggestions.length > 0 && (
+        {/* Autocomplete / history dropdown */}
+        {showSuggestions && search.trim().length >= 2 && suggestions.length > 0 && (
           <div className="absolute top-full left-0 right-0 z-30 mt-1.5 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg shadow-slate-200/60">
             {suggestions.map((c, idx) => {
               const cat = TAXONOMY.find(t => t.l1 === c.taxonomy.l1);
               return (
                 <button
                   key={c.id}
-                  onMouseDown={() => navigate(`/courses/${c.id}`)}
+                  onMouseDown={() => { saveSearch(search.trim()); navigate(`/courses/${c.id}`); }}
                   className={cn(
                     'flex w-full items-center gap-3 px-4 py-2.5 text-left transition',
                     idx === suggestionIdx ? 'bg-slate-50' : 'hover:bg-slate-50'
@@ -275,6 +305,32 @@ export default function CoursesPage() {
                 </button>
               );
             })}
+          </div>
+        )}
+        {showSuggestions && !search.trim() && searchHistory.length > 0 && (
+          <div className="absolute top-full left-0 right-0 z-30 mt-1.5 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg shadow-slate-200/60">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100">
+              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wide">Recent searches</span>
+              <button
+                onMouseDown={clearSearchHistory}
+                className="text-[11px] text-slate-400 hover:text-slate-600 transition"
+              >
+                Clear
+              </button>
+            </div>
+            {searchHistory.map((term, idx) => (
+              <button
+                key={term}
+                onMouseDown={() => { setSearch(term); setSuggestionIdx(-1); setShowSuggestions(false); }}
+                className={cn(
+                  'flex w-full items-center gap-3 px-4 py-2.5 text-left transition',
+                  idx === suggestionIdx ? 'bg-slate-50' : 'hover:bg-slate-50'
+                )}
+              >
+                <History className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+                <span className="flex-1 text-sm text-slate-600">{term}</span>
+              </button>
+            ))}
           </div>
         )}
       </div>

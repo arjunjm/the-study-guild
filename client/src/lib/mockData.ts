@@ -122,10 +122,42 @@ export function getMockLesson(lessonId: string): Lesson | undefined {
 }
 
 export function putMockLesson(lessonId: string, updates: Partial<Lesson>): Lesson | undefined {
-  const base = MOCK_LESSONS.find(l => l.id === lessonId);
-  if (!base) return undefined;
+  const existing = MOCK_LESSONS.find(l => l.id === lessonId);
+  if (!existing) return undefined;
   _lessonOverrides.set(lessonId, { ..._lessonOverrides.get(lessonId), ...updates });
   return getMockLesson(lessonId)!;
+}
+
+export function createMockLesson(courseId: string, data: Partial<Lesson>): Lesson {
+  const lesson: Lesson = {
+    id: `lesson-new-${Date.now()}`,
+    courseId,
+    title: data.title ?? 'New Lesson',
+    order: data.order ?? 0,
+    estimatedMinutes: data.estimatedMinutes ?? 10,
+    content: data.content ?? { schemaVersion: '1', sections: [{ type: 'text', content: 'Start writing your lesson content here.' }] },
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  MOCK_LESSONS.push(lesson);
+  const course = MOCK_COURSES.find(c => c.id === courseId);
+  if (course) {
+    course.lessonIds = [...(course.lessonIds ?? []), lesson.id];
+    course.totalLessons = (course.totalLessons ?? 0) + 1;
+  }
+  return lesson;
+}
+
+export function deleteMockLesson(lessonId: string): void {
+  const idx = MOCK_LESSONS.findIndex(l => l.id === lessonId);
+  if (idx === -1) return;
+  const lesson = MOCK_LESSONS[idx];
+  MOCK_LESSONS.splice(idx, 1);
+  const course = MOCK_COURSES.find(c => c.id === lesson.courseId);
+  if (course) {
+    course.lessonIds = (course.lessonIds ?? []).filter(id => id !== lessonId);
+    course.totalLessons = Math.max(0, (course.totalLessons ?? 1) - 1);
+  }
 }
 
 // ---------------------------------------------------------------------------
