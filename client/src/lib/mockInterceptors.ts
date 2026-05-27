@@ -2,6 +2,7 @@ import type { AxiosInstance } from 'axios';
 import {
   getMockUser, getMockProgress, getAllMockProgress, completeMockLesson, getMockCourseProgress, getMockLeaderboard,
   patchMockUser, getMockLesson, putMockLesson, MOCK_COURSES, MOCK_LESSONS, MOCK_TAXONOMIES,
+  createMockCourse, patchMockCourse, publishMockCourse,
 } from './mockData';
 
 export function installMockInterceptors(client: AxiosInstance) {
@@ -28,7 +29,7 @@ export function resolveMock(url: string, method: string, body?: string) {
 
   // Users
   if (url.endsWith('/users/me/progress') && method === 'get') return ok(getMockCourseProgress());
-  if (url.endsWith('/users/me/courses') && method === 'get') return ok(MOCK_COURSES.filter(c => c.authorId === 'teacher-001'));
+  if (url.endsWith('/users/me/courses') && method === 'get') return ok(MOCK_COURSES.filter(c => c.authorId === getMockUser().id));
   if (url.endsWith('/users/me') && method === 'get') return ok(getMockUser());
   if (url.endsWith('/users/me') && method === 'patch') return ok(patchMockUser(parsed));
   if (url.match(/\/users\/.+\/profile/)) return ok(getMockUser());
@@ -57,8 +58,8 @@ export function resolveMock(url: string, method: string, body?: string) {
   }
   if (url.match(/\/courses\/[^/]+\/publish/) && method === 'post') {
     const courseId = url.split('/courses/')[1].split('/')[0];
-    const course = MOCK_COURSES.find(c => c.id === courseId);
-    return ok({ ...course, published: true });
+    const course = publishMockCourse(courseId) ?? MOCK_COURSES.find(c => c.id === courseId);
+    return ok(course);
   }
   if (url.match(/\/courses\/[^/]+\/rate/) && method === 'post') {
     return ok({ rating: parsed.rating });
@@ -70,8 +71,8 @@ export function resolveMock(url: string, method: string, body?: string) {
   }
   if (url.match(/\/courses\/[^/]+$/) && (method === 'patch' || method === 'put')) {
     const courseId = url.split('/courses/')[1];
-    const course = MOCK_COURSES.find(c => c.id === courseId) ?? MOCK_COURSES[0];
-    return ok({ ...course, ...parsed });
+    const course = patchMockCourse(courseId, parsed) ?? MOCK_COURSES.find(c => c.id === courseId);
+    return ok(course);
   }
   if (url.includes('/courses') && method === 'get') {
     const qs = url.includes('?') ? url.split('?')[1] : '';
@@ -92,7 +93,7 @@ export function resolveMock(url: string, method: string, body?: string) {
     return ok(courses);
   }
   if (url.includes('/courses') && method === 'post') {
-    return ok({ ...parsed, id: `course-new-${Date.now()}`, authorId: 'dev-user-001', authorName: 'Dev Guildmate', published: false, lessonIds: [], totalLessons: 0, estimatedMinutes: 0, ratingAverage: 0, ratingCount: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    return ok(createMockCourse(parsed));
   }
 
   // Leaderboard

@@ -9,6 +9,7 @@ import { computeRank, XP_REWARDS } from './xpUtils';
 let _xp = 575;
 let _displayName = 'Dev Guildmate';
 let _bio: string | undefined = undefined;
+let _role: UserProfile['role'] = 'learner';
 const _completedLessons = new Set<string>();
 const _achievements = new Set<string>(['first-lesson', 'seven-day-streak']);
 const _lessonOverrides = new Map<string, Partial<Lesson>>();
@@ -16,19 +17,19 @@ const _lessonOverrides = new Map<string, Partial<Lesson>>();
 const BASE_USER = {
   id: 'dev-user-001',
   email: 'dev@studyguild.local',
-  role: 'learner' as const,
   streak: 7,
   lastLoginDate: new Date().toISOString().split('T')[0],
   createdAt: '2025-01-01T00:00:00.000Z',
 };
 
 export function getMockUser(): UserProfile {
-  return { ...BASE_USER, displayName: _displayName, bio: _bio, xp: _xp, rank: computeRank(_xp), achievements: [..._achievements] };
+  return { ...BASE_USER, role: _role, displayName: _displayName, bio: _bio, xp: _xp, rank: computeRank(_xp), achievements: [..._achievements] };
 }
 
-export function patchMockUser(updates: { displayName?: string; bio?: string }): UserProfile {
+export function patchMockUser(updates: { displayName?: string; bio?: string; role?: UserProfile['role'] }): UserProfile {
   if (updates.displayName !== undefined) _displayName = updates.displayName;
   if (updates.bio !== undefined) _bio = updates.bio;
+  if (updates.role !== undefined) _role = updates.role;
   return getMockUser();
 }
 
@@ -128,7 +129,7 @@ export function putMockLesson(lessonId: string, updates: Partial<Lesson>): Lesso
 }
 
 // ---------------------------------------------------------------------------
-// Static course / lesson data
+// Static course / lesson data (mutable so teacher UI can create/edit/publish)
 // ---------------------------------------------------------------------------
 export const MOCK_COURSES: Course[] = [
   {
@@ -142,9 +143,9 @@ export const MOCK_COURSES: Course[] = [
     published: true,
     publishedAt: '2025-01-10T00:00:00.000Z',
     tags: ['oauth2', 'security', 'authentication', 'pkce'],
-    lessonIds: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004', 'lesson-005', 'lesson-006', 'lesson-007'],
-    totalLessons: 7,
-    estimatedMinutes: 79,
+    lessonIds: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004', 'lesson-005', 'lesson-006', 'lesson-007', 'lesson-008', 'lesson-009'],
+    totalLessons: 9,
+    estimatedMinutes: 118,
     ratingAverage: 4.8,
     ratingCount: 42,
     createdAt: '2025-01-01T00:00:00.000Z',
@@ -909,51 +910,72 @@ export const MOCK_LESSONS: Lesson[] = [
           type: 'text',
           content: `## The problem OAuth2 solves
 
-Before OAuth2, if an app needed access to your Google contacts it would ask for your **Google password**. You'd hand over your credentials — which meant the app could do *anything* on your behalf, forever.
+Imagine it's 2007. A new app called TripIt wants to scan your email for flight confirmations. Their solution: **ask for your Gmail password**.
 
-OAuth2 introduces a better idea: instead of sharing passwords, you grant **limited, revocable access** using short-lived tokens.`,
+You hand over your credentials — and now TripIt can read your emails, send messages on your behalf, and do anything else your password allows. Forever. With no easy way to revoke just that access.
+
+OAuth2, published as RFC 6749 in 2012, introduced a better model: instead of sharing passwords, you grant **limited, revocable access** using short-lived tokens that only work for specific actions.`,
         },
         {
           type: 'callout',
           variant: 'info',
-          title: 'Core idea',
-          content: "OAuth2 is an authorization framework — it tells a service WHAT an app can do on your behalf. It is not an authentication protocol (that's OpenID Connect, which builds on top of OAuth2).",
+          title: 'Authorization ≠ Authentication',
+          content: "OAuth2 is an *authorization* framework — it answers 'what can this app do?' It is NOT an authentication protocol — it doesn't tell you who the user is. That's OpenID Connect (OIDC), which layers identity on top of OAuth2. You'll often use both together.",
         },
         {
           type: 'text',
           content: `## The four roles
 
-| Role | Description |
-|------|-------------|
-| **Resource Owner** | You — the user who owns the data |
-| **Client** | The app that wants access |
-| **Authorization Server** | Issues tokens (e.g. Google, Azure AD) |
-| **Resource Server** | The API holding your data |`,
+Every OAuth2 interaction involves exactly four roles. Understanding these is the key to understanding every flow.
+
+| Role | Who they are | Real-world example |
+|------|-------------|-------------------|
+| **Resource Owner** | The user who owns the data | You |
+| **Client** | The app wanting access | A calendar app |
+| **Authorization Server** | Issues tokens after verifying identity & consent | Google, Azure AD, Auth0 |
+| **Resource Server** | The API holding the protected data | Google Calendar API |
+
+The critical insight: the **Client never sees your password**. It only ever sees tokens that the Authorization Server has approved.`,
         },
         {
           type: 'flowDiagram',
-          title: 'OAuth2 Authorization Code Flow',
+          title: 'OAuth2 Authorization Code Flow — The Full Picture',
           nodes: [
-            { id: '1', label: 'User clicks\n"Login with Google"', type: 'input', position: { x: 50, y: 50 } },
-            { id: '2', label: 'App redirects to\nAuthorization Server', position: { x: 50, y: 150 } },
-            { id: '3', label: 'User logs in &\ngrants permission', type: 'decision', position: { x: 50, y: 250 } },
-            { id: '4', label: 'Auth Server returns\nAuthorization Code', position: { x: 300, y: 250 } },
-            { id: '5', label: 'App exchanges code\nfor Access Token', position: { x: 300, y: 150 } },
-            { id: '6', label: 'App calls API with\nAccess Token', type: 'output', position: { x: 300, y: 50 } },
+            { id: '1', label: 'User clicks\n"Connect Google"', type: 'input', position: { x: 60, y: 30 } },
+            { id: '2', label: 'App builds auth URL\n+ redirects browser', position: { x: 60, y: 130 } },
+            { id: '3', label: 'User authenticates\n& grants consent', type: 'decision', position: { x: 60, y: 230 } },
+            { id: '4', label: 'Auth Server redirects\nback with auth CODE', position: { x: 330, y: 230 } },
+            { id: '5', label: 'App server exchanges\nCODE → tokens\n(back-channel)', position: { x: 330, y: 130 } },
+            { id: '6', label: 'App calls API with\nAccess Token', type: 'output', position: { x: 330, y: 30 } },
           ],
           edges: [
-            { id: 'e1-2', source: '1', target: '2', label: 'step 1' },
-            { id: 'e2-3', source: '2', target: '3', label: 'step 2' },
-            { id: 'e3-4', source: '3', target: '4', label: 'approved', animated: true },
-            { id: 'e4-5', source: '4', target: '5', label: 'step 3' },
-            { id: 'e5-6', source: '5', target: '6', label: 'step 4', animated: true },
+            { id: 'e1-2', source: '1', target: '2', label: '1. User action' },
+            { id: 'e2-3', source: '2', target: '3', label: '2. Front-channel\nredirect' },
+            { id: 'e3-4', source: '3', target: '4', label: '3. Code issued', animated: true },
+            { id: 'e4-5', source: '4', target: '5', label: '4. Back-channel\nPOST /token' },
+            { id: 'e5-6', source: '5', target: '6', label: '5. Bearer token\nin header', animated: true },
           ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'http',
+          caption: 'Step 2: what the authorization redirect actually looks like',
+          code: `GET /authorize?
+  response_type=code            ← "give me a code to exchange"
+  &client_id=my-spa             ← identifies the app
+  &redirect_uri=https://myapp.com/callback
+  &scope=openid%20profile%20email%20Calendar.Read
+  &state=xK9mPqRt               ← CSRF protection (random nonce)
+  &code_challenge=E9Melhoa2...  ← PKCE (covered in lesson 5)
+  &code_challenge_method=S256
+
+Host: login.microsoftonline.com`,
         },
         {
           type: 'callout',
           variant: 'tip',
-          title: 'Why the code exchange step?',
-          content: 'The authorization code is short-lived and single-use. Exchanging it for a token happens server-to-server (back-channel), so the token never travels through the browser URL bar where it could be logged or leaked.',
+          title: 'Why the two-step code exchange?',
+          content: 'The authorization code is returned in the browser redirect URL — visible in address bars, browser history, and server logs. Exchanging it for a token happens **server-to-server over HTTPS** (the back-channel), so the actual access token never touches the browser URL bar. A two-line interception that grabs the code gives the attacker nothing useful — they still need the client secret (or PKCE verifier) to complete the exchange.',
         },
       ],
     },
@@ -971,41 +993,132 @@ OAuth2 introduces a better idea: instead of sharing passwords, you grant **limit
       sections: [
         {
           type: 'text',
-          content: `## Three types of tokens
+          content: `## Three tokens, three jobs
 
-OAuth2 and OIDC use three different tokens, each with a distinct purpose.`,
+OAuth2 and OIDC use three different tokens. They are **not interchangeable** — each has a specific purpose and a specific place it should live.`,
         },
         {
           type: 'callout',
           variant: 'info',
-          title: 'Access Token',
-          content: 'Short-lived (minutes to hours). Sent with every API request. The Resource Server validates it. Never store in localStorage — use memory or httpOnly cookies.',
+          title: '🔑 Access Token — the API key',
+          content: 'Short-lived (typically 1 hour). This is what you send to the API. The Resource Server validates it on every request. Think of it as a day pass — it expires, and when it does, you get a new one with the refresh token.',
         },
         {
           type: 'callout',
           variant: 'warning',
-          title: 'Refresh Token',
-          content: 'Long-lived (days to months). Used ONLY to get a new access token when it expires. Keep this locked down — if leaked, it can generate new access tokens.',
+          title: '🔄 Refresh Token — the master key',
+          content: 'Long-lived (days to months, sometimes indefinite). Its only job is to get new access tokens when the current one expires. Never send it to your API. If a refresh token leaks, an attacker has persistent access until it\'s revoked.',
         },
         {
           type: 'callout',
           variant: 'tip',
-          title: 'ID Token (OIDC)',
-          content: "A JWT containing claims about WHO you are (name, email, sub). Not meant to be sent to APIs — it's for the client app to know the user's identity.",
+          title: '🪪 ID Token (OIDC only) — the identity card',
+          content: "A JWT containing WHO you are — sub, name, email, picture. This is for your app's UI (show the user's name, decide what to render). Never send it to APIs as a credential. It doesn't prove authorization, only identity.",
+        },
+        {
+          type: 'text',
+          content: `## JWT anatomy — what's actually in these tokens?
+
+JWTs (JSON Web Tokens) have three parts separated by dots:
+
+\`\`\`
+eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhYmMxMjMiLCJleHAiOjE3NDh9.SIG...
+     HEADER                    PAYLOAD                        SIGNATURE
+\`\`\`
+
+Each part is base64url-encoded. The **header** declares the algorithm. The **payload** carries the claims. The **signature** is what you verify — without it, anyone could forge a JWT.`,
         },
         {
           type: 'codeBlock',
           language: 'json',
-          caption: 'Decoded JWT access token',
-          code: `{
-  "iss": "https://login.microsoftonline.com/tenant-id/v2.0",
-  "sub": "abc123",
-  "aud": "api://your-app-id",
-  "exp": 1748275200,
-  "iat": 1748271600,
-  "scp": "Courses.Read User.Write",
-  "name": "Dev Guildmate"
+          caption: 'Decoded JWT access token — every claim explained',
+          code: `// Header
+{
+  "alg": "RS256",   // signing algorithm (asymmetric — public key verification)
+  "typ": "JWT",
+  "kid": "key-2025" // which key to use from the JWKS endpoint
+}
+
+// Payload (the "claims")
+{
+  "iss": "https://login.microsoftonline.com/tenant-id/v2.0", // issuer
+  "sub": "abc123",                  // subject — the user's stable unique ID
+  "aud": "api://your-app-id",       // audience — WHO this token is for
+  "exp": 1748275200,                // expiry (Unix timestamp)
+  "iat": 1748271600,                // issued at
+  "nbf": 1748271600,                // not valid before
+  "scp": "Courses.Read User.Write", // scopes granted
+  "name": "Dev Guildmate",          // display name (from profile scope)
+  "oid": "user-object-id"           // Azure AD object ID
 }`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Token Lifecycle — from login to silent refresh',
+          nodes: [
+            { id: 'tl1', label: 'User logs in\n(auth code flow)', type: 'input', position: { x: 30, y: 40 } },
+            { id: 'tl2', label: 'Receive access token\n(1h) + refresh token\n(30 days)', position: { x: 30, y: 140 } },
+            { id: 'tl3', label: 'API call with\nAccess Token', position: { x: 30, y: 240 } },
+            { id: 'tl4', label: 'Access token\nexpired → 401', type: 'decision', position: { x: 250, y: 240 } },
+            { id: 'tl5', label: 'POST /token\nwith refresh token', position: { x: 250, y: 140 } },
+            { id: 'tl6', label: 'New access token\n(+ rotated refresh\ntoken)', type: 'output', position: { x: 250, y: 40 } },
+          ],
+          edges: [
+            { id: 'etl1', source: 'tl1', target: 'tl2', label: 'tokens issued' },
+            { id: 'etl2', source: 'tl2', target: 'tl3', label: 'use for ~1hr' },
+            { id: 'etl3', source: 'tl3', target: 'tl4', animated: true },
+            { id: 'etl4', source: 'tl4', target: 'tl5', label: 'silent refresh' },
+            { id: 'etl5', source: 'tl5', target: 'tl6', animated: true, label: 'new tokens' },
+          ],
+        },
+        {
+          type: 'callout',
+          variant: 'info',
+          title: 'Refresh token rotation',
+          content: 'Modern authorization servers rotate refresh tokens on every use — each refresh returns a new refresh token and invalidates the old one. This means a leaked refresh token is detected as soon as the legitimate user next refreshes (the old token is already used). Azure AD and Auth0 both enable rotation by default.',
+        },
+        {
+          type: 'quiz',
+          title: 'Token Types Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'tok-q1',
+              question: 'An attacker steals a refresh token. What can they do with it?',
+              options: [
+                'Read API responses directly',
+                'Obtain new access tokens until the refresh token is revoked',
+                'Nothing — the access token is needed too',
+                'Only view the user\'s profile information',
+              ],
+              correctIndex: 1,
+              explanation: 'A refresh token alone is enough to continuously generate new access tokens. This is why refresh tokens must be stored more carefully than access tokens — they represent long-lived access.',
+            },
+            {
+              id: 'tok-q2',
+              question: 'You want to display the logged-in user\'s name in the UI. Which token should you use?',
+              options: [
+                'Access token — it has the scp claim',
+                'Refresh token — it has the longest lifetime',
+                'ID token — it contains identity claims like name and email',
+                'Authorization code — it\'s issued first',
+              ],
+              correctIndex: 2,
+              explanation: 'The ID Token (from OIDC) contains identity claims including name, email, and picture. It\'s specifically meant for client-side consumption to build the user interface. The access token is for API authorization, not identity display.',
+            },
+            {
+              id: 'tok-q3',
+              question: 'What does the "aud" (audience) claim in a JWT do?',
+              options: [
+                'Identifies who issued the token',
+                'Specifies the token\'s expiry time',
+                'Identifies the intended recipient — the API the token is for',
+                'Lists the user\'s granted scopes',
+              ],
+              correctIndex: 2,
+              explanation: 'The aud claim specifies which service this token is intended for. An API must reject tokens not addressed to it — otherwise a token issued for one service could be replayed against another in the same tenant.',
+            },
+          ],
         },
       ],
     },
@@ -1023,11 +1136,21 @@ OAuth2 and OIDC use three different tokens, each with a distinct purpose.`,
       sections: [
         {
           type: 'text',
-          content: "Let's test your understanding of OAuth2 fundamentals.",
+          content: `## Mid-course check
+
+You've covered the core theory: what OAuth2 is, the four roles, the authorization code flow, and the three token types. Before diving into scopes, PKCE, and token security — let's make sure it's all clicking.
+
+These questions mix conceptual understanding with practical implications.`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Test-taking tip',
+          content: "When unsure, map the answer back to the fundamental principle: OAuth2 delegates limited, revocable access using tokens — without sharing credentials. Answers that involve passwords, permanent access, or bypassing the authorization server are almost certainly wrong.",
         },
         {
           type: 'quiz',
-          title: 'OAuth2 Quiz',
+          title: 'OAuth2 Fundamentals Quiz',
           passingScore: 60,
           questions: [
             {
@@ -1035,7 +1158,7 @@ OAuth2 and OIDC use three different tokens, each with a distinct purpose.`,
               question: 'In OAuth2, which party issues access tokens?',
               options: ['Resource Server', 'Client Application', 'Authorization Server', 'Resource Owner'],
               correctIndex: 2,
-              explanation: "The Authorization Server (e.g. Azure AD, Google) is responsible for issuing tokens after verifying the user's identity and consent.",
+              explanation: "The Authorization Server (e.g. Azure AD, Google) is responsible for issuing tokens after verifying the user's identity and consent. The Resource Server only validates tokens — it never issues them.",
             },
             {
               id: 'q2',
@@ -1047,14 +1170,38 @@ OAuth2 and OIDC use three different tokens, each with a distinct purpose.`,
                 'To comply with GDPR requirements',
               ],
               correctIndex: 1,
-              explanation: 'The back-channel exchange ensures the token never appears in the browser URL, browser history, or server access logs — preventing easy interception.',
+              explanation: 'The back-channel exchange ensures the token never appears in the browser URL, browser history, or server access logs. The authorization code that does appear in the URL is single-use and short-lived — far less dangerous than the actual token.',
             },
             {
               id: 'q3',
               question: 'Which token should you send with every API request?',
               options: ['ID Token', 'Refresh Token', 'Authorization Code', 'Access Token'],
               correctIndex: 3,
-              explanation: 'The Access Token is the bearer credential sent to the Resource Server. The ID Token is for identity, the Refresh Token for getting new access tokens, and the code is one-time use.',
+              explanation: 'The Access Token is the bearer credential sent to the Resource Server with every API call. The ID Token is for identity display in the UI. The Refresh Token only ever goes to the Authorization Server. The code is one-time use only.',
+            },
+            {
+              id: 'q4',
+              question: 'A legacy integration requires a third-party app to access your data. With OAuth2, what does the app receive instead of your password?',
+              options: [
+                'A copy of your hashed password',
+                'A time-limited access token for specific scopes only',
+                'An API key tied to your account permanently',
+                'Your session cookie from the Authorization Server',
+              ],
+              correctIndex: 1,
+              explanation: "This is the core value proposition of OAuth2. The app gets a time-limited, scope-restricted access token — not your password. If the app is compromised, you revoke that specific token without changing your password or affecting other apps.",
+            },
+            {
+              id: 'q5',
+              question: 'In OAuth2 terminology, what is the "Resource Server"?',
+              options: [
+                'The server that stores user passwords',
+                'The app that the user is trying to log into',
+                'The API that holds the protected data the client wants to access',
+                'The server that issues authorization codes',
+              ],
+              correctIndex: 2,
+              explanation: 'The Resource Server is the API holding protected data (e.g. Google Calendar API, your own backend). It validates incoming access tokens but does not issue them — that\'s the Authorization Server\'s job.',
             },
           ],
         },
@@ -1068,7 +1215,7 @@ OAuth2 and OIDC use three different tokens, each with a distinct purpose.`,
     courseId: 'course-oauth2',
     order: 3,
     title: 'Scopes & Consent',
-    estimatedMinutes: 9,
+    estimatedMinutes: 11,
     createdAt: '2025-01-01T00:00:00.000Z',
     updatedAt: '2025-01-01T00:00:00.000Z',
     content: {
@@ -1080,44 +1227,122 @@ OAuth2 and OIDC use three different tokens, each with a distinct purpose.`,
 
 Scopes are strings that define **what permissions** an access token grants. When your app redirects to an authorization server it includes a \`scope\` parameter listing everything it needs.
 
-\`\`\`
-GET /authorize?
-  response_type=code
-  &client_id=my-app
-  &scope=openid profile email Calendar.Read
-  &redirect_uri=https://myapp.com/callback
-\`\`\`
+The authorization server shows the user a **consent screen** listing what the app is requesting. The user can approve or deny it.
 
-The authorization server shows the user a **consent screen** listing the requested scopes. The user can approve or deny each one.`,
+Think of scopes as line items on a permission invoice: the app presents what it wants, the user decides what to grant, and the access token records what was approved.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'The Incremental Consent Journey',
+          nodes: [
+            { id: 'sc1', label: 'User signs up\nscope: openid profile', type: 'input', position: { x: 30, y: 40 } },
+            { id: 'sc2', label: 'Consent granted\n✓ Profile access', position: { x: 30, y: 140 } },
+            { id: 'sc3', label: 'User opens\nCalendar feature', position: { x: 30, y: 240 } },
+            { id: 'sc4', label: 'Request Calendar.Read\n(new consent screen)', type: 'decision', position: { x: 280, y: 240 } },
+            { id: 'sc5', label: 'Token now includes\nprofile + Calendar.Read', position: { x: 280, y: 140 } },
+            { id: 'sc6', label: 'App reads\ncalendar events', type: 'output', position: { x: 280, y: 40 } },
+          ],
+          edges: [
+            { id: 'esc1', source: 'sc1', target: 'sc2', label: 'minimal ask\nat signup' },
+            { id: 'esc2', source: 'sc2', target: 'sc3' },
+            { id: 'esc3', source: 'sc3', target: 'sc4', label: 'new scope needed' },
+            { id: 'esc4', source: 'sc4', target: 'sc5', label: 'granted', animated: true },
+            { id: 'esc5', source: 'sc5', target: 'sc6', animated: true },
+          ],
         },
         {
           type: 'callout',
           variant: 'tip',
-          title: 'Principle of least privilege',
-          content: 'Only request scopes you actually need right now. Requesting broad permissions upfront increases user anxiety and rejection rates. Request additional scopes incrementally as the user tries features that need them.',
+          title: 'Principle of least privilege — and better conversion',
+          content: 'Only request scopes you need right now. Apps that request 15 permissions upfront see dramatically higher "Deny" rates — users are suspicious of over-asking. Incremental consent (ask when the user reaches a feature) builds trust and improves conversion. Google\'s UX guidelines make this a requirement for apps in their marketplace.',
         },
         {
           type: 'text',
-          content: `## Common scope patterns
+          content: `## Standard scope vocabulary
 
-| Scope | What it grants |
-|-------|---------------|
-| \`openid\` | Enables OIDC — returns an ID token |
-| \`profile\` | Name, picture, locale |
-| \`email\` | Email address |
-| \`offline_access\` | A refresh token (for long-lived sessions) |
-| \`api://app-id/read\` | Custom API scope — read data |
-| \`api://app-id/write\` | Custom API scope — write data |
+| Scope | What it grants | Notes |
+|-------|---------------|-------|
+| \`openid\` | Enables OIDC — returns an ID token | Required for OIDC flows |
+| \`profile\` | Name, picture, locale, birthdate | Common in sign-in flows |
+| \`email\` | Email address | Request separately from profile |
+| \`offline_access\` | A refresh token | Without this, sessions end when the access token expires |
+| \`api://app-id/Courses.Read\` | Custom API scope — read | Define in your API registration |
+| \`api://app-id/Courses.Write\` | Custom API scope — write | Separate read/write for least-privilege |
 
-## Incremental consent
+## How scopes appear in tokens
 
-Rather than asking for all scopes upfront, modern apps use **incremental consent**: start with \`openid profile\`, then ask for \`Calendar.Read\` only when the user opens the calendar feature. Google, Microsoft, and GitHub all support this pattern.`,
+The scopes the user approved are recorded in the access token's \`scp\` (or \`scope\`) claim. Your API should check this claim before executing privileged operations:`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'Checking scopes on the Resource Server',
+          code: `// Express middleware to require a specific scope
+export function requireScope(scope: string) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const token = req.user as JwtPayload;
+    const scopes = (token.scp ?? token.scope ?? '').split(' ');
+
+    if (!scopes.includes(scope)) {
+      return res.status(403).json({
+        error: 'insufficient_scope',
+        required: scope,
+      });
+    }
+    next();
+  };
+}
+
+// Usage:
+app.delete('/courses/:id',
+  requireAuth,                          // is the token valid?
+  requireScope('Courses.Write'),         // does it have write permission?
+  deleteCourseHandler
+);`,
         },
         {
           type: 'callout',
           variant: 'warning',
-          title: 'Scope != role',
-          content: "Scopes control what the app can ask for — they don't control what the user is allowed to do on the resource server. A scope of `Files.ReadWrite` means the app *can* write files, but whether it's allowed depends on the user's permissions in the resource server.",
+          title: 'Scope ≠ Permission (an important distinction)',
+          content: "A scope like `Files.ReadWrite` means the *app* is authorized to read and write files — but your Resource Server still needs to check whether the *user* has permission on the specific resource. If Alice requests `Files.ReadWrite` and Bob's file, your server should check Alice has access to Bob's file regardless of the scope. Scopes control app capabilities; your business logic controls resource permissions.",
+        },
+        {
+          type: 'quiz',
+          title: 'Scopes & Consent Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'scope-q1',
+              question: 'Why should apps use incremental consent rather than requesting all scopes upfront?',
+              options: [
+                'OAuth2 spec requires it for all apps',
+                'It reduces user anxiety and improves consent approval rates',
+                'The authorization server limits how many scopes fit in a request',
+                'It makes tokens smaller and faster to validate',
+              ],
+              correctIndex: 1,
+              explanation: 'Requesting many permissions upfront is suspicious and alarming to users. Incremental consent — asking for permissions contextually when a feature needs them — builds trust and dramatically improves approval rates.',
+            },
+            {
+              id: 'scope-q2',
+              question: 'Which scope must be included to receive a refresh token (for long-lived sessions)?',
+              options: ['profile', 'email', 'offline_access', 'openid'],
+              correctIndex: 2,
+              explanation: "The `offline_access` scope requests a refresh token. Without it, the user's session ends when the access token expires (typically ~1 hour), requiring a new login.",
+            },
+            {
+              id: 'scope-q3',
+              question: 'A user grants the scope "Files.Read" to your app. Does this mean the user can read ALL files via your app?',
+              options: [
+                'Yes — the scope grants full read access',
+                'No — the Resource Server still enforces its own permission model',
+                'Only if the user is an admin',
+                'Only files created after the scope was granted',
+              ],
+              correctIndex: 1,
+              explanation: 'Scopes are about what the *app* is allowed to request — not about user permissions on specific resources. Your Resource Server must still enforce authorization (e.g. Alice cannot read Bob\'s private files even if the app has Files.Read scope on Alice\'s behalf).',
+            },
+          ],
         },
       ],
     },
@@ -1238,7 +1463,7 @@ sessionStorage.setItem('pkce_verifier', codeVerifier);`,
     courseId: 'course-oauth2',
     order: 5,
     title: 'Token Storage & Security',
-    estimatedMinutes: 13,
+    estimatedMinutes: 15,
     createdAt: '2025-01-01T00:00:00.000Z',
     updatedAt: '2025-01-01T00:00:00.000Z',
     content: {
@@ -1253,12 +1478,35 @@ This is one of the most debated questions in web security. The answer involves a
 - **XSS (Cross-Site Scripting)** — malicious JavaScript running in your page can read anything JavaScript can access (localStorage, sessionStorage, in-memory variables)
 - **CSRF (Cross-Site Request Forgery)** — a malicious site tricks the browser into making authenticated requests using cookies it can't read but the browser sends automatically
 
-| Storage | XSS accessible | CSRF risk | Survives refresh | Recommendation |
-|---------|---------------|-----------|-----------------|----------------|
-| \`localStorage\` | ✅ Yes | ❌ No | ✅ Yes | ❌ Avoid for tokens |
+| Storage | XSS readable | CSRF risk | Survives refresh | Best for |
+|---------|-------------|-----------|-----------------|----------|
+| \`localStorage\` | ✅ Yes | ❌ No | ✅ Yes | ❌ Never use for tokens |
 | \`sessionStorage\` | ✅ Yes | ❌ No | ❌ No | ⚠️ Short sessions only |
-| In-memory (JS var) | ✅ Yes | ❌ No | ❌ No | ✅ Best for access tokens |
-| \`httpOnly\` cookie | ❌ No | ✅ Yes | ✅ Yes | ✅ Best for refresh tokens |`,
+| In-memory (JS var) | ✅ Yes* | ❌ No | ❌ No | ✅ Access tokens |
+| \`httpOnly\` cookie | ❌ No | ✅ Yes | ✅ Yes | ✅ Refresh tokens |
+
+*In-memory is still XSS-readable, but an attacker would need to extract it within the token's lifetime (~1hr). More importantly, they can't exfiltrate it across sessions or reload it.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Token Storage Decision Tree',
+          nodes: [
+            { id: 'sd1', label: 'Which token?', type: 'decision', position: { x: 200, y: 30 } },
+            { id: 'sd2', label: 'Access Token\n(short-lived)', position: { x: 60, y: 130 } },
+            { id: 'sd3', label: 'Refresh Token\n(long-lived)', position: { x: 350, y: 130 } },
+            { id: 'sd4', label: 'Store in JS memory\n(module variable)', type: 'output', position: { x: 60, y: 230 } },
+            { id: 'sd5', label: 'Store in httpOnly\nSecure cookie', type: 'output', position: { x: 350, y: 230 } },
+            { id: 'sd6', label: 'Lost on refresh?\nSilently fetch new\none via /auth/refresh', position: { x: 60, y: 330 } },
+            { id: 'sd7', label: 'CSRF protected?\nYes, via SameSite=Strict\n+ CSRF token header', position: { x: 350, y: 330 } },
+          ],
+          edges: [
+            { id: 'esd1', source: 'sd1', target: 'sd2', label: 'access' },
+            { id: 'esd2', source: 'sd1', target: 'sd3', label: 'refresh' },
+            { id: 'esd3', source: 'sd2', target: 'sd4', animated: true },
+            { id: 'esd4', source: 'sd3', target: 'sd5', animated: true },
+            { id: 'esd5', source: 'sd4', target: 'sd6' },
+            { id: 'esd6', source: 'sd5', target: 'sd7' },
+          ],
         },
         {
           type: 'callout',
@@ -1407,9 +1655,26 @@ apiClient.interceptors.response.use(
           type: 'text',
           content: `## From theory to production
 
-You now understand the OAuth2 concepts. Let's walk through what a complete, production-ready implementation looks like using **MSAL.js** — Microsoft's official library for Azure AD (Entra ID) OAuth2 flows.
+You now understand OAuth2 from first principles. Let's wire everything together into a complete picture of how it all works in a real SPA + API architecture.
 
-The same patterns apply to Auth0, Okta, and any other OIDC-compliant provider; only the config changes.`,
+The implementation below uses **MSAL.js** (Microsoft's library for Azure AD), but the patterns apply identically to Auth0, Okta, Cognito, and any OIDC-compliant provider.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Complete SPA + API OAuth2 Architecture',
+          nodes: [
+            { id: 'arch1', label: 'SPA\n(React)', type: 'input', position: { x: 30, y: 120 } },
+            { id: 'arch2', label: 'Azure AD\n(Auth Server)', position: { x: 250, y: 30 } },
+            { id: 'arch3', label: 'Your API\n(Node/Express)', position: { x: 250, y: 210 } },
+            { id: 'arch4', label: 'JWKS Endpoint\npublic keys', position: { x: 470, y: 30 } },
+          ],
+          edges: [
+            { id: 'eaa1', source: 'arch1', target: 'arch2', label: '1. Auth code\n+ PKCE', animated: true },
+            { id: 'eaa2', source: 'arch2', target: 'arch1', label: '2. Access token\n+ ID token\n+ refresh token' },
+            { id: 'eaa3', source: 'arch1', target: 'arch3', label: '3. Bearer token\nin header', animated: true },
+            { id: 'eaa4', source: 'arch3', target: 'arch4', label: '4. Fetch signing\nkeys (cached)' },
+            { id: 'eaa5', source: 'arch4', target: 'arch3', label: '5. Verify JWT\nsignature' },
+          ],
         },
         {
           type: 'codeBlock',
@@ -1575,6 +1840,332 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
               ],
               correctIndex: 2,
               explanation: 'The authorization code is returned in the browser redirect and can appear in URL bars, browser history, and server logs. Exchanging it for a token server-to-server (back-channel) ensures the actual token never touches the browser address bar.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── OAuth2 Lesson 8: Grant Types Compared ────────────────────────────────────
+  {
+    id: 'lesson-008',
+    courseId: 'course-oauth2',
+    order: 7,
+    title: 'Grant Types: When to Use Which',
+    estimatedMinutes: 12,
+    createdAt: '2025-01-01T00:00:00.000Z',
+    updatedAt: '2025-01-01T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Not one flow fits all
+
+OAuth2 defines multiple **grant types** — different ways for a client to obtain tokens depending on who is involved and what kind of client it is. Choosing the wrong one introduces unnecessary risk.
+
+There are four main grant types in common use today. One is deprecated (Implicit). Three are actively recommended.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Grant Type Selection Guide',
+          nodes: [
+            { id: 'gt1', label: 'Is a human\nuser involved?', type: 'decision', position: { x: 200, y: 30 } },
+            { id: 'gt2', label: 'Does the device\nhave a browser?', type: 'decision', position: { x: 60, y: 130 } },
+            { id: 'gt3', label: 'Machine-to-machine\n(no user)', position: { x: 370, y: 130 } },
+            { id: 'gt4', label: 'Authorization Code\n+ PKCE ✅', type: 'output', position: { x: 30, y: 230 } },
+            { id: 'gt5', label: 'Device Code Flow\n(TV / CLI) ✅', type: 'output', position: { x: 150, y: 230 } },
+            { id: 'gt6', label: 'Client Credentials\nFlow ✅', type: 'output', position: { x: 370, y: 230 } },
+          ],
+          edges: [
+            { id: 'egt1', source: 'gt1', target: 'gt2', label: 'yes' },
+            { id: 'egt2', source: 'gt1', target: 'gt3', label: 'no' },
+            { id: 'egt3', source: 'gt2', target: 'gt4', label: 'yes' },
+            { id: 'egt4', source: 'gt2', target: 'gt5', label: 'no' },
+            { id: 'egt5', source: 'gt3', target: 'gt6', animated: true },
+          ],
+        },
+        {
+          type: 'text',
+          content: `## Authorization Code + PKCE (the default for user-facing apps)
+
+The flow you've been studying. User clicks a button, gets redirected, authenticates, grants consent, and the app receives tokens.
+
+**Use when**: Web apps, SPAs, mobile apps — any time a human user is authenticating.
+
+**Why PKCE**: Required by OAuth 2.1 for all authorization code flows. Provides CSRF protection and prevents code interception attacks.
+
+---
+
+## Client Credentials (machine-to-machine)
+
+A service authenticates as itself using its own credentials — no user involved. The client posts its \`client_id\` and \`client_secret\` directly to get an access token.
+
+**Use when**: Background jobs, microservices calling other microservices, cron jobs, CI/CD pipelines.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'Client Credentials grant — service-to-service authentication',
+          code: `// A background job authenticating as itself (no user)
+async function getServiceToken(): Promise<string> {
+  const response = await fetch(
+    \`https://login.microsoftonline.com/\${TENANT_ID}/oauth2/v2.0/token\`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: SERVICE_CLIENT_ID,
+        client_secret: SERVICE_CLIENT_SECRET,  // stored in Key Vault, never in code
+        scope: 'https://graph.microsoft.com/.default',
+      }),
+    }
+  );
+
+  const { access_token } = await response.json();
+  return access_token;
+}
+
+// Cache this token until exp - 60s, then refresh
+// Fetching a new one on every request wastes network round trips`,
+        },
+        {
+          type: 'text',
+          content: `## Device Code Flow (browserless devices)
+
+For devices that can't open a browser — smart TVs, CLI tools, IoT devices. The device displays a URL and a short code. The user visits the URL on *another* device, enters the code, authenticates, and the original device polls until approval.
+
+**Use when**: CLI tools (\`gh auth login\`, \`az login\`), TV apps, any device without a usable browser.
+
+---
+
+## Implicit Flow — ⚠️ Deprecated
+
+The Implicit flow returned tokens directly in the redirect URL fragment (\`#access_token=...\`). This was simpler but fundamentally insecure: tokens appeared in browser history, Referrer headers, and server logs.
+
+**Don't use it.** RFC 9700 (OAuth 2.1) removes it entirely. All modern providers support authorization code + PKCE instead.`,
+        },
+        {
+          type: 'callout',
+          variant: 'danger',
+          title: 'Resource Owner Password Credentials (ROPC) — also avoid',
+          content: "ROPC lets the client collect the user's username and password directly and POST them to the token endpoint. This completely defeats the purpose of OAuth2 — the client handles credentials. The only exception is for migrating legacy apps where you literally cannot do a redirect. Even then, treat it as a temporary measure.",
+        },
+        {
+          type: 'quiz',
+          title: 'Grant Types Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'grant-q1',
+              question: 'A background microservice needs to call another internal API. No user is involved. Which grant type should it use?',
+              options: ['Authorization Code + PKCE', 'Device Code Flow', 'Client Credentials', 'Implicit Flow'],
+              correctIndex: 2,
+              explanation: 'Client Credentials is designed for machine-to-machine authentication where no human user is involved. The service authenticates using its own client_id and client_secret to get an access token for the target API.',
+            },
+            {
+              id: 'grant-q2',
+              question: 'Why was the Implicit flow deprecated?',
+              options: [
+                'It requires too many HTTP round trips',
+                'Tokens appeared in the browser URL, browser history, and Referrer headers',
+                'It does not support refresh tokens',
+                'It requires a client secret which SPAs cannot store',
+              ],
+              correctIndex: 1,
+              explanation: 'The Implicit flow returned tokens in the URL fragment. This made them visible in browser history, server logs, and Referrer headers — all places attackers could collect them. Authorization Code + PKCE achieves the same goal without exposing tokens in URLs.',
+            },
+            {
+              id: 'grant-q3',
+              question: 'A developer builds a CLI tool that needs to authenticate the user. The terminal has no browser. Which flow is most appropriate?',
+              options: [
+                'Client Credentials — the CLI is a service',
+                'Authorization Code — redirect via curl',
+                'Device Code Flow — show a URL + code, poll for approval',
+                'ROPC — prompt for username/password in the terminal',
+              ],
+              correctIndex: 2,
+              explanation: "Device Code Flow is purpose-built for browserless environments. The user visits a URL on any device (their phone), enters the short code shown by the CLI, authenticates, and the CLI polls until approved. This is how `gh auth login` and `az login` work.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── OAuth2 Lesson 9: Attacks & Defenses ───────────────────────────────────────
+  {
+    id: 'lesson-009',
+    courseId: 'course-oauth2',
+    order: 8,
+    title: 'Common Attacks & How to Defend Against Them',
+    estimatedMinutes: 13,
+    createdAt: '2025-01-01T00:00:00.000Z',
+    updatedAt: '2025-01-01T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## OAuth2 is secure by design — but implementation matters
+
+The OAuth2 framework is well-designed, but it gives implementors a lot of latitude. Many real-world breaches happen not because OAuth2 is broken, but because a specific defense was skipped.
+
+This lesson covers the most common OAuth2 attacks and exactly how to prevent each one.`,
+        },
+        {
+          type: 'callout',
+          variant: 'danger',
+          title: 'Attack 1: Authorization Code Interception',
+          content: 'The authorization code is returned in the browser redirect URL. A malicious app on the same device (or a tab-hijacking browser extension) could intercept it and exchange it for tokens before your app does.',
+        },
+        {
+          type: 'text',
+          content: `### Defense: PKCE (Proof Key for Code Exchange)
+
+Already covered in Lesson 5 — PKCE makes an intercepted code useless without the matching \`code_verifier\`. Always use PKCE.
+
+---`,
+        },
+        {
+          type: 'callout',
+          variant: 'danger',
+          title: 'Attack 2: Open Redirect Attacks',
+          content: 'If your redirect_uri validation is loose — e.g., you accept any URI that starts with your domain — an attacker can craft a redirect to a subdomain or path they control. The authorization code lands on their server.',
+        },
+        {
+          type: 'codeBlock',
+          language: 'text',
+          caption: 'Malicious authorization request exploiting loose redirect_uri validation',
+          code: `# Attacker's crafted URL — notice the redirect_uri
+GET /authorize?
+  response_type=code
+  &client_id=legit-app
+  &redirect_uri=https://myapp.com.evil.com/callback  ← typosquat
+  &redirect_uri=https://myapp.com/evil-path?next=https://evil.com  ← path traversal
+
+# Defense: register EXACT redirect URIs — no wildcards, no partial matches
+# Correct: https://myapp.com/callback  (and ONLY this URL)`,
+        },
+        {
+          type: 'text',
+          content: `### Defense: Exact redirect URI matching
+
+Register exact redirect URIs — no wildcards, no partial matching. Many authorization servers enforce this by default, but your own validation should also be strict. Reject any request whose \`redirect_uri\` doesn't exactly match a pre-registered URI.
+
+---`,
+        },
+        {
+          type: 'callout',
+          variant: 'danger',
+          title: 'Attack 3: CSRF on the Redirect',
+          content: 'Without state validation, an attacker can initiate an OAuth2 flow, pause it, and trick the victim into completing it. The victim\'s account then gets linked to the attacker\'s identity. This is the OAuth2 CSRF attack.',
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'Protecting against OAuth2 CSRF with the state parameter',
+          code: `// 1. Before redirecting to the auth server — generate a random state
+const state = crypto.randomUUID();
+sessionStorage.setItem('oauth_state', state);
+
+const authUrl = new URL('https://login.microsoftonline.com/.../authorize');
+authUrl.searchParams.set('state', state);
+// ... other params
+window.location.href = authUrl.toString();
+
+// 2. In the callback handler — verify the state
+const returnedState = new URLSearchParams(location.search).get('state');
+const savedState = sessionStorage.getItem('oauth_state');
+
+if (!savedState || returnedState !== savedState) {
+  throw new Error('State mismatch — possible CSRF attack. Abort.');
+}
+sessionStorage.removeItem('oauth_state'); // use once, then discard`,
+        },
+        {
+          type: 'callout',
+          variant: 'danger',
+          title: 'Attack 4: Token Leakage via Referrer Headers',
+          content: 'If an access token ends up in a URL (e.g. `?token=...`), and the page has links to external sites, the token appears in the `Referrer` header of those outbound requests. The external site sees your token in their server logs.',
+        },
+        {
+          type: 'text',
+          content: `### Defense: Bearer header, not query parameters
+
+Always send tokens in the \`Authorization: Bearer <token>\` header — never as URL query parameters. Set \`Referrer-Policy: no-referrer\` or \`strict-origin\` on your app too.
+
+---`,
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'Attack 5: Confused Deputy — missing audience validation',
+          content: 'If your API validates a JWT\'s signature and expiry but not its `aud` (audience) claim, a token issued for service A could be replayed against service B — if both services trust the same authorization server. Always validate `aud` matches your specific API client ID.',
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Security Checklist — Your OAuth2 Defence Layers',
+          nodes: [
+            { id: 'sec1', label: 'PKCE\n(code interception)', type: 'input', position: { x: 30, y: 30 } },
+            { id: 'sec2', label: 'State parameter\n(CSRF)', position: { x: 30, y: 110 } },
+            { id: 'sec3', label: 'Exact redirect URI\n(open redirect)', position: { x: 30, y: 190 } },
+            { id: 'sec4', label: 'Bearer header only\n(token leakage)', position: { x: 260, y: 30 } },
+            { id: 'sec5', label: 'Validate aud claim\n(confused deputy)', position: { x: 260, y: 110 } },
+            { id: 'sec6', label: 'httpOnly cookies\nfor refresh tokens\n(XSS)', position: { x: 260, y: 190 } },
+            { id: 'sec7', label: '✅ Secured OAuth2\nImplementation', type: 'output', position: { x: 145, y: 280 } },
+          ],
+          edges: [
+            { id: 'esec1', source: 'sec1', target: 'sec7', animated: true },
+            { id: 'esec2', source: 'sec2', target: 'sec7', animated: true },
+            { id: 'esec3', source: 'sec3', target: 'sec7', animated: true },
+            { id: 'esec4', source: 'sec4', target: 'sec7', animated: true },
+            { id: 'esec5', source: 'sec5', target: 'sec7', animated: true },
+            { id: 'esec6', source: 'sec6', target: 'sec7', animated: true },
+          ],
+        },
+        {
+          type: 'quiz',
+          title: 'Security Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'sec-q1',
+              question: 'An attacker intercepts the authorization code from a redirect URL. Why can\'t they exchange it for tokens (assuming PKCE is implemented)?',
+              options: [
+                'The code expires before they can use it',
+                'They don\'t have the code_verifier that was only known to the legitimate client',
+                'The redirect URI won\'t match their server',
+                'The authorization server blocks IPs not in an allowlist',
+              ],
+              correctIndex: 1,
+              explanation: 'With PKCE, the authorization server stored the code_challenge (a hash) at the start. To exchange the code, you must provide the original code_verifier. An attacker with only the code cannot produce the correct verifier — they never saw it.',
+            },
+            {
+              id: 'sec-q2',
+              question: 'What is the purpose of the "state" parameter in an OAuth2 authorization request?',
+              options: [
+                'To store the user\'s preferred language',
+                'To identify which scope set to request',
+                'To prevent CSRF attacks by binding the request to a specific browser session',
+                'To encode the redirect URI safely',
+              ],
+              correctIndex: 2,
+              explanation: 'The state parameter is a random nonce you generate before the redirect and verify when the callback arrives. If the state in the callback doesn\'t match what you stored, someone else initiated that auth flow — reject it.',
+            },
+            {
+              id: 'sec-q3',
+              question: 'Your API validates that a JWT\'s signature is valid and not expired. Is this sufficient?',
+              options: [
+                'Yes — signature validation proves the token is legitimate',
+                'No — you must also validate the iss and aud claims to prevent token misuse',
+                'No — you must also check the scp claim only',
+                'Yes — expiry and signature cover all attack vectors',
+              ],
+              correctIndex: 1,
+              explanation: "Signature validity only proves the token was issued by a trusted auth server. Without validating aud (audience), a token for another service in the same tenant could be replayed against yours. Without validating iss (issuer), a token from a different tenant's auth server (with a stolen key) could pass. Always validate both.",
             },
           ],
         },
@@ -14605,6 +15196,40 @@ function connect(url: string) {
   },
 
 ];
+
+export function createMockCourse(data: Partial<Course>): Course {
+  const course: Course = {
+    id: `course-new-${Date.now()}`,
+    title: data.title ?? 'New Course',
+    description: data.description ?? '',
+    taxonomy: data.taxonomy ?? { l1: 'Security', l2: 'Authentication' },
+    difficulty: data.difficulty ?? 'beginner',
+    tags: data.tags ?? [],
+    authorId: getMockUser().id,
+    authorName: getMockUser().displayName,
+    published: false,
+    lessonIds: [],
+    totalLessons: 0,
+    estimatedMinutes: 0,
+    ratingAverage: 0,
+    ratingCount: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  MOCK_COURSES.push(course);
+  return course;
+}
+
+export function patchMockCourse(id: string, updates: Partial<Course>): Course | undefined {
+  const idx = MOCK_COURSES.findIndex(c => c.id === id);
+  if (idx === -1) return undefined;
+  MOCK_COURSES[idx] = { ...MOCK_COURSES[idx], ...updates, updatedAt: new Date().toISOString() };
+  return MOCK_COURSES[idx];
+}
+
+export function publishMockCourse(id: string): Course | undefined {
+  return patchMockCourse(id, { published: true, publishedAt: new Date().toISOString() });
+}
 
 export function getMockCourseProgress(): Array<{ course: Course; completedCount: number; totalLessons: number; completedLessonIds: string[] }> {
   return MOCK_COURSES.map(course => {

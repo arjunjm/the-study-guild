@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Clock, CheckCircle, List, PenLine, ArrowRight, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, CheckCircle, List, PenLine, ArrowRight, BookOpen, FileText } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { cn } from '../lib/utils';
 import LessonRenderer from '../components/lesson/LessonRenderer';
@@ -124,6 +124,7 @@ export default function LessonPage() {
     <LessonPageContent
       lesson={lesson}
       courseId={courseId!}
+      courseTitle={course?.title}
       alreadyComplete={alreadyComplete}
       completedCount={completedCount}
       prevLesson={prevLesson}
@@ -147,11 +148,12 @@ export default function LessonPage() {
 }
 
 function LessonPageContent({
-  lesson, courseId, alreadyComplete, completedCount, prevLesson, nextLesson,
+  lesson, courseId, courseTitle, alreadyComplete, completedCount, prevLesson, nextLesson,
   prevComplete, nextComplete, totalLessons, reward, completing, onComplete, onDismissReward,
 }: {
   lesson: Lesson;
   courseId: string;
+  courseTitle?: string;
   alreadyComplete: boolean;
   completedCount: number;
   prevLesson: Lesson | null;
@@ -167,17 +169,41 @@ function LessonPageContent({
   const navigate = useNavigate();
   const [scrollPct, setScrollPct] = useState(0);
   const [showToc, setShowToc] = useState(false);
+  const [activeSectionIdx, setActiveSectionIdx] = useState(0);
   const [showNotes, setShowNotes] = useState(() => !!localStorage.getItem(`lesson-notes-${lesson.id}`));
   const [notes, setNotes] = useState(() => localStorage.getItem(`lesson-notes-${lesson.id}`) ?? '');
   const sections = lesson.content.sections;
 
   useEffect(() => {
     const t = setTimeout(() => {
-      if (notes.trim()) localStorage.setItem(`lesson-notes-${lesson.id}`, notes);
-      else localStorage.removeItem(`lesson-notes-${lesson.id}`);
+      if (notes.trim()) {
+        localStorage.setItem(`lesson-notes-${lesson.id}`, notes);
+        const meta = { lessonTitle: lesson.title, courseId, courseTitle: courseTitle ?? '', savedAt: new Date().toISOString() };
+        localStorage.setItem(`lesson-note-meta-${lesson.id}`, JSON.stringify(meta));
+      } else {
+        localStorage.removeItem(`lesson-notes-${lesson.id}`);
+        localStorage.removeItem(`lesson-note-meta-${lesson.id}`);
+      }
     }, 600);
     return () => clearTimeout(t);
-  }, [notes, lesson.id]);
+  }, [notes, lesson.id, lesson.title, courseId, courseTitle]);
+
+  // Track active section via IntersectionObserver
+  useEffect(() => {
+    if (sections.length < 2) return;
+    const observers: IntersectionObserver[] = [];
+    sections.forEach((_, i) => {
+      const el = document.getElementById(`lesson-section-${i}`);
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveSectionIdx(i); },
+        { rootMargin: '-5% 0px -70% 0px', threshold: 0 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach(obs => obs.disconnect());
+  }, [sections.length]);
 
   const onScroll = useCallback(() => {
     const docHeight = document.documentElement.scrollHeight - window.innerHeight;
@@ -301,7 +327,38 @@ function LessonPageContent({
 
         {/* Content */}
         <div className="mx-auto max-w-3xl px-4 py-8 lg:px-10 lg:py-10">
-          <h1 className="mb-8 text-2xl font-bold text-slate-900 lg:text-3xl">{lesson.title}</h1>
+          <h1 className="mb-4 text-2xl font-bold text-slate-900 lg:text-3xl">{lesson.title}</h1>
+
+          {/* Section progress dots */}
+          {sections.length > 1 && (
+            <div className="mb-8 flex items-center gap-1.5">
+              {sections.map((s, i) => {
+                const isPast = i < activeSectionIdx;
+                const isActive = i === activeSectionIdx;
+                const dotColor = s.type === 'quiz'
+                  ? (isPast || isActive ? 'bg-amber-500' : 'bg-slate-200')
+                  : s.type === 'codeBlock'
+                  ? (isPast || isActive ? 'bg-violet-500' : 'bg-slate-200')
+                  : s.type === 'flowDiagram'
+                  ? (isPast || isActive ? 'bg-cyan-500' : 'bg-slate-200')
+                  : s.type === 'callout'
+                  ? (isPast || isActive ? 'bg-blue-400' : 'bg-slate-200')
+                  : (isPast || isActive ? 'bg-slate-400' : 'bg-slate-200');
+                return (
+                  <button
+                    key={i}
+                    onClick={() => document.getElementById(`lesson-section-${i}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                    title={`Section ${i + 1}: ${s.type}`}
+                    className={cn(
+                      'h-1.5 rounded-full transition-all duration-300 hover:opacity-80',
+                      isActive ? `w-6 ${dotColor}` : `w-2 ${dotColor}`
+                    )}
+                  />
+                );
+              })}
+              <span className="ml-1 text-[11px] text-slate-400 tabular-nums">{activeSectionIdx + 1}/{sections.length}</span>
+            </div>
+          )}
           <LessonRenderer
             content={lesson.content}
             onComplete={onComplete}
@@ -320,7 +377,12 @@ function LessonPageContent({
                 My notes
                 {notes.trim() && <span className="h-1.5 w-1.5 rounded-full bg-violet-500" title="Has notes" />}
               </span>
-              <span className="text-xs text-slate-400">{showNotes ? 'collapse' : notes.trim() ? 'view' : 'add notes'}</span>
+              <div className="flex items-center gap-3">
+                <Link to="/notes" onClick={e => e.stopPropagation()} className="text-[11px] text-violet-500 hover:text-violet-700 transition">
+                  <FileText className="inline h-3 w-3 mr-0.5" />all notes
+                </Link>
+                <span className="text-xs text-slate-400">{showNotes ? 'collapse' : notes.trim() ? 'view' : 'add notes'}</span>
+              </div>
             </button>
             {showNotes && (
               <div className="border-t border-slate-100 px-5 py-4">

@@ -38,7 +38,15 @@ export default function TeacherDashboard() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['my-courses'] }),
   });
 
-  if (me?.role === 'learner') {
+  if (!me) {
+    return (
+      <div className="flex min-h-full items-center justify-center py-20">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-700 border-t-violet-500" />
+      </div>
+    );
+  }
+
+  if (me.role === 'learner') {
     return (
       <div className="flex flex-col items-center justify-center p-10 text-center">
         <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-violet-100">
