@@ -247,6 +247,41 @@ const RESOURCES: Record<string, TopicResource[]> = {
     { title: 'Towards Data Science', type: 'blog', description: 'Community-curated Medium publication with practical articles on data science, ML, and visualization techniques.', url: 'https://towardsdatascience.com' },
     { title: 'Streamlit', type: 'tool', description: 'Build and share data apps in pure Python. The fastest way to turn a data analysis script into an interactive web app.', url: 'https://streamlit.io' },
   ],
+
+  'Mobile::iOS': [
+    { title: 'Swift Documentation', type: 'docs', description: 'The official Swift language reference and standard library docs. Start here before any third-party resource.', url: 'https://www.swift.org/documentation/' },
+    { title: 'Hacking with Swift', type: 'blog', description: 'Paul Hudson\'s site with 100 days of SwiftUI, free tutorials, and hands-on project-based learning. Best free iOS resource.', url: 'https://www.hackingwithswift.com' },
+    { title: 'iOS App Dev Tutorials (Apple)', type: 'docs', description: 'Apple\'s official SwiftUI tutorials. Guided, project-based, and always up to date with the latest SDK.', url: 'https://developer.apple.com/tutorials/app-dev-training' },
+    { title: 'PointFree', type: 'course', description: 'In-depth Swift and functional programming video series. Best resource for advanced composition patterns in Swift.', url: 'https://www.pointfree.co' },
+  ],
+
+  'Mobile::Android': [
+    { title: 'Android Developers Guide', type: 'docs', description: 'The official Android developer documentation. Covers Jetpack Compose, architecture patterns, and platform APIs comprehensively.', url: 'https://developer.android.com/guide' },
+    { title: 'Kotlin Documentation', type: 'docs', description: 'JetBrains\' official Kotlin language reference. Essential reading for idioms, coroutines, and the standard library.', url: 'https://kotlinlang.org/docs/home.html' },
+    { title: 'Android Compose Pathway', type: 'course', description: 'Google\'s official learning path for Jetpack Compose — the modern declarative UI toolkit for Android.', url: 'https://developer.android.com/jetpack/compose/documentation' },
+    { title: 'Philipp Lackner on YouTube', type: 'video', description: 'Popular Kotlin/Compose video channel. Practical tutorials on architecture (MVVM, Clean), Hilt, Room, and real-world apps.', url: 'https://www.youtube.com/@PhilippLackner' },
+  ],
+
+  'Mobile::React Native': [
+    { title: 'React Native Docs', type: 'docs', description: 'The official React Native documentation. Core concepts, native modules, and platform-specific guides for iOS and Android.', url: 'https://reactnative.dev/docs/getting-started' },
+    { title: 'Expo Documentation', type: 'docs', description: 'Expo wraps React Native with managed workflows, OTA updates, and EAS Build. Most new RN apps start with Expo.', url: 'https://docs.expo.dev' },
+    { title: 'William Candillon on YouTube', type: 'video', description: 'Deep dives into React Native animations using Reanimated and Skia. Best resource for polished, performant animations.', url: 'https://www.youtube.com/@wcandillon' },
+    { title: 'React Native Paper', type: 'tool', description: 'Material Design 3 component library for React Native. Production-ready UI components that follow platform conventions.', url: 'https://reactnativepaper.com' },
+  ],
+
+  'Mobile::Flutter': [
+    { title: 'Flutter Documentation', type: 'docs', description: 'The official Flutter docs with widget catalog, cookbook, and architecture guides. Comprehensive and well-maintained.', url: 'https://docs.flutter.dev' },
+    { title: 'Dart Language Tour', type: 'docs', description: 'The official Dart language reference. Start here to understand null safety, async/await, and type system before Flutter.', url: 'https://dart.dev/language' },
+    { title: 'Flutter & Dart — The Complete Guide (Udemy)', type: 'course', description: 'Maximilian Schwarzmüller\'s highly-rated course. Covers widgets, state management, Firebase, animations, and deployment.', url: 'https://www.udemy.com/course/learn-flutter-dart-to-build-ios-android-apps/' },
+    { title: 'Riverpod', type: 'tool', description: 'The most popular state management solution for Flutter. Reactive, compile-time safe, and testable — successor to Provider.', url: 'https://riverpod.dev' },
+  ],
+
+  'Engineering::TypeScript': [
+    { title: 'TypeScript Handbook', type: 'docs', description: 'The official TypeScript handbook. Covers types, generics, decorators, and all advanced features with excellent examples.', url: 'https://www.typescriptlang.org/docs/handbook/intro.html' },
+    { title: 'Total TypeScript', type: 'course', description: 'Matt Pocock\'s comprehensive TypeScript course with workshops on type transformations, generics, and advanced patterns.', url: 'https://www.totaltypescript.com' },
+    { title: 'TypeScript Deep Dive', type: 'book', description: 'Basarat\'s free online book covering TypeScript internals, common mistakes, and advanced patterns. Community-favorite reference.', url: 'https://basarat.gitbook.io/typescript/' },
+    { title: 'tRPC', type: 'tool', description: 'End-to-end typesafe APIs without code generation. Best demonstration of advanced TypeScript type inference in practice.', url: 'https://trpc.io' },
+  ],
 };
 
 export function getTopicResources(l1: string, l2: string): TopicResource[] {
