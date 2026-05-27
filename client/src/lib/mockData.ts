@@ -175,9 +175,9 @@ export const MOCK_COURSES: Course[] = [
     published: true,
     publishedAt: '2025-01-10T00:00:00.000Z',
     tags: ['oauth2', 'security', 'authentication', 'pkce'],
-    lessonIds: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004', 'lesson-005', 'lesson-006', 'lesson-007', 'lesson-008', 'lesson-009'],
-    totalLessons: 9,
-    estimatedMinutes: 118,
+    lessonIds: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004', 'lesson-005', 'lesson-006', 'lesson-007', 'lesson-008', 'lesson-009', 'lesson-010'],
+    totalLessons: 10,
+    estimatedMinutes: 132,
     ratingAverage: 4.8,
     ratingCount: 42,
     createdAt: '2025-01-01T00:00:00.000Z',
@@ -2589,6 +2589,236 @@ app.post('/auth/revoke', async (req, res) => {
               ],
               correctIndex: 1,
               explanation: 'Clearing local state only prevents your app from sending the token. The JWT itself remains valid at the Authorization Server until its `exp` claim. An attacker who stole it earlier still has a working token. The fix: (1) keep access tokens short-lived (< 15 min), and (2) explicitly revoke the refresh token via the RFC 7009 revocation endpoint on logout.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── OAuth2 Lesson 10: Token Validation Deep Dive ─────────────────────────────
+  {
+    id: 'lesson-010',
+    courseId: 'course-oauth2',
+    order: 9,
+    title: 'Token Validation Deep Dive',
+    estimatedMinutes: 14,
+    createdAt: '2025-01-01T00:00:00.000Z',
+    updatedAt: '2025-01-01T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## How your API actually knows a token is real
+
+Receiving a Bearer token is easy. Knowing whether to trust it is where most implementations get security wrong.
+
+There are two fundamentally different ways to validate a token, each with different tradeoffs:
+
+| Approach | How it works | Latency | Works for |
+|---|---|---|---|
+| **Local JWT validation** | Verify signature + claims locally | ~0ms | JWTs (self-contained) |
+| **Token introspection** | Ask the auth server in real time | ~50–200ms | Opaque tokens or revocation checks |
+
+Most modern systems use **local JWT validation** — it's fast, scales horizontally, and requires no round-trip to the auth server on every request. But it means you must correctly implement every validation step yourself.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Local JWT Validation — What your API must do on every request',
+          nodes: [
+            { id: 'v1', label: 'Request arrives\nAuthorization: Bearer <jwt>', type: 'input', position: { x: 180, y: 0 } },
+            { id: 'v2', label: 'Extract & base64-decode\nJWT header → get kid', position: { x: 180, y: 80 } },
+            { id: 'v3', label: 'Fetch public key\nfrom JWKS endpoint\n(cached by kid)', position: { x: 180, y: 160 } },
+            { id: 'v4', label: 'Verify RS256/ES256\nsignature', type: 'decision', position: { x: 180, y: 250 } },
+            { id: 'v5', label: 'Validate claims:\niss ✓  aud ✓  exp ✓\nnbf ✓  scp ✓', type: 'decision', position: { x: 180, y: 340 } },
+            { id: 'v6', label: '✅ Request allowed\nExtract sub, scp, oid', type: 'output', position: { x: 180, y: 430 } },
+            { id: 'v7', label: '❌ 401 Unauthorized', type: 'output', position: { x: 430, y: 295 }, style: { background: '#450a0a', color: '#fca5a5', border: '1px solid #991b1b' } },
+          ],
+          edges: [
+            { id: 'ev1', source: 'v1', target: 'v2' },
+            { id: 'ev2', source: 'v2', target: 'v3' },
+            { id: 'ev3', source: 'v3', target: 'v4' },
+            { id: 'ev4', source: 'v4', target: 'v5', label: 'valid' },
+            { id: 'ev5', source: 'v5', target: 'v6', label: 'all pass', animated: true },
+            { id: 'ev6', source: 'v4', target: 'v7', label: 'invalid sig' },
+            { id: 'ev7', source: 'v5', target: 'v7', label: 'claim fail' },
+          ],
+        },
+        {
+          type: 'text',
+          content: `## The JWKS endpoint — where public keys live
+
+OAuth2 authorization servers publish their signing keys at a well-known URL:
+
+\`\`\`
+https://login.microsoftonline.com/{tenant}/discovery/v2.0/keys
+https://accounts.google.com/.well-known/openid-configuration  → then keys_uri
+https://{your-auth0-domain}/.well-known/jwks.json
+\`\`\`
+
+The response is a **JSON Web Key Set (JWKS)** — an array of public keys, each identified by a \`kid\` (key ID). The JWT header's \`kid\` tells you which key to use.
+
+**Why public keys?** The auth server signs with its private key (never shared). Your API verifies with the public key. An attacker without the private key cannot produce a valid signature — even if they intercept a token and modify the payload.
+
+**Caching**: Fetch the JWKS once and cache it. Re-fetch only when you see a new \`kid\` you don't recognise (auth servers rotate keys periodically). Fetching on every request is unnecessary load.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'Complete JWT validation middleware — production-grade Node.js',
+          code: `import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import jwksClient from 'jwks-rsa';
+
+// jwks-rsa caches keys by kid automatically
+const jwks = jwksClient({
+  jwksUri: \`https://login.microsoftonline.com/\${process.env.TENANT_ID}/discovery/v2.0/keys\`,
+  cache: true,
+  cacheMaxAge: 10 * 60 * 1000,  // 10 minutes
+  rateLimit: true,
+});
+
+async function getPublicKey(kid: string): Promise<string> {
+  const key = await jwks.getSigningKey(kid);
+  return key.getPublicKey();
+}
+
+export async function requireAuth(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Missing Bearer token' });
+  }
+
+  const token = authHeader.slice(7);
+
+  // 1. Decode header without verification to get kid
+  const decoded = jwt.decode(token, { complete: true });
+  if (!decoded || !decoded.header.kid) {
+    return res.status(401).json({ error: 'Invalid token structure' });
+  }
+
+  try {
+    // 2. Fetch the right public key
+    const publicKey = await getPublicKey(decoded.header.kid);
+
+    // 3. Verify signature + validate ALL these claims
+    const payload = jwt.verify(token, publicKey, {
+      algorithms: ['RS256'],                  // reject HS256, none, etc.
+      issuer: \`https://login.microsoftonline.com/\${process.env.TENANT_ID}/v2.0\`,
+      audience: process.env.API_CLIENT_ID,    // reject tokens for other services
+    }) as jwt.JwtPayload;
+
+    // 4. Check required scopes
+    const tokenScopes = (payload.scp ?? '').split(' ');
+    if (!tokenScopes.includes('access_as_user')) {
+      return res.status(403).json({ error: 'Insufficient scope' });
+    }
+
+    // 5. Attach verified identity to the request
+    req.user = { sub: payload.sub!, oid: payload.oid, scopes: tokenScopes };
+    next();
+  } catch (err) {
+    // jwt.verify throws for expired, invalid sig, wrong iss, wrong aud, etc.
+    return res.status(401).json({ error: 'Token validation failed' });
+  }
+}`,
+        },
+        {
+          type: 'callout',
+          variant: 'danger',
+          title: 'Never skip claim validation',
+          content: '**iss** (issuer): Prevents tokens from a different auth server (even one with stolen keys) from working. **aud** (audience): Prevents a token issued for your staging API from being replayed against production. **exp**: Prevents use of expired tokens — always checked by jwt.verify. **scp**: Ensures the token has the scope needed for the specific operation, not just any valid token.',
+        },
+        {
+          type: 'text',
+          content: `## Token introspection — the alternative
+
+If you use **opaque tokens** (random strings, not JWTs), you can't validate locally. Instead you call the auth server's introspection endpoint (RFC 7662):
+
+\`\`\`http
+POST /oauth/introspect
+Authorization: Basic <client_id:client_secret>
+Content-Type: application/x-www-form-urlencoded
+
+token=opaqueTokenValue123
+\`\`\`
+
+The auth server responds with \`{ active: true, sub: "...", scope: "..." }\` or \`{ active: false }\`.
+
+**When to use introspection:**
+- Opaque tokens (no local validation possible)
+- You need to detect revocation in real time (introspection always reflects current state)
+- Tokens that need to be invalidated immediately (e.g. financial transactions, high-security logout)
+
+**Tradeoff:** Every API request triggers a round-trip to the auth server. At scale, this becomes a bottleneck. Most systems use short-lived JWTs (15 minutes) to balance revocation window against performance.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Local JWT vs. Token Introspection — choosing the right approach',
+          nodes: [
+            { id: 'q1', label: 'What type of\ntoken do you have?', type: 'input', position: { x: 200, y: 0 } },
+            { id: 'q2', label: 'JWT (three-part\ndot-separated)', type: 'decision', position: { x: 80, y: 100 } },
+            { id: 'q3', label: 'Opaque token\n(random string)', type: 'decision', position: { x: 320, y: 100 } },
+            { id: 'q4', label: 'Need real-time\nrevocation?', type: 'decision', position: { x: 80, y: 200 } },
+            { id: 'q5', label: 'Local JWT\nValidation ✅\n(fast, no network)', type: 'output', position: { x: 0, y: 310 } },
+            { id: 'q6', label: 'Token\nIntrospection\n(real-time state)', type: 'output', position: { x: 200, y: 310 } },
+          ],
+          edges: [
+            { id: 'eq1', source: 'q1', target: 'q2' },
+            { id: 'eq2', source: 'q1', target: 'q3' },
+            { id: 'eq3', source: 'q2', target: 'q4' },
+            { id: 'eq4', source: 'q3', target: 'q6', label: 'must introspect' },
+            { id: 'eq5', source: 'q4', target: 'q5', label: 'no — use\nshort expiry' },
+            { id: 'eq6', source: 'q4', target: 'q6', label: 'yes — worth\nthe round-trip' },
+          ],
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Production pattern: short-lived JWTs + refresh token rotation',
+          content: 'Set access tokens to expire in **15 minutes**. This limits the damage window of a leaked token without needing introspection on every request. Combine with **refresh token rotation** so a stolen refresh token is detected the next time the legitimate user tries to use theirs. This is the pattern used by Azure AD, Auth0, and Okta by default.',
+        },
+        {
+          type: 'quiz',
+          title: 'Token Validation Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'tv-q1',
+              question: 'Your API receives a JWT with `"alg": "none"` in the header. What should you do?',
+              options: [
+                'Accept it — the none algorithm means no signature is needed',
+                'Reject it immediately — alg:none means the token is unsigned and must be rejected',
+                'Verify it using the public key anyway',
+                'Check the iss claim first, then decide',
+              ],
+              correctIndex: 1,
+              explanation: '`alg: none` means the JWT has no signature. Any code that accepts it is vulnerable to token forgery — an attacker can craft any payload and set alg:none. Always specify allowed algorithms explicitly (RS256 or ES256) and reject anything else. This was a notorious real-world vulnerability in many JWT libraries.',
+            },
+            {
+              id: 'tv-q2',
+              question: 'You validate a JWT\'s signature and expiry, but skip checking the `aud` claim. What attack does this enable?',
+              options: [
+                'An attacker can forge a new JWT with a future expiry',
+                'A valid token issued for your staging API can be replayed against your production API',
+                'An attacker can extend the token\'s lifetime by modifying the exp claim',
+                'There is no risk — signature validation is sufficient',
+              ],
+              correctIndex: 1,
+              explanation: 'Without `aud` validation, a token issued for `staging-api` is also accepted by `production-api` (same issuer, different audience). This is called a "confused deputy" attack. The `aud` claim exists precisely to prevent tokens from being reused across services — always validate it.',
+            },
+            {
+              id: 'tv-q3',
+              question: 'Why should you cache public keys from the JWKS endpoint instead of fetching them on every request?',
+              options: [
+                'JWKS endpoints have rate limits and adding a network round-trip to every request slows your API and creates an availability dependency',
+                'Public keys change too often to cache reliably',
+                'Caching is required by the OAuth2 spec',
+                'The JWKS endpoint is only available during business hours',
+              ],
+              correctIndex: 0,
+              explanation: 'Fetching the JWKS on every request adds 50-200ms of latency and makes your API\'s availability dependent on the auth server\'s availability. Cache keys by kid — they typically rotate monthly. Refresh only when you encounter an unknown kid (which signals a recent rotation).',
             },
           ],
         },
