@@ -24,8 +24,7 @@ function LabeledEdge({
       <BaseEdge
         id={id}
         path={edgePath}
-        style={style}
-        className={data?.animated ? 'react-flow__edge-path animated' : undefined}
+        style={data?.animated ? { ...style, strokeDasharray: '5,3' } : style}
       />
       {label && (
         <EdgeLabelRenderer>
