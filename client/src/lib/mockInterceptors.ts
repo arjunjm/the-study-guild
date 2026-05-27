@@ -5,20 +5,17 @@ import {
 } from './mockData';
 
 export function installMockInterceptors(client: AxiosInstance) {
-  client.interceptors.request.use(config => {
-    config.headers['X-Mock'] = 'true';
+  // Replace the HTTP adapter entirely — no request ever hits the real server in dev mode.
+  client.interceptors.request.use((config) => {
+    const url = config.url ?? '';
+    const method = (config.method ?? 'get').toLowerCase();
+    const rawData = config.data;
+    config.adapter = async (cfg) => {
+      const body = typeof rawData === 'string' ? rawData : (rawData ? JSON.stringify(rawData) : undefined);
+      const result = await resolveMock(url, method, body);
+      return { ...result, config: cfg } as any;
+    };
     return config;
-  });
-
-  client.interceptors.response.use(undefined, async (error) => {
-    const url: string = error?.config?.url ?? '';
-    const method: string = (error?.config?.method ?? 'get').toLowerCase();
-
-    const isMockMode = import.meta.env.VITE_MOCK_API === 'true';
-    const isNetworkError = !error.response;
-    if (!isMockMode && !isNetworkError) throw error;
-
-    return resolveMock(url, method, error?.config?.data);
   });
 }
 
@@ -111,15 +108,12 @@ function resolveMock(url: string, method: string, body?: string) {
   }
   if (url.includes('/progress/lesson-complete') && method === 'post') {
     const { lessonId, courseId, quizScore } = parsed;
-
-    // Find quiz passing score from the lesson content if quiz was attempted
     let passingScore = 60;
     if (quizScore !== undefined) {
       const lesson = MOCK_LESSONS.find(l => l.id === lessonId);
       const quizSection = lesson?.content.sections.find(s => s.type === 'quiz');
       if (quizSection?.type === 'quiz') passingScore = quizSection.passingScore;
     }
-
     const result = completeMockLesson(lessonId, quizScore, passingScore);
     const progress = getMockProgress(courseId);
     return ok({ progress, ...result });

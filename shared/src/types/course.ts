@@ -38,9 +38,11 @@ export interface CodeBlockSection {
 
 export interface FlowDiagramNode {
   id: string;
-  label: string;
-  type?: 'default' | 'input' | 'output' | 'decision';
+  label?: string;
+  type?: string;
   position: { x: number; y: number };
+  data?: Record<string, unknown>;
+  style?: Record<string, unknown>;
 }
 
 export interface FlowDiagramEdge {
@@ -49,6 +51,7 @@ export interface FlowDiagramEdge {
   target: string;
   label?: string;
   animated?: boolean;
+  style?: Record<string, unknown>;
 }
 
 export interface FlowDiagramSection {

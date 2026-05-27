@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
-import { Zap, Flame, Trophy, BookOpen, ChevronRight, CheckCircle2, Star, Pencil, Check, X } from 'lucide-react';
+import { Zap, Flame, Trophy, BookOpen, CheckCircle2, Star, Pencil, Check, X } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { TAXONOMY } from '../data/taxonomy';
 import { cn } from '../lib/utils';
@@ -24,7 +24,6 @@ const ACHIEVEMENT_CONFIG: Record<string, { label: string; icon: string }> = {
   'streak-3':        { label: '3-Day Streak',       icon: '🔥' },
   'streak-7':        { label: 'Week Warrior',       icon: '🔥' },
   'streak-30':       { label: 'Monthly Champion',   icon: '👑' },
-  // legacy IDs (kept for backward compat)
   'seven-day-streak': { label: '7-Day Streak',      icon: '🔥' },
   'course-complete':  { label: 'Course Complete',   icon: '🎓' },
 };
@@ -92,7 +91,6 @@ export default function ProfilePage() {
   const completed = courseProgress?.filter(c => c.completedCount >= c.totalLessons && c.totalLessons > 0) ?? [];
   const totalLessonsCompleted = courseProgress?.reduce((sum, c) => sum + c.completedCount, 0) ?? 0;
 
-  // Per-category learning stats
   const categoryStats = courseProgress
     ? Object.entries(
         courseProgress.reduce((acc, cp) => {
@@ -110,13 +108,13 @@ export default function ProfilePage() {
   return (
     <div className="p-6 lg:p-10 max-w-3xl">
       {/* Hero */}
-      <div className="mb-6 rounded-2xl border border-slate-800 bg-gradient-to-br from-violet-900/40 via-slate-900 to-slate-900 p-8">
+      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="flex items-start gap-5">
           <div className="relative flex-shrink-0">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-violet-800 text-3xl font-bold text-white shadow-lg shadow-violet-900/50">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-violet-700 text-3xl font-bold text-white shadow-sm">
               {user.displayName?.charAt(0).toUpperCase()}
             </div>
-            <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-slate-900 bg-amber-500 text-[10px] font-bold text-slate-900">
+            <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-amber-500 text-[10px] font-bold text-white shadow-sm">
               {rankIndex + 1}
             </div>
           </div>
@@ -124,7 +122,7 @@ export default function ProfilePage() {
             {editing ? (
               <div className="space-y-2">
                 <input
-                  className="w-full rounded-xl border border-violet-500/40 bg-slate-800/80 px-3 py-2 text-base font-bold text-white outline-none focus:border-violet-500/70"
+                  className="w-full rounded-xl border border-violet-300 bg-white px-3 py-2 text-base font-bold text-slate-900 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
                   value={draftName}
                   onChange={e => setDraftName(e.target.value)}
                   maxLength={50}
@@ -132,7 +130,7 @@ export default function ProfilePage() {
                   autoFocus
                 />
                 <textarea
-                  className="w-full resize-none rounded-xl border border-slate-700/60 bg-slate-800/60 px-3 py-2 text-sm text-slate-300 outline-none focus:border-violet-500/40 placeholder-slate-600"
+                  className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100 placeholder-slate-400"
                   value={draftBio}
                   onChange={e => setDraftBio(e.target.value)}
                   maxLength={160}
@@ -149,7 +147,7 @@ export default function ProfilePage() {
                   </button>
                   <button
                     onClick={() => setEditing(false)}
-                    className="flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-400 transition hover:text-white"
+                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-500 transition hover:text-slate-700 hover:border-slate-300"
                   >
                     <X className="h-3.5 w-3.5" /> Cancel
                   </button>
@@ -158,11 +156,11 @@ export default function ProfilePage() {
             ) : (
               <>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-bold text-white">{user.displayName}</h1>
+                  <h1 className="text-2xl font-bold text-slate-900">{user.displayName}</h1>
                   {!userId && (
                     <button
                       onClick={startEdit}
-                      className="rounded-lg p-1 text-slate-600 transition hover:text-slate-300 hover:bg-slate-800"
+                      className="rounded-lg p-1 text-slate-400 transition hover:text-slate-600 hover:bg-slate-100"
                       title="Edit profile"
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -170,41 +168,41 @@ export default function ProfilePage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-semibold text-lg text-amber-400">{user.rank}</p>
+                  <p className="font-semibold text-lg text-amber-600">{user.rank}</p>
                   {!userId && (user as UserProfile).role === 'teacher' && (
                     <Link
                       to="/teach"
-                      className="flex items-center gap-1 rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-xs font-medium text-violet-300 transition hover:bg-violet-500/20"
+                      className="flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-700 transition hover:bg-violet-100"
                     >
                       Teacher
                     </Link>
                   )}
                   {!userId && (user as UserProfile).role === 'admin' && (
-                    <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-300">
+                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">
                       Admin
                     </span>
                   )}
                 </div>
                 {!userId && (user as UserProfile).email && (
-                  <p className="text-sm text-slate-500">{(user as UserProfile).email}</p>
+                  <p className="text-sm text-slate-400">{(user as UserProfile).email}</p>
                 )}
                 {(user as UserProfile).bio && (
-                  <p className="mt-1 text-sm text-slate-400 leading-relaxed">{(user as UserProfile).bio}</p>
+                  <p className="mt-1 text-sm text-slate-500 leading-relaxed">{(user as UserProfile).bio}</p>
                 )}
               </>
             )}
             <div className="mt-4">
-              <div className="mb-1.5 flex justify-between text-xs text-slate-400">
+              <div className="mb-1.5 flex justify-between text-xs text-slate-500">
                 <span className="flex items-center gap-1">
-                  <Zap className="h-3 w-3 text-violet-400" /> {(user.xp ?? 0).toLocaleString()} XP
+                  <Zap className="h-3 w-3 text-violet-500" /> {(user.xp ?? 0).toLocaleString()} XP
                 </span>
                 {nextThreshold
-                  ? <span className="text-slate-500">{xpIntoRank} / {xpForNextRank} → {RANK_ORDER[rankIndex + 1]}</span>
-                  : <span className="text-amber-400">Max rank reached</span>}
+                  ? <span className="text-slate-400">{xpIntoRank} / {xpForNextRank} → {RANK_ORDER[rankIndex + 1]}</span>
+                  : <span className="text-amber-600">Max rank reached</span>}
               </div>
-              <div className="h-2.5 w-full rounded-full bg-slate-800">
+              <div className="h-2.5 w-full rounded-full bg-slate-100">
                 <div
-                  className="h-2.5 rounded-full bg-gradient-to-r from-violet-600 to-amber-400 transition-all"
+                  className="h-2.5 rounded-full bg-gradient-to-r from-violet-500 to-amber-400 transition-all"
                   style={{ width: `${rankPct}%` }}
                 />
               </div>
@@ -216,23 +214,23 @@ export default function ProfilePage() {
       {/* Stats */}
       <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { label: 'Total XP', value: (user.xp ?? 0).toLocaleString(), Icon: Zap, cls: 'text-violet-400 bg-violet-500/10 border-violet-500/20' },
-          { label: 'Day streak', value: String((user as UserProfile).streak ?? 0), Icon: Flame, cls: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
-          { label: 'Achievements', value: String(user.achievements?.length ?? 0), Icon: Trophy, cls: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
-          { label: 'Lessons done', value: String(totalLessonsCompleted), Icon: BookOpen, cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+          { label: 'Total XP', value: (user.xp ?? 0).toLocaleString(), Icon: Zap, cls: 'text-violet-600 bg-violet-50 border-violet-200' },
+          { label: 'Day streak', value: String((user as UserProfile).streak ?? 0), Icon: Flame, cls: 'text-orange-600 bg-orange-50 border-orange-200' },
+          { label: 'Achievements', value: String(user.achievements?.length ?? 0), Icon: Trophy, cls: 'text-amber-600 bg-amber-50 border-amber-200' },
+          { label: 'Lessons done', value: String(totalLessonsCompleted), Icon: BookOpen, cls: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
         ].map(({ label, value, Icon, cls }) => (
-          <div key={label} className={`rounded-xl border p-4 ${cls}`}>
+          <div key={label} className={`rounded-xl border p-4 shadow-sm ${cls}`}>
             <Icon className="mb-2 h-4 w-4" />
-            <p className="text-xl font-bold text-white">{value}</p>
-            <p className="text-xs text-slate-400">{label}</p>
+            <p className="text-xl font-bold text-slate-900">{value}</p>
+            <p className="text-xs text-slate-500">{label}</p>
           </div>
         ))}
       </div>
 
       {/* Category learning breakdown */}
       {!userId && categoryStats.length > 0 && (
-        <div className="mb-8 rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5">
-          <h2 className="mb-4 text-sm font-semibold text-white">Learning by topic</h2>
+        <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="mb-4 text-sm font-semibold text-slate-900">Learning by topic</h2>
           <div className="space-y-3">
             {categoryStats.map(([l1, stats]) => {
               const cat = TAXONOMY.find(c => c.l1 === l1);
@@ -242,15 +240,15 @@ export default function ProfilePage() {
                   <div className="mb-1 flex items-center justify-between text-xs">
                     <div className="flex items-center gap-1.5">
                       {cat && <cat.icon className={cn('h-3 w-3', cat.color)} />}
-                      <span className="font-medium text-slate-300">{l1}</span>
+                      <span className="font-medium text-slate-700">{l1}</span>
                     </div>
-                    <span className="text-slate-500 tabular-nums">
+                    <span className="text-slate-400 tabular-nums">
                       {stats.completed} / {stats.total} lessons
                     </span>
                   </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-violet-600 to-violet-400 transition-all duration-700"
+                      className="h-full rounded-full bg-gradient-to-r from-violet-500 to-violet-400 transition-all duration-700"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -270,8 +268,8 @@ export default function ProfilePage() {
       {!userId && (
         <div className="mb-8">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold text-white">Achievements</h2>
-            <span className="text-xs text-slate-500">
+            <h2 className="font-semibold text-slate-900">Achievements</h2>
+            <span className="text-xs text-slate-400">
               {user.achievements?.length ?? 0} / {Object.keys(ACHIEVEMENT_CONFIG).filter(k => !['seven-day-streak','course-complete'].includes(k)).length} unlocked
             </span>
           </div>
@@ -286,8 +284,8 @@ export default function ProfilePage() {
                     className={cn(
                       'flex items-center gap-2 rounded-xl border px-3 py-2 transition',
                       earned
-                        ? 'border-amber-500/30 bg-amber-500/8 text-amber-200'
-                        : 'border-slate-800/60 bg-slate-900/40 text-slate-600 grayscale opacity-50'
+                        ? 'border-amber-200 bg-amber-50 text-amber-700'
+                        : 'border-slate-200 bg-slate-50 text-slate-400 grayscale opacity-50'
                     )}
                     title={earned ? `Earned: ${cfg.label}` : `Locked: ${cfg.label}`}
                   >
@@ -301,14 +299,14 @@ export default function ProfilePage() {
       )}
       {userId && user.achievements && user.achievements.length > 0 && (
         <div className="mb-8">
-          <h2 className="mb-3 font-semibold text-white">Achievements</h2>
+          <h2 className="mb-3 font-semibold text-slate-900">Achievements</h2>
           <div className="flex flex-wrap gap-2">
             {user.achievements.map(id => {
               const cfg = ACHIEVEMENT_CONFIG[id] ?? { label: id, icon: '🏅' };
               return (
-                <div key={id} className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/8 px-3 py-2">
+                <div key={id} className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
                   <span className="text-lg">{cfg.icon}</span>
-                  <span className="text-xs font-medium text-amber-200">{cfg.label}</span>
+                  <span className="text-xs font-medium text-amber-700">{cfg.label}</span>
                 </div>
               );
             })}
@@ -319,7 +317,7 @@ export default function ProfilePage() {
       {/* In Progress courses */}
       {inProgress.length > 0 && (
         <div className="mb-8">
-          <h2 className="mb-3 font-semibold text-white">In Progress</h2>
+          <h2 className="mb-3 font-semibold text-slate-900">In Progress</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {inProgress.map((cp) => {
               const { course, completedCount, totalLessons, completedLessonIds } = cp;
@@ -331,20 +329,20 @@ export default function ProfilePage() {
                 <Link
                   key={course.id}
                   to={to}
-                  className="group rounded-xl border border-slate-800 bg-slate-900 p-4 transition hover:border-violet-600/40 hover:bg-slate-800/70"
+                  className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:border-violet-300 hover:bg-violet-50 shadow-sm"
                 >
                   <div className="mb-1 flex items-start justify-between gap-2">
-                    <h3 className="font-medium text-white group-hover:text-violet-300 transition">{course.title}</h3>
-                    <span className="shrink-0 rounded-md border border-violet-500/25 bg-violet-500/8 px-2 py-0.5 text-[10px] font-medium text-violet-400 group-hover:bg-violet-500/15 transition">
+                    <h3 className="font-medium text-slate-800 group-hover:text-violet-700 transition">{course.title}</h3>
+                    <span className="shrink-0 rounded-md border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700 group-hover:bg-violet-100 transition">
                       Resume
                     </span>
                   </div>
-                  <p className="mb-3 text-xs text-slate-500">{course.taxonomy.l1} · {course.taxonomy.l2}</p>
+                  <p className="mb-3 text-xs text-slate-400">{course.taxonomy.l1} · {course.taxonomy.l2}</p>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 rounded-full bg-slate-800">
+                    <div className="flex-1 h-1.5 rounded-full bg-slate-100">
                       <div className="h-1.5 rounded-full bg-violet-500 transition-all" style={{ width: `${pct}%` }} />
                     </div>
-                    <span className="text-xs text-slate-500 tabular-nums">{completedCount}/{totalLessons}</span>
+                    <span className="text-xs text-slate-400 tabular-nums">{completedCount}/{totalLessons}</span>
                   </div>
                 </Link>
               );
@@ -357,11 +355,11 @@ export default function ProfilePage() {
       {completed.length > 0 && (
         <div className="mb-8">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold text-white flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
               Completed courses
             </h2>
-            <span className="text-xs text-slate-500">{completed.length} course{completed.length !== 1 ? 's' : ''}</span>
+            <span className="text-xs text-slate-400">{completed.length} course{completed.length !== 1 ? 's' : ''}</span>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {completed.map(({ course }) => {
@@ -370,7 +368,7 @@ export default function ProfilePage() {
                 <Link
                   key={course.id}
                   to={`/courses/${course.id}`}
-                  className="group rounded-xl border border-emerald-500/15 bg-emerald-500/5 p-4 transition hover:border-emerald-500/30 hover:bg-emerald-500/8"
+                  className="group rounded-xl border border-emerald-200 bg-emerald-50 p-4 transition hover:border-emerald-300 hover:bg-emerald-100 shadow-sm"
                 >
                   <div className="mb-2 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
@@ -379,15 +377,15 @@ export default function ProfilePage() {
                           <cat.icon className={cn('h-3.5 w-3.5', cat.color)} />
                         </span>
                       )}
-                      <h3 className="truncate text-sm font-medium text-slate-200 group-hover:text-white transition">{course.title}</h3>
+                      <h3 className="truncate text-sm font-medium text-slate-700 group-hover:text-slate-900 transition">{course.title}</h3>
                     </div>
-                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
                   </div>
                   <div className="flex items-center justify-between text-xs text-slate-500">
                     <span>{course.taxonomy.l1} · {course.taxonomy.l2}</span>
                     {course.ratingCount > 0 && (
-                      <span className="flex items-center gap-1 text-amber-400/70">
-                        <Star className="h-3 w-3 fill-amber-400/70" />
+                      <span className="flex items-center gap-1 text-amber-600">
+                        <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
                         {course.ratingAverage.toFixed(1)}
                       </span>
                     )}
@@ -403,8 +401,8 @@ export default function ProfilePage() {
       {!userId && <ActivityHeatMap xp={user.xp ?? 0} streak={user.streak ?? 0} totalLessons={totalLessonsCompleted} />}
 
       {/* Rank ladder */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-        <h2 className="mb-4 font-semibold text-white">Guild Ranks</h2>
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 font-semibold text-slate-900">Guild Ranks</h2>
         <div className="space-y-1.5">
           {RANK_ORDER.map((rank, i) => {
             const achieved = rankIndex >= i;
@@ -415,20 +413,20 @@ export default function ProfilePage() {
                 key={rank}
                 className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${
                   isCurrent
-                    ? 'border border-amber-500/40 bg-amber-500/10'
+                    ? 'border border-amber-200 bg-amber-50'
                     : achieved
-                    ? 'text-slate-400'
-                    : 'text-slate-700'
+                    ? 'text-slate-500'
+                    : 'text-slate-300'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <span className={achieved ? '' : 'grayscale opacity-30'}>{RANK_ICONS[i] ?? '⭐'}</span>
-                  <span className={`font-medium ${isCurrent ? 'text-amber-300' : achieved ? 'text-slate-300' : 'text-slate-700'}`}>
+                  <span className={`font-medium ${isCurrent ? 'text-amber-700' : achieved ? 'text-slate-700' : 'text-slate-300'}`}>
                     {rank}
-                    {isCurrent && <span className="ml-2 text-xs text-amber-500/80">← you</span>}
+                    {isCurrent && <span className="ml-2 text-xs text-amber-500">← you</span>}
                   </span>
                 </div>
-                <span className={`text-xs tabular-nums ${achieved ? 'text-slate-500' : 'text-slate-700'}`}>
+                <span className={`text-xs tabular-nums ${achieved ? 'text-slate-400' : 'text-slate-300'}`}>
                   {threshold.toLocaleString()} XP
                 </span>
               </div>
@@ -444,20 +442,17 @@ function ActivityHeatMap({ xp, streak, totalLessons }: { xp: number; streak: num
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Generate 35 days of plausible mock activity using deterministic noise
   const seed = xp + streak * 7 + totalLessons * 3;
   const days: { date: Date; count: number }[] = [];
   for (let i = 34; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    // Pseudo-random but stable: higher activity in recent days (streak)
     const recency = i < streak ? 1 : 0;
-    const noise = Math.abs(Math.sin(seed + i * 137.508)) ;
+    const noise = Math.abs(Math.sin(seed + i * 137.508));
     const count = recency ? Math.ceil(noise * 4) : noise > 0.7 ? Math.ceil(noise * 3) : 0;
     days.push({ date: d, count });
   }
 
-  // Pad to start on Monday
   const firstDow = days[0].date.getDay();
   const padStart = firstDow === 0 ? 6 : firstDow - 1;
   const padded: (typeof days[0] | null)[] = [...Array(padStart).fill(null), ...days];
@@ -468,11 +463,11 @@ function ActivityHeatMap({ xp, streak, totalLessons }: { xp: number; streak: num
 
   const maxCount = Math.max(...days.map(d => d.count), 1);
   const intensity = (count: number) => {
-    if (count === 0) return 'bg-slate-800 hover:bg-slate-700';
+    if (count === 0) return 'bg-slate-100 hover:bg-slate-200';
     const pct = count / maxCount;
-    if (pct < 0.33) return 'bg-violet-900/60 hover:bg-violet-800/70';
-    if (pct < 0.66) return 'bg-violet-600/70 hover:bg-violet-500/80';
-    return 'bg-violet-500 hover:bg-violet-400';
+    if (pct < 0.33) return 'bg-violet-200 hover:bg-violet-300';
+    if (pct < 0.66) return 'bg-violet-400 hover:bg-violet-500';
+    return 'bg-violet-600 hover:bg-violet-700';
   };
 
   const todayStr = today.toISOString().split('T')[0];
@@ -480,13 +475,13 @@ function ActivityHeatMap({ xp, streak, totalLessons }: { xp: number; streak: num
   const totalLessonsInPeriod = days.reduce((s, d) => s + d.count, 0);
 
   return (
-    <div className="mb-8 rounded-xl border border-slate-800 bg-slate-900 p-5">
+    <div className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="flex items-center gap-2 font-semibold text-white">
-          <Zap className="h-4 w-4 text-violet-400" />
+        <h2 className="flex items-center gap-2 font-semibold text-slate-900">
+          <Zap className="h-4 w-4 text-violet-500" />
           Learning activity — last 5 weeks
         </h2>
-        <div className="flex items-center gap-3 text-xs text-slate-500">
+        <div className="flex items-center gap-3 text-xs text-slate-400">
           <span>{totalActiveDays} active days</span>
           <span>{totalLessonsInPeriod} lessons</span>
         </div>
@@ -495,7 +490,7 @@ function ActivityHeatMap({ xp, streak, totalLessons }: { xp: number; streak: num
         <div className="min-w-max">
           <div className="mb-1 flex gap-1">
             {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((l, i) => (
-              <div key={i} className="h-5 w-5 text-center text-[10px] font-medium text-slate-600">{l}</div>
+              <div key={i} className="h-5 w-5 text-center text-[10px] font-medium text-slate-400">{l}</div>
             ))}
           </div>
           {weeks.map((week, wi) => (
@@ -510,7 +505,7 @@ function ActivityHeatMap({ xp, streak, totalLessons }: { xp: number; streak: num
                     title={`${str}: ${day.count} lesson${day.count !== 1 ? 's' : ''}`}
                     className={cn(
                       'h-5 w-5 rounded-sm transition-colors cursor-default',
-                      isToday ? 'ring-2 ring-violet-400/40 ring-offset-1 ring-offset-slate-900' : '',
+                      isToday ? 'ring-2 ring-violet-400 ring-offset-1 ring-offset-white' : '',
                       intensity(day.count)
                     )}
                   />
@@ -520,9 +515,9 @@ function ActivityHeatMap({ xp, streak, totalLessons }: { xp: number; streak: num
           ))}
         </div>
       </div>
-      <div className="mt-3 flex items-center gap-2 text-[10px] text-slate-600">
+      <div className="mt-3 flex items-center gap-2 text-[10px] text-slate-400">
         <span>Less</span>
-        {['bg-slate-800', 'bg-violet-900/60', 'bg-violet-600/70', 'bg-violet-500'].map(cls => (
+        {['bg-slate-100', 'bg-violet-200', 'bg-violet-400', 'bg-violet-600'].map(cls => (
           <div key={cls} className={cn('h-3 w-3 rounded-sm', cls)} />
         ))}
         <span>More</span>
@@ -535,7 +530,6 @@ function StreakCalendar({ streak, lastLoginDate }: { streak: number; lastLoginDa
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Build a set of active date strings (YYYY-MM-DD) based on streak count
   const activeDays = new Set<string>();
   const lastDate = lastLoginDate ? new Date(lastLoginDate + 'T00:00:00') : today;
   for (let i = 0; i < streak; i++) {
@@ -544,7 +538,6 @@ function StreakCalendar({ streak, lastLoginDate }: { streak: number; lastLoginDa
     activeDays.add(d.toISOString().split('T')[0]);
   }
 
-  // Show 4 weeks (28 days) ending today, padded to start on Monday
   const days: Date[] = [];
   for (let i = 27; i >= 0; i--) {
     const d = new Date(today);
@@ -552,8 +545,7 @@ function StreakCalendar({ streak, lastLoginDate }: { streak: number; lastLoginDa
     days.push(d);
   }
 
-  // Pad to start on Monday (day 1)
-  const firstDay = days[0].getDay(); // 0=Sun, 1=Mon...
+  const firstDay = days[0].getDay();
   const padStart = firstDay === 0 ? 6 : firstDay - 1;
   const paddedDays: (Date | null)[] = [
     ...Array(padStart).fill(null),
@@ -571,23 +563,21 @@ function StreakCalendar({ streak, lastLoginDate }: { streak: number; lastLoginDa
   const todayStr = today.toISOString().split('T')[0];
 
   return (
-    <div className="mb-8 rounded-xl border border-slate-800 bg-slate-900 p-5">
+    <div className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-semibold text-white flex items-center gap-2">
-          <Flame className="h-4 w-4 text-orange-400" />
+        <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+          <Flame className="h-4 w-4 text-orange-500" />
           Activity — last 4 weeks
         </h2>
-        <span className="text-xs text-slate-500">{streak}-day streak</span>
+        <span className="text-xs text-slate-400">{streak}-day streak</span>
       </div>
       <div className="overflow-x-auto">
         <div className="min-w-max">
-          {/* Day labels */}
           <div className="mb-1 flex gap-1 pl-0">
             {dayLabels.map((l, i) => (
-              <div key={i} className="h-5 w-5 text-center text-[10px] font-medium text-slate-600">{l}</div>
+              <div key={i} className="h-5 w-5 text-center text-[10px] font-medium text-slate-400">{l}</div>
             ))}
           </div>
-          {/* Weeks (rows) */}
           {grid.map((week, wi) => (
             <div key={wi} className="mb-1 flex gap-1">
               {week.map((day, di) => {
@@ -603,11 +593,11 @@ function StreakCalendar({ streak, lastLoginDate }: { streak: number; lastLoginDa
                       'h-5 w-5 rounded-sm transition-colors',
                       isToday
                         ? isActive
-                          ? 'bg-orange-400 ring-2 ring-orange-400/40 ring-offset-1 ring-offset-slate-900'
-                          : 'bg-slate-700 ring-2 ring-slate-500/40 ring-offset-1 ring-offset-slate-900'
+                          ? 'bg-orange-500 ring-2 ring-orange-400 ring-offset-1 ring-offset-white'
+                          : 'bg-slate-200 ring-2 ring-slate-300 ring-offset-1 ring-offset-white'
                         : isActive
-                        ? 'bg-orange-500/70 hover:bg-orange-400/90'
-                        : 'bg-slate-800 hover:bg-slate-700'
+                        ? 'bg-orange-400 hover:bg-orange-500'
+                        : 'bg-slate-100 hover:bg-slate-200'
                     )}
                   />
                 );
@@ -616,7 +606,7 @@ function StreakCalendar({ streak, lastLoginDate }: { streak: number; lastLoginDa
           ))}
         </div>
       </div>
-      <p className="mt-2 text-xs text-slate-600">Each cell is one day. Orange = active day.</p>
+      <p className="mt-2 text-xs text-slate-400">Each cell is one day. Orange = active day.</p>
     </div>
   );
 }

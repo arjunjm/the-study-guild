@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Share2, Star, Clock, CheckCircle, Circle, ChevronLeft, BookOpen, ArrowRight, Zap, Code2, HelpCircle, GitFork, Award, Download, X } from 'lucide-react';
+import { Share2, Star, Clock, CheckCircle, Circle, ChevronLeft, BookOpen, ArrowRight, Code2, HelpCircle, GitFork, Award, Download, X } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { TAXONOMY } from '../data/taxonomy';
 import { cn } from '../lib/utils';
@@ -65,16 +65,21 @@ export default function CourseDetailPage() {
   const remainingMinutes = lessons && pct > 0 && pct < 100
     ? lessons.filter(l => !progress?.completedLessonIds.includes(l.id)).reduce((s, l) => s + l.estimatedMinutes, 0)
     : 0;
-  const diffStyle = { beginner: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20', intermediate: 'text-amber-400 bg-amber-400/10 border-amber-400/20', advanced: 'text-red-400 bg-red-400/10 border-red-400/20' }[course.difficulty];
+  const diffStyle = {
+    beginner: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+    intermediate: 'text-amber-700 bg-amber-50 border-amber-200',
+    advanced: 'text-red-700 bg-red-50 border-red-200',
+  }[course.difficulty];
   const cat = TAXONOMY.find(c => c.l1 === course.taxonomy.l1);
 
   return (
+    <>
     <div className="min-h-full">
       {/* Hero */}
-      <div className="relative overflow-hidden border-b border-slate-800/60 mesh-bg px-4 py-10 lg:px-10 lg:py-12">
-        <div className="pointer-events-none absolute -top-20 right-0 h-80 w-80 rounded-full bg-violet-600/8 blur-3xl" />
-        <div className="relative max-w-3xl">
-          <Link to="/courses" className="mb-4 flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition w-fit">
+      <div className="relative overflow-hidden border-b border-slate-200 bg-white px-4 py-10 lg:px-10 lg:py-12">
+        <div className="pointer-events-none absolute -top-20 right-0 h-80 w-80 rounded-full bg-violet-100/40 blur-3xl" />
+        <div className="relative max-w-3xl mx-auto">
+          <Link to="/courses" className="mb-4 flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition w-fit">
             <ChevronLeft className="h-3.5 w-3.5" /> Back to courses
           </Link>
           <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
@@ -84,21 +89,21 @@ export default function CourseDetailPage() {
                 {course.taxonomy.l1}
               </span>
             ) : (
-              <span className="rounded-lg bg-slate-800 px-2 py-1 text-slate-300">{course.taxonomy.l1}</span>
+              <span className="rounded-lg bg-slate-100 px-2 py-1 text-slate-600">{course.taxonomy.l1}</span>
             )}
-            <span className="text-slate-600">›</span>
+            <span className="text-slate-300">›</span>
             <span className="text-slate-500">{course.taxonomy.l2}</span>
             <span className={`ml-1 rounded-full border px-2.5 py-0.5 font-medium capitalize ${diffStyle}`}>{course.difficulty}</span>
           </div>
-          <h1 className="mb-3 font-display text-2xl font-bold text-white lg:text-4xl">{course.title}</h1>
-          <p className="mb-4 max-w-xl text-sm text-slate-400 leading-relaxed">{course.description}</p>
+          <h1 className="mb-3 font-display text-2xl font-bold text-slate-900 lg:text-4xl">{course.title}</h1>
+          <p className="mb-4 max-w-xl text-sm text-slate-500 leading-relaxed">{course.description}</p>
           {course.tags && course.tags.length > 0 && (
             <div className="mb-4 flex flex-wrap gap-1.5">
               {course.tags.map(tag => (
                 <Link
                   key={tag}
                   to={`/courses?search=${encodeURIComponent(tag)}`}
-                  className="rounded-full bg-slate-800/80 px-2 py-0.5 text-xs text-slate-500 transition hover:bg-slate-700/80 hover:text-slate-300"
+                  className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
                 >
                   #{tag}
                 </Link>
@@ -109,44 +114,42 @@ export default function CourseDetailPage() {
             <span className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5" />{total} lessons</span>
             <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{course.estimatedMinutes} min</span>
             {course.ratingCount > 0 && (
-              <span className="flex items-center gap-1 text-amber-400/80">
-                <Star className="h-3.5 w-3.5 fill-amber-400/80" />
+              <span className="flex items-center gap-1 text-amber-600">
+                <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
                 {course.ratingAverage.toFixed(1)} ({course.ratingCount} ratings)
               </span>
             )}
-            <span>by <span className="text-slate-400">{course.authorName}</span></span>
+            <span>by <span className="text-slate-700">{course.authorName}</span></span>
           </div>
         </div>
       </div>
 
-      <div className="px-4 py-8 lg:px-10 lg:py-10 max-w-3xl">
+      <div className="mx-auto max-w-3xl px-4 py-8 lg:px-10 lg:py-10">
         {/* Course completion celebration banner */}
         {pct === 100 && total > 0 && (
           <>
-            <div className="mb-6 relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-900/30 via-slate-900 to-slate-900 p-6">
-              <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-emerald-500/10 blur-2xl" />
-              <div className="pointer-events-none absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-amber-500/8 blur-xl" />
+            <div className="mb-6 relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-white p-6 shadow-sm">
+              <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-emerald-100 blur-2xl" />
               <div className="relative flex items-center gap-5">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15">
-                  <Award className="h-7 w-7 text-emerald-400" />
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-100">
+                  <Award className="h-7 w-7 text-emerald-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-500 mb-0.5">Course Complete</p>
-                  <h2 className="text-lg font-bold text-white">{course.title}</h2>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600 mb-0.5">Course Complete</p>
+                  <h2 className="text-lg font-bold text-slate-900">{course.title}</h2>
+                  <p className="text-sm text-slate-500">
                     You've completed all {total} lessons · {course.estimatedMinutes} min of learning
                   </p>
                 </div>
                 <button
                   onClick={() => setShowCert(true)}
-                  className="shrink-0 flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
+                  className="shrink-0 flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
                 >
                   <Award className="h-4 w-4" />
                   Certificate
                 </button>
               </div>
             </div>
-            {/* What to learn next */}
             {relatedCourses && relatedCourses.length > 0 && (() => {
               const DIFFICULTY_ORDER = { beginner: 0, intermediate: 1, advanced: 2 };
               const nextLevel = relatedCourses
@@ -155,17 +158,17 @@ export default function CourseDetailPage() {
                 .slice(0, 2);
               if (nextLevel.length === 0) return null;
               return (
-                <div className="mb-8 rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5">
-                  <p className="mb-3 text-xs font-bold uppercase tracking-widest text-violet-400">What to learn next</p>
+                <div className="mb-8 rounded-2xl border border-violet-200 bg-violet-50 p-5">
+                  <p className="mb-3 text-xs font-bold uppercase tracking-widest text-violet-600">What to learn next</p>
                   <div className="grid gap-2.5 sm:grid-cols-2">
                     {nextLevel.map(rc => {
-                      const diff = { beginner: 'text-emerald-400', intermediate: 'text-amber-400', advanced: 'text-red-400' }[rc.difficulty];
+                      const diff = { beginner: 'text-emerald-700', intermediate: 'text-amber-700', advanced: 'text-red-700' }[rc.difficulty];
                       const rcCat = TAXONOMY.find(c => c.l1 === rc.taxonomy.l1);
                       return (
                         <Link
                           key={rc.id}
                           to={`/courses/${rc.id}`}
-                          className="group flex items-center gap-3 rounded-xl border border-slate-800/60 bg-slate-900/60 p-3.5 transition hover:border-violet-500/30 hover:bg-slate-900/80"
+                          className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3.5 transition hover:border-violet-300 hover:bg-white shadow-sm"
                         >
                           {rcCat && (
                             <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg', rcCat.bgColor)}>
@@ -173,14 +176,14 @@ export default function CourseDetailPage() {
                             </span>
                           )}
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-slate-200 group-hover:text-violet-200 transition leading-snug">{rc.title}</p>
+                            <p className="truncate text-sm font-medium text-slate-800 group-hover:text-violet-700 transition leading-snug">{rc.title}</p>
                             <div className="mt-0.5 flex items-center gap-2 text-xs">
                               <span className={cn('font-medium capitalize', diff)}>{rc.difficulty}</span>
-                              <span className="text-slate-600">·</span>
+                              <span className="text-slate-300">·</span>
                               <span className="text-slate-500">{rc.estimatedMinutes}m</span>
                             </div>
                           </div>
-                          <ArrowRight className="h-4 w-4 shrink-0 text-slate-600 group-hover:text-violet-400 transition" />
+                          <ArrowRight className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-violet-500 transition" />
                         </Link>
                       );
                     })}
@@ -193,10 +196,10 @@ export default function CourseDetailPage() {
 
         {/* Progress + CTA */}
         {total > 0 && (
-          <div className="mb-8 rounded-2xl border border-slate-800/60 bg-slate-900/50 p-5">
+          <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-200">
+                <p className="text-sm font-medium text-slate-800">
                   {pct === 100 ? 'Course complete!' : pct === 0 ? 'Not started' : 'In progress'}
                 </p>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -211,7 +214,7 @@ export default function CourseDetailPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => navigator.clipboard.writeText(window.location.href).then(() => toast.success('Link copied!', 'Share this course with a friend'))}
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-700/60 px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 hover:border-slate-600 transition"
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700 hover:border-slate-300 transition"
                 >
                   <Share2 className="h-3.5 w-3.5" /> Share
                 </button>
@@ -226,7 +229,7 @@ export default function CourseDetailPage() {
                 )}
               </div>
             </div>
-            <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-800">
+            <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-100">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-violet-600 to-violet-400 transition-all duration-700"
                 style={{ width: `${pct}%` }}
@@ -237,12 +240,12 @@ export default function CourseDetailPage() {
 
         {/* What you'll learn */}
         {lessons && lessons.length >= 4 && (
-          <div className="mb-8 rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5">
-            <h2 className="mb-3 text-sm font-semibold text-white">What you'll learn</h2>
+          <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="mb-3 text-sm font-semibold text-slate-900">What you'll learn</h2>
             <div className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
               {lessons.map(lesson => (
-                <div key={lesson.id} className="flex items-start gap-2 text-xs text-slate-400">
-                  <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500/60" />
+                <div key={lesson.id} className="flex items-start gap-2 text-xs text-slate-600">
+                  <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
                   <span className="leading-relaxed">{lesson.title}</span>
                 </div>
               ))}
@@ -252,7 +255,7 @@ export default function CourseDetailPage() {
 
         {/* Lessons */}
         <div className="mb-8">
-          <h2 className="mb-4 text-base font-semibold text-white">Course content</h2>
+          <h2 className="mb-4 text-base font-semibold text-slate-900">Course content</h2>
           <div className="space-y-2">
             {lessons?.map((lesson, i) => {
               const done = progress?.completedLessonIds.includes(lesson.id);
@@ -263,46 +266,42 @@ export default function CourseDetailPage() {
                 <Link
                   key={lesson.id}
                   to={`/courses/${courseId}/lessons/${lesson.id}`}
-                  className="group flex items-center gap-4 rounded-xl border border-slate-800/60 bg-slate-900/40 p-4 transition-all hover:border-violet-500/30 hover:bg-slate-900/70"
+                  className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-violet-300 hover:bg-violet-50 shadow-sm"
                 >
-                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition ${done ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition ${done ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
                     {done ? <CheckCircle className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-200 group-hover:text-white transition truncate">
-                      <span className="text-slate-600 mr-2 text-xs">{String(i + 1).padStart(2, '0')}</span>
+                    <p className="text-sm font-medium text-slate-800 group-hover:text-slate-900 transition truncate">
+                      <span className="text-slate-400 mr-2 text-xs">{String(i + 1).padStart(2, '0')}</span>
                       {lesson.title}
                     </p>
                     <div className="mt-1 flex items-center gap-2">
-                      <span className="text-xs text-slate-600">{lesson.estimatedMinutes} min</span>
+                      <span className="text-xs text-slate-400">{lesson.estimatedMinutes} min</span>
                       {hasQuiz && (
-                        <span className="flex items-center gap-0.5 rounded-full bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-medium text-violet-400">
+                        <span className="flex items-center gap-0.5 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
                           <HelpCircle className="h-2.5 w-2.5" />Quiz
                         </span>
                       )}
                       {hasCode && (
-                        <span className="flex items-center gap-0.5 rounded-full bg-slate-700/60 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">
+                        <span className="flex items-center gap-0.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
                           <Code2 className="h-2.5 w-2.5" />Code
                         </span>
                       )}
                       {hasDiagram && (
-                        <span className="flex items-center gap-0.5 rounded-full bg-cyan-500/10 px-1.5 py-0.5 text-[10px] font-medium text-cyan-400">
+                        <span className="flex items-center gap-0.5 rounded-full bg-cyan-50 px-1.5 py-0.5 text-[10px] font-medium text-cyan-700">
                           <GitFork className="h-2.5 w-2.5" />Diagram
                         </span>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    {done ? (
-                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-500">
-                        earned
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-400">
-                        +{hasQuiz ? '10–40' : '10'} XP
+                    {done && (
+                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                        done
                       </span>
                     )}
-                    <ArrowRight className="h-4 w-4 text-slate-700 opacity-0 group-hover:opacity-100 transition" />
+                    <ArrowRight className="h-4 w-4 text-slate-300 opacity-0 group-hover:opacity-100 group-hover:text-violet-500 transition" />
                   </div>
                 </Link>
               );
@@ -310,31 +309,9 @@ export default function CourseDetailPage() {
           </div>
         </div>
 
-        {/* XP reward summary */}
-        <div className="mb-8 rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5">
-          <h3 className="mb-3 text-sm font-semibold text-white flex items-center gap-2">
-            <Zap className="h-4 w-4 text-violet-400" />
-            XP you'll earn
-          </h3>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {[
-              { label: 'Per lesson', xp: 10 * total, detail: `${total} × 10 XP` },
-              { label: 'Course complete', xp: 50, detail: 'bonus' },
-              { label: 'Quiz perfect', xp: 40, detail: 'per lesson (optional)' },
-              { label: 'Total potential', xp: 10 * total + 50 + 40 * total, detail: 'all quizzes perfect' },
-            ].map(({ label, xp, detail }) => (
-              <div key={label} className="rounded-xl bg-slate-900/60 p-3">
-                <p className="text-lg font-bold text-violet-300">+{xp}</p>
-                <p className="text-xs font-medium text-slate-300">{label}</p>
-                <p className="text-[11px] text-slate-600">{detail}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Rating */}
-        <div className="mb-8 rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5">
-          <h3 className="mb-1 text-sm font-semibold text-white">Rate this course</h3>
+        <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="mb-1 text-sm font-semibold text-slate-900">Rate this course</h3>
           <p className="mb-4 text-xs text-slate-500">Your feedback helps other learners find great content.</p>
           <div className="flex items-center gap-2" onMouseLeave={() => setHoveredRating(0)}>
             {[1, 2, 3, 4, 5].map(n => {
@@ -348,17 +325,17 @@ export default function CourseDetailPage() {
                   className={cn(
                     'rounded-lg border p-2 transition',
                     filled
-                      ? 'border-amber-500/40 bg-amber-500/10'
-                      : 'border-slate-700/60 hover:border-amber-500/30 hover:bg-amber-500/5',
+                      ? 'border-amber-300 bg-amber-50'
+                      : 'border-slate-200 hover:border-amber-200 hover:bg-amber-50',
                     rateMutation.isPending && 'opacity-50 cursor-not-allowed',
                   )}
                 >
-                  <Star className={cn('h-5 w-5 transition', filled ? 'fill-amber-400 text-amber-400' : 'text-slate-600')} />
+                  <Star className={cn('h-5 w-5 transition', filled ? 'fill-amber-500 text-amber-500' : 'text-slate-300')} />
                 </button>
               );
             })}
             {submittedRating > 0 && !rateMutation.isPending && (
-              <span className="ml-2 text-xs text-emerald-400">Rating saved!</span>
+              <span className="ml-2 text-xs text-emerald-600">Rating saved!</span>
             )}
           </div>
         </div>
@@ -367,32 +344,32 @@ export default function CourseDetailPage() {
         {relatedCourses && relatedCourses.length > 0 && (
           <div>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-white">More in {course.taxonomy.l1}</h2>
+              <h2 className="text-base font-semibold text-slate-900">More in {course.taxonomy.l1}</h2>
               <Link
                 to={`/courses?l1=${encodeURIComponent(course.taxonomy.l1)}`}
-                className="text-xs text-violet-400 hover:text-violet-300 transition"
+                className="text-xs text-violet-600 hover:text-violet-700 transition"
               >
                 View all →
               </Link>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               {relatedCourses.map(rc => {
-                const diff = { beginner: 'text-emerald-400', intermediate: 'text-amber-400', advanced: 'text-red-400' }[rc.difficulty];
+                const diff = { beginner: 'text-emerald-700', intermediate: 'text-amber-700', advanced: 'text-red-700' }[rc.difficulty];
                 return (
                   <Link
                     key={rc.id}
                     to={`/courses/${rc.id}`}
-                    className="group rounded-xl border border-slate-800/60 bg-slate-900/40 p-4 transition-all hover:border-violet-500/30 hover:bg-slate-900/70"
+                    className="group rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-violet-300 hover:bg-violet-50 shadow-sm"
                   >
-                    <p className="mb-1 text-xs text-slate-500">{rc.taxonomy.l2}</p>
-                    <h3 className="mb-2 text-sm font-semibold text-slate-200 group-hover:text-violet-300 transition leading-snug line-clamp-2">{rc.title}</h3>
+                    <p className="mb-1 text-xs text-slate-400">{rc.taxonomy.l2}</p>
+                    <h3 className="mb-2 text-sm font-semibold text-slate-800 group-hover:text-violet-700 transition leading-snug line-clamp-2">{rc.title}</h3>
                     <div className="flex items-center justify-between text-xs">
                       <span className={cn('font-medium capitalize', diff)}>{rc.difficulty}</span>
-                      <div className="flex items-center gap-2 text-slate-600">
+                      <div className="flex items-center gap-2 text-slate-500">
                         {rc.ratingAverage > 0 && (
-                          <span className="flex items-center gap-0.5 text-amber-400">
-                            <Star className="h-3 w-3 fill-current" />
-                            <span className="text-slate-400">{rc.ratingAverage.toFixed(1)}</span>
+                          <span className="flex items-center gap-0.5 text-amber-600">
+                            <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                            <span>{rc.ratingAverage.toFixed(1)}</span>
                           </span>
                         )}
                         <span className="flex items-center gap-1">
@@ -413,65 +390,61 @@ export default function CourseDetailPage() {
     {/* Certificate modal */}
     {showCert && course && (
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
         onClick={e => { if (e.target === e.currentTarget) setShowCert(false); }}
       >
-        <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 shadow-2xl shadow-emerald-500/10">
-          {/* Decorative background */}
+        <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/60">
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-emerald-500/8 blur-3xl" />
-            <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-amber-500/8 blur-3xl" />
+            <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-emerald-50 blur-3xl" />
+            <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-amber-50 blur-3xl" />
           </div>
 
           <button
             onClick={() => setShowCert(false)}
-            className="absolute right-4 top-4 z-10 rounded-lg p-1.5 text-slate-600 transition hover:text-slate-400"
+            className="absolute right-4 top-4 z-10 rounded-lg p-1.5 text-slate-400 transition hover:text-slate-600"
           >
             <X className="h-4 w-4" />
           </button>
 
-          {/* Certificate body */}
           <div className="relative px-10 py-12 text-center">
-            {/* Guild seal */}
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border-2 border-amber-500/40 bg-amber-500/10 shadow-lg shadow-amber-500/10">
-              <Award className="h-10 w-10 text-amber-400" />
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border-2 border-amber-300 bg-amber-50 shadow-lg shadow-amber-100">
+              <Award className="h-10 w-10 text-amber-600" />
             </div>
 
-            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.25em] text-slate-500">Certificate of Completion</p>
-            <p className="mb-1 text-sm text-slate-400">This certifies that</p>
-            <p className="mb-3 font-display text-2xl font-bold text-white">Guild Member</p>
-            <p className="mb-1 text-sm text-slate-400">has successfully completed</p>
-            <p className="mb-6 font-display text-xl font-bold text-amber-300 leading-snug">{course.title}</p>
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">Certificate of Completion</p>
+            <p className="mb-1 text-sm text-slate-500">This certifies that</p>
+            <p className="mb-3 font-display text-2xl font-bold text-slate-900">Guild Member</p>
+            <p className="mb-1 text-sm text-slate-500">has successfully completed</p>
+            <p className="mb-6 font-display text-xl font-bold text-amber-600 leading-snug">{course.title}</p>
 
             <div className="mb-8 flex justify-center gap-8 text-center text-xs text-slate-500">
               <div>
-                <p className="font-semibold text-slate-300">{total}</p>
+                <p className="font-semibold text-slate-700">{total}</p>
                 <p>Lessons</p>
               </div>
               <div>
-                <p className="font-semibold text-slate-300">{course.estimatedMinutes} min</p>
+                <p className="font-semibold text-slate-700">{course.estimatedMinutes} min</p>
                 <p>Study time</p>
               </div>
               <div>
-                <p className="font-semibold capitalize text-slate-300">{course.difficulty}</p>
+                <p className="font-semibold capitalize text-slate-700">{course.difficulty}</p>
                 <p>Level</p>
               </div>
             </div>
 
-            {/* Decorative border line */}
             <div className="mb-6 flex items-center gap-3">
-              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
-              <Star className="h-3 w-3 text-amber-500/60 fill-amber-500/60" />
-              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-300 to-transparent" />
+              <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-300 to-transparent" />
             </div>
 
-            <p className="mb-6 text-xs text-slate-600">The Study Guild · {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p className="mb-6 text-xs text-slate-400">The Study Guild · {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
             <button
               onClick={() => {
                 navigator.clipboard.writeText(`I just completed "${course.title}" on The Study Guild! 🎓`).then(() => toast.success('Copied to clipboard!', 'Share your achievement'));
               }}
-              className="flex items-center gap-2 mx-auto rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
+              className="flex items-center gap-2 mx-auto rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
             >
               <Download className="h-4 w-4" />
               Share achievement
@@ -480,19 +453,19 @@ export default function CourseDetailPage() {
         </div>
       </div>
     )}
+    </>
   );
 }
 
 function Bone({ className }: { className?: string }) {
-  return <div className={cn('rounded-lg bg-slate-800/70 animate-pulse', className)} />;
+  return <div className={cn('rounded-lg bg-slate-100 animate-pulse', className)} />;
 }
 
 function CourseDetailSkeleton() {
   return (
     <div className="min-h-full">
-      {/* Hero skeleton */}
-      <div className="border-b border-slate-800/60 px-4 py-10 lg:px-10 lg:py-12">
-        <div className="max-w-3xl">
+      <div className="border-b border-slate-200 bg-white px-4 py-10 lg:px-10 lg:py-12">
+        <div className="max-w-3xl mx-auto">
           <Bone className="mb-4 h-3 w-24" />
           <div className="mb-3 flex gap-2">
             <Bone className="h-6 w-20 rounded-lg" />
@@ -502,31 +475,24 @@ function CourseDetailSkeleton() {
           <Bone className="mb-3 h-8 w-3/4" />
           <Bone className="mb-2 h-4 w-full" />
           <Bone className="mb-6 h-4 w-2/3" />
-          <div className="flex gap-4 mb-6">
-            {[1,2,3,4].map(i => <Bone key={i} className="h-12 w-24 rounded-xl" />)}
+          <div className="flex gap-4">
+            {[1,2,3,4].map(i => <Bone key={i} className="h-4 w-24 rounded-full" />)}
           </div>
-          <Bone className="h-10 w-40 rounded-xl" />
         </div>
       </div>
 
-      {/* Body skeleton */}
-      <div className="mx-auto max-w-3xl px-4 py-8 lg:px-10 lg:py-10 flex gap-8">
-        <div className="flex-1 min-w-0">
-          <Bone className="mb-6 h-5 w-32" />
-          {[1,2,3,4,5].map(i => (
-            <div key={i} className="mb-3 flex items-center gap-3 rounded-xl border border-slate-800/50 p-4">
-              <Bone className="h-7 w-7 rounded-full shrink-0" />
-              <div className="flex-1">
-                <Bone className="mb-1.5 h-3.5 w-3/5" />
-                <Bone className="h-3 w-1/4" />
-              </div>
+      <div className="mx-auto max-w-3xl px-4 py-8 lg:px-10 lg:py-10">
+        <Bone className="mb-6 h-20 rounded-2xl" />
+        <Bone className="mb-6 h-5 w-32" />
+        {[1,2,3,4,5].map(i => (
+          <div key={i} className="mb-3 flex items-center gap-3 rounded-xl border border-slate-200 p-4">
+            <Bone className="h-7 w-7 rounded-full shrink-0" />
+            <div className="flex-1">
+              <Bone className="mb-1.5 h-3.5 w-3/5" />
+              <Bone className="h-3 w-1/4" />
             </div>
-          ))}
-        </div>
-        <div className="hidden lg:block w-64 shrink-0">
-          <Bone className="mb-4 h-36 rounded-2xl" />
-          <Bone className="mb-3 h-28 rounded-2xl" />
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   );

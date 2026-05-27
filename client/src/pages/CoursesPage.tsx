@@ -9,9 +9,9 @@ import { useAuth } from '../contexts/AuthContext';
 import type { Course, UserCourseProgress } from '@study-guild/shared';
 
 const DIFFICULTY_STYLES = {
-  beginner:     { label: 'Beginner',     classes: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/30' },
-  intermediate: { label: 'Intermediate', classes: 'text-amber-400 bg-amber-400/10 border-amber-400/30' },
-  advanced:     { label: 'Advanced',     classes: 'text-red-400 bg-red-400/10 border-red-400/30' },
+  beginner:     { label: 'Beginner',     classes: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+  intermediate: { label: 'Intermediate', classes: 'text-amber-700 bg-amber-50 border-amber-200' },
+  advanced:     { label: 'Advanced',     classes: 'text-red-700 bg-red-50 border-red-200' },
 };
 
 const DIFFICULTIES = ['beginner', 'intermediate', 'advanced'] as const;
@@ -26,7 +26,6 @@ export default function CoursesPage() {
   const filterTag = searchParams.get('tag') ?? '';
   const sortBy = (searchParams.get('sort') ?? 'newest') as 'newest' | 'rating' | 'popular';
 
-  // Local search state with debounced URL sync
   const [search, setSearch] = useState(searchParams.get('search') ?? '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestionIdx, setSuggestionIdx] = useState(-1);
@@ -52,7 +51,6 @@ export default function CoursesPage() {
     });
   }, []);
 
-  // Press '/' anywhere to focus search (skip when typing in another input)
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key !== '/') return;
@@ -134,7 +132,6 @@ export default function CoursesPage() {
     },
   });
 
-  // Always fetch all courses to compute category counts (unaffected by active filters)
   const { data: allCourses } = useQuery<Course[]>({
     queryKey: ['courses', '', '', '', ''],
     queryFn: async () => (await apiClient.get<{ data: Course[] }>('/courses')).data.data,
@@ -173,7 +170,6 @@ export default function CoursesPage() {
         .slice(0, 6)
     : [];
 
-  // Top 10 tags by frequency across all courses
   const popularTags = allCourses
     ? Object.entries(
         allCourses.flatMap(c => c.tags ?? []).reduce((acc, t) => { acc[t] = (acc[t] ?? 0) + 1; return acc; }, {} as Record<string, number>)
@@ -190,7 +186,6 @@ export default function CoursesPage() {
   const sortedCourses = courses ? [...courses].sort((a, b) => {
     if (sortBy === 'rating') return (b.ratingAverage ?? 0) - (a.ratingAverage ?? 0);
     if (sortBy === 'popular') return (b.ratingCount ?? 0) - (a.ratingCount ?? 0);
-    // newest: sort by publishedAt or createdAt descending
     const dateA = new Date(a.publishedAt ?? a.createdAt ?? 0).getTime();
     const dateB = new Date(b.publishedAt ?? b.createdAt ?? 0).getTime();
     return dateB - dateA;
@@ -207,20 +202,20 @@ export default function CoursesPage() {
     <div className="min-h-full px-4 py-8 lg:px-10 lg:py-10">
       {/* Header */}
       <div className="mb-7">
-        <h1 className="mb-1 text-2xl font-bold text-white lg:text-3xl">Browse courses</h1>
-        <p className="text-sm text-slate-400">
+        <h1 className="mb-1 text-2xl font-bold text-slate-900 lg:text-3xl">Browse courses</h1>
+        <p className="text-sm text-slate-500">
           {displayCourses
             ? `${displayCourses.length} course${displayCourses.length !== 1 ? 's' : ''} available`
             : 'Loading…'}
           {!hasFilters && totalHours > 0 && (
-            <span className="ml-2 text-slate-600">· {totalHours}+ hours of content</span>
+            <span className="ml-2 text-slate-400">· {totalHours}+ hours of content</span>
           )}
         </p>
       </div>
 
       {/* Search bar */}
       <div className="mb-4 relative max-w-2xl">
-        <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 pointer-events-none z-10" />
+        <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
         <input
           ref={searchInputRef}
           type="search"
@@ -246,19 +241,19 @@ export default function CoursesPage() {
               setSuggestionIdx(-1);
             }
           }}
-          className="w-full rounded-2xl border border-slate-700/60 bg-slate-900/60 py-3 pl-11 pr-4 text-sm text-white placeholder-slate-500 outline-none transition focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500/30"
+          className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100 shadow-sm"
         />
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-slate-500 hover:text-slate-300 transition z-10"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-slate-400 hover:text-slate-600 transition z-10"
           >
             <X className="h-4 w-4" />
           </button>
         )}
         {/* Autocomplete dropdown */}
         {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute top-full left-0 right-0 z-30 mt-1.5 overflow-hidden rounded-xl border border-slate-700/60 bg-slate-900 shadow-2xl shadow-black/50">
+          <div className="absolute top-full left-0 right-0 z-30 mt-1.5 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg shadow-slate-200/60">
             {suggestions.map((c, idx) => {
               const cat = TAXONOMY.find(t => t.l1 === c.taxonomy.l1);
               return (
@@ -267,7 +262,7 @@ export default function CoursesPage() {
                   onMouseDown={() => navigate(`/courses/${c.id}`)}
                   className={cn(
                     'flex w-full items-center gap-3 px-4 py-2.5 text-left transition',
-                    idx === suggestionIdx ? 'bg-slate-800/80' : 'hover:bg-slate-800/60'
+                    idx === suggestionIdx ? 'bg-slate-50' : 'hover:bg-slate-50'
                   )}
                 >
                   {cat && (
@@ -275,8 +270,8 @@ export default function CoursesPage() {
                       <cat.icon className={cn('h-3 w-3', cat.color)} />
                     </span>
                   )}
-                  <span className="flex-1 truncate text-sm text-slate-200">{c.title}</span>
-                  <span className="shrink-0 text-xs text-slate-600 capitalize">{c.difficulty}</span>
+                  <span className="flex-1 truncate text-sm text-slate-800">{c.title}</span>
+                  <span className="shrink-0 text-xs text-slate-400 capitalize">{c.difficulty}</span>
                 </button>
               );
             })}
@@ -287,12 +282,12 @@ export default function CoursesPage() {
       {/* Popular tags strip */}
       {!hasFilters && popularTags.length > 0 && (
         <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-0.5 -mx-1 px-1 scrollbar-thin">
-          <span className="shrink-0 text-[11px] font-medium text-slate-600">Popular:</span>
+          <span className="shrink-0 text-[11px] font-medium text-slate-400">Popular:</span>
           {popularTags.map(tag => (
             <button
               key={tag}
               onClick={() => setTag(tag)}
-              className="shrink-0 rounded-full border border-slate-700/60 bg-slate-900/40 px-3 py-1 text-xs text-slate-400 transition hover:border-violet-500/40 hover:bg-violet-500/8 hover:text-violet-300"
+              className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-500 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700"
             >
               #{tag}
             </button>
@@ -306,7 +301,7 @@ export default function CoursesPage() {
           <span className="text-xs text-slate-500">Tag:</span>
           <button
             onClick={() => setTag(filterTag)}
-            className="flex items-center gap-1 rounded-full border border-violet-500/40 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-300 transition hover:bg-violet-500/20"
+            className="flex items-center gap-1 rounded-full border border-violet-300 bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700 transition hover:bg-violet-100"
           >
             #{filterTag}
             <X className="ml-0.5 h-3 w-3" />
@@ -316,7 +311,7 @@ export default function CoursesPage() {
 
       {/* Difficulty chips */}
       <div className="mb-6 flex flex-wrap items-center gap-2">
-        <span className="text-xs text-slate-600 font-medium">Level:</span>
+        <span className="text-xs text-slate-500 font-medium">Level:</span>
         {DIFFICULTIES.map(d => {
           const isActive = filterDiff === d;
           const count = difficultyCounts[d] ?? 0;
@@ -328,12 +323,12 @@ export default function CoursesPage() {
                 'rounded-full border px-3 py-1 text-xs font-medium capitalize transition-all duration-150',
                 isActive
                   ? DIFFICULTY_STYLES[d].classes
-                  : 'border-slate-700/60 text-slate-500 hover:border-slate-600 hover:text-slate-300'
+                  : 'border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700'
               )}
             >
               {DIFFICULTY_STYLES[d].label}
               {count > 0 && (
-                <span className={cn('ml-1 font-normal', isActive ? 'opacity-70' : 'text-slate-700')}>
+                <span className={cn('ml-1 font-normal', isActive ? 'opacity-70' : 'text-slate-400')}>
                   ({count})
                 </span>
               )}
@@ -351,15 +346,15 @@ export default function CoursesPage() {
               className={cn(
                 'flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all duration-150',
                 showBookmarkedOnly
-                  ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
-                  : 'border-slate-700/60 text-slate-500 hover:border-slate-600 hover:text-slate-300'
+                  ? 'border-amber-300 bg-amber-50 text-amber-700'
+                  : 'border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700'
               )}
             >
               <Bookmark className="h-3 w-3" />
               Saved ({bookmarks.size})
             </button>
           )}
-          <span className="text-xs text-slate-600 font-medium">Sort:</span>
+          <span className="text-xs text-slate-500 font-medium">Sort:</span>
           {(['newest', 'rating', 'popular'] as const).map(s => (
             <button
               key={s}
@@ -367,8 +362,8 @@ export default function CoursesPage() {
               className={cn(
                 'rounded-full border px-3 py-1 text-xs font-medium capitalize transition-all duration-150',
                 sortBy === s
-                  ? 'border-violet-500/50 bg-violet-500/10 text-violet-400'
-                  : 'border-slate-700/60 text-slate-500 hover:border-slate-600 hover:text-slate-300'
+                  ? 'border-violet-300 bg-violet-50 text-violet-700'
+                  : 'border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700'
               )}
             >
               {s === 'newest' ? 'Newest' : s === 'rating' ? 'Top rated' : 'Popular'}
@@ -378,7 +373,7 @@ export default function CoursesPage() {
         {hasFilters && (
           <button
             onClick={clearAll}
-            className="flex items-center gap-1.5 rounded-full border border-slate-700/40 px-3 py-1 text-xs text-slate-500 transition hover:border-red-500/30 hover:text-red-400"
+            className="flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-500 transition hover:border-red-200 hover:text-red-600"
           >
             <X className="h-3 w-3" />
             Clear all
@@ -389,16 +384,16 @@ export default function CoursesPage() {
       {/* Recently viewed strip */}
       {!hasFilters && recentCourses.length > 0 && (
         <div className="mb-8">
-          <h2 className="mb-3 text-sm font-semibold text-slate-400">Recently viewed</h2>
+          <h2 className="mb-3 text-sm font-semibold text-slate-600">Recently viewed</h2>
           <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 snap-x">
             {recentCourses.map(c => {
               const cat = TAXONOMY.find(t => t.l1 === c.l1);
-              const diffColor = { beginner: 'text-emerald-400', intermediate: 'text-amber-400', advanced: 'text-red-400' }[c.difficulty as 'beginner' | 'intermediate' | 'advanced'] ?? 'text-slate-400';
+              const diffColor = { beginner: 'text-emerald-700', intermediate: 'text-amber-700', advanced: 'text-red-700' }[c.difficulty as 'beginner' | 'intermediate' | 'advanced'] ?? 'text-slate-500';
               return (
                 <Link
                   key={c.id}
                   to={`/courses/${c.id}`}
-                  className="group snap-start shrink-0 w-48 rounded-xl border border-slate-800/60 bg-slate-900/50 p-3.5 transition-all hover:border-violet-500/30 hover:bg-slate-900/80 hover:-translate-y-0.5"
+                  className="group snap-start shrink-0 w-48 rounded-xl border border-slate-200 bg-white p-3.5 transition-all hover:border-violet-300 hover:bg-violet-50 hover:-translate-y-0.5 shadow-sm"
                 >
                   {cat && (
                     <span className={cn('mb-2 inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium', cat.bgColor, cat.color)}>
@@ -406,7 +401,7 @@ export default function CoursesPage() {
                       {c.l1}
                     </span>
                   )}
-                  <p className="text-xs font-semibold text-slate-200 group-hover:text-white transition line-clamp-2 leading-snug">{c.title}</p>
+                  <p className="text-xs font-semibold text-slate-800 group-hover:text-violet-700 transition line-clamp-2 leading-snug">{c.title}</p>
                   <p className={`mt-1 text-[11px] capitalize ${diffColor}`}>{c.difficulty}</p>
                 </Link>
               );
@@ -432,7 +427,7 @@ export default function CoursesPage() {
         if (inProgress.length === 0) return null;
         return (
           <div className="mb-8">
-            <h2 className="mb-3 text-sm font-semibold text-slate-400">Continue learning</h2>
+            <h2 className="mb-3 text-sm font-semibold text-slate-600">Continue learning</h2>
             <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 snap-x">
               {inProgress.map(c => {
                 const p = progressMap.get(c.id)!;
@@ -443,7 +438,7 @@ export default function CoursesPage() {
                   <Link
                     key={c.id}
                     to={nextId ? `/courses/${c.id}/lessons/${nextId}` : `/courses/${c.id}`}
-                    className="group snap-start shrink-0 w-56 rounded-2xl border border-slate-800/60 bg-slate-900/50 p-4 transition-all hover:border-violet-500/30 hover:bg-slate-900/80 hover:-translate-y-0.5"
+                    className="group snap-start shrink-0 w-56 rounded-2xl border border-slate-200 bg-white p-4 transition-all hover:border-violet-300 hover:bg-violet-50 hover:-translate-y-0.5 shadow-sm"
                   >
                     {cat && (
                       <span className={cn('mb-2 inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium', cat.bgColor, cat.color)}>
@@ -451,13 +446,13 @@ export default function CoursesPage() {
                         {c.taxonomy.l1}
                       </span>
                     )}
-                    <p className="mb-3 text-sm font-semibold text-slate-200 group-hover:text-white transition leading-snug line-clamp-2">{c.title}</p>
-                    <div className="mb-1 h-1 w-full rounded-full bg-slate-800 overflow-hidden">
+                    <p className="mb-3 text-sm font-semibold text-slate-800 group-hover:text-violet-700 transition leading-snug line-clamp-2">{c.title}</p>
+                    <div className="mb-1 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
                       <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-violet-400 transition-all" style={{ width: `${pct}%` }} />
                     </div>
                     <div className="flex items-center justify-between text-[11px] text-slate-500">
                       <span>{pct}% done</span>
-                      <span className="flex items-center gap-0.5 text-violet-400 group-hover:text-violet-300 transition font-medium">
+                      <span className="flex items-center gap-0.5 text-violet-600 group-hover:text-violet-700 transition font-medium">
                         Resume <ChevronRight className="h-3 w-3" />
                       </span>
                     </div>
@@ -469,8 +464,7 @@ export default function CoursesPage() {
         );
       })()}
 
-      {/* Category overview — shown only when no filters are active */}
-      {/* Top-rated strip — shown only when no filters active */}
+      {/* Top-rated strip */}
       {!hasFilters && !isLoading && allCourses && allCourses.length > 0 && (() => {
         const topRated = [...allCourses]
           .filter(c => c.ratingCount >= 30)
@@ -479,8 +473,8 @@ export default function CoursesPage() {
         if (topRated.length === 0) return null;
         return (
           <div className="mb-8">
-            <h2 className="mb-3 text-sm font-semibold text-slate-400 flex items-center gap-1.5">
-              <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+            <h2 className="mb-3 text-sm font-semibold text-slate-600 flex items-center gap-1.5">
+              <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
               Top rated this week
             </h2>
             <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
@@ -491,21 +485,21 @@ export default function CoursesPage() {
                   <Link
                     key={course.id}
                     to={`/courses/${course.id}`}
-                    className="group flex items-center gap-3 rounded-2xl border border-amber-500/15 bg-gradient-to-r from-amber-500/5 to-slate-900/40 p-4 transition-all hover:border-amber-500/30 hover:bg-amber-500/8"
+                    className="group flex items-center gap-3 rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-white p-4 transition-all hover:border-amber-300 hover:from-amber-100 hover:to-amber-50 shadow-sm"
                   >
                     <div className="relative flex-shrink-0">
-                      <span className={cn('flex h-10 w-10 items-center justify-center rounded-xl', cat?.bgColor ?? 'bg-slate-800')}>
-                        {cat ? <cat.icon className={cn('h-5 w-5', cat.color)} /> : <BookOpen className="h-5 w-5 text-slate-500" />}
+                      <span className={cn('flex h-10 w-10 items-center justify-center rounded-xl', cat?.bgColor ?? 'bg-slate-100')}>
+                        {cat ? <cat.icon className={cn('h-5 w-5', cat.color)} /> : <BookOpen className="h-5 w-5 text-slate-400" />}
                       </span>
-                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-slate-900">
+                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white">
                         {i + 1}
                       </span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-semibold text-slate-200 group-hover:text-white transition leading-snug">{course.title}</p>
-                      <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-600">
-                        <span className="flex items-center gap-0.5 text-amber-400">
-                          <Star className="h-2.5 w-2.5 fill-amber-400" />
+                      <p className="truncate text-xs font-semibold text-slate-800 group-hover:text-slate-900 transition leading-snug">{course.title}</p>
+                      <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-500">
+                        <span className="flex items-center gap-0.5 text-amber-600">
+                          <Star className="h-2.5 w-2.5 fill-amber-500 text-amber-500" />
                           {course.ratingAverage.toFixed(1)}
                         </span>
                         <span>·</span>
@@ -524,7 +518,7 @@ export default function CoursesPage() {
 
       {!hasFilters && !isLoading && (
         <div className="mb-8">
-          <h2 className="mb-3 text-sm font-semibold text-slate-400">Browse by topic</h2>
+          <h2 className="mb-3 text-sm font-semibold text-slate-600">Browse by topic</h2>
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-4">
             {TAXONOMY.map(cat => {
               const count = categoryCounts[cat.l1] ?? 0;
@@ -534,16 +528,16 @@ export default function CoursesPage() {
                   key={cat.l1}
                   onClick={() => navigate(`/courses?l1=${encodeURIComponent(cat.l1)}`)}
                   className={cn(
-                    'group flex items-center gap-3 rounded-2xl border border-slate-800/60 bg-slate-900/40 p-4 text-left transition-all duration-200',
-                    'hover:border-slate-700 hover:bg-slate-900/70 hover:-translate-y-0.5 hover:shadow-lg',
+                    'group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 shadow-sm',
+                    'hover:border-slate-300 hover:bg-slate-50 hover:-translate-y-0.5 hover:shadow-md',
                   )}
                 >
                   <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', cat.bgColor)}>
                     <cat.icon className={cn('h-4.5 w-4.5', cat.color)} style={{ width: 18, height: 18 }} />
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate text-xs font-semibold text-slate-200 group-hover:text-white transition">{cat.label}</p>
-                    <p className="text-[11px] text-slate-500">{count} course{count !== 1 ? 's' : ''}</p>
+                    <p className="truncate text-xs font-semibold text-slate-700 group-hover:text-slate-900 transition">{cat.label}</p>
+                    <p className="text-[11px] text-slate-400">{count} course{count !== 1 ? 's' : ''}</p>
                   </div>
                 </button>
               );
@@ -555,24 +549,23 @@ export default function CoursesPage() {
       {/* Active topic breadcrumb + subcategory chips */}
       {activeCat && (
         <div className="mb-6 space-y-3">
-          <div className="flex items-center gap-2 rounded-xl border border-slate-800/60 bg-slate-900/40 px-4 py-2.5">
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5">
             <activeCat.icon className={cn('h-4 w-4 shrink-0', activeCat.color)} />
             <span className={cn('text-sm font-medium', activeCat.color)}>{activeCat.label}</span>
             {activeItem && (
               <>
-                <span className="text-slate-600 text-sm">›</span>
-                <span className="text-sm text-slate-300">{activeItem.label}</span>
+                <span className="text-slate-400 text-sm">›</span>
+                <span className="text-sm text-slate-600">{activeItem.label}</span>
               </>
             )}
             <button
               onClick={clearTopicFilter}
-              className="ml-auto rounded-lg p-1 text-slate-600 transition hover:text-slate-400"
+              className="ml-auto rounded-lg p-1 text-slate-400 transition hover:text-slate-600"
               title="Clear topic filter"
             >
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
-          {/* Subcategory chips */}
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setSearchParams(prev => {
@@ -584,7 +577,7 @@ export default function CoursesPage() {
                 'rounded-full border px-3 py-1 text-xs font-medium transition-all',
                 !filterL2
                   ? cn(activeCat.activeColor.replace('border-r-2', '').trim(), 'border-transparent')
-                  : 'border-slate-700/60 text-slate-500 hover:border-slate-600 hover:text-slate-300',
+                  : 'border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700',
               )}
             >
               All
@@ -604,7 +597,7 @@ export default function CoursesPage() {
                     'rounded-full border px-3 py-1 text-xs font-medium transition-all',
                     isActive
                       ? cn(activeCat.activeColor.replace('border-r-2', '').trim(), 'border-transparent')
-                      : 'border-slate-700/60 text-slate-500 hover:border-slate-600 hover:text-slate-300',
+                      : 'border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700',
                   )}
                 >
                   {item.label}
@@ -619,14 +612,13 @@ export default function CoursesPage() {
       {isLoading && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-52 rounded-2xl bg-slate-900/50 border border-slate-800/60 animate-pulse" />
+            <div key={i} className="h-52 rounded-2xl bg-slate-100 border border-slate-200 animate-pulse" />
           ))}
         </div>
       )}
 
       {/* Empty state */}
       {!isLoading && (displayCourses?.length === 0) && (() => {
-        // Build suggestions: courses that share any word with the search query or match the tag filter
         const queryWords = search.trim().toLowerCase().split(/\s+/).filter(w => w.length >= 3);
         const suggestions = allCourses
           ? allCourses
@@ -644,16 +636,16 @@ export default function CoursesPage() {
           : [];
         return (
           <div className="py-12 text-center">
-            <div className="mb-4 inline-flex rounded-2xl bg-slate-900/50 p-4">
-              <Search className="h-7 w-7 text-slate-600" />
+            <div className="mb-4 inline-flex rounded-2xl bg-slate-100 p-4">
+              <Search className="h-7 w-7 text-slate-400" />
             </div>
-            <p className="font-medium text-slate-400">No courses found</p>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="font-medium text-slate-700">No courses found</p>
+            <p className="mt-1 text-sm text-slate-500">
               {search.trim() ? `No matches for "${search.trim()}"` : 'Try adjusting your filters'}
             </p>
             {suggestions.length > 0 && (
               <div className="mt-8 text-left max-w-xl mx-auto">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">You might like</p>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">You might like</p>
                 <div className="space-y-2">
                   {suggestions.map(c => {
                     const cat = TAXONOMY.find(t => t.l1 === c.taxonomy.l1);
@@ -661,22 +653,22 @@ export default function CoursesPage() {
                       <Link
                         key={c.id}
                         to={`/courses/${c.id}`}
-                        className="flex items-center gap-3 rounded-xl border border-slate-800/60 bg-slate-900/40 p-3 transition hover:border-violet-500/30 hover:bg-slate-900/70"
+                        className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 transition hover:border-violet-300 hover:bg-violet-50 shadow-sm"
                       >
                         {cat ? (
                           <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', cat.bgColor)}>
                             <cat.icon className={cn('h-4 w-4', cat.color)} />
                           </span>
                         ) : (
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-800">
-                            <BookOpen className="h-4 w-4 text-slate-500" />
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                            <BookOpen className="h-4 w-4 text-slate-400" />
                           </span>
                         )}
                         <div className="min-w-0 flex-1 text-left">
-                          <p className="truncate text-sm font-medium text-slate-200">{c.title}</p>
+                          <p className="truncate text-sm font-medium text-slate-800">{c.title}</p>
                           <p className="text-xs text-slate-500">{c.taxonomy.l1} · {c.difficulty}</p>
                         </div>
-                        <ChevronRight className="h-4 w-4 shrink-0 text-slate-600" />
+                        <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
                       </Link>
                     );
                   })}
@@ -684,7 +676,7 @@ export default function CoursesPage() {
               </div>
             )}
             {hasFilters && (
-              <button onClick={clearAll} className="mt-6 text-xs text-violet-400 hover:text-violet-300 transition">
+              <button onClick={clearAll} className="mt-6 text-xs text-violet-600 hover:text-violet-700 transition">
                 Clear all filters
               </button>
             )}
@@ -726,10 +718,10 @@ function ProgressRing({ pct }: { pct: number }) {
   const offset = circ * (1 - pct / 100);
   return (
     <svg width="28" height="28" viewBox="0 0 28 28" className="shrink-0" aria-hidden>
-      <circle cx="14" cy="14" r={r} fill="none" stroke="rgb(30,41,59)" strokeWidth="2.5" />
+      <circle cx="14" cy="14" r={r} fill="none" stroke="rgb(226,232,240)" strokeWidth="2.5" />
       <circle
         cx="14" cy="14" r={r} fill="none"
-        stroke={pct === 100 ? '#10b981' : '#7c3aed'}
+        stroke={pct === 100 ? '#059669' : '#7c3aed'}
         strokeWidth="2.5"
         strokeDasharray={circ}
         strokeDashoffset={offset}
@@ -741,7 +733,7 @@ function ProgressRing({ pct }: { pct: number }) {
         <polyline
           points="8,14 12,18 20,10"
           fill="none"
-          stroke="#10b981"
+          stroke="#059669"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -780,19 +772,19 @@ function CourseCard({ course, progressPct, lastAccessedAt, nextLessonId, onTagCl
   const isHot = course.ratingAverage >= 4.5 && course.ratingCount >= 40;
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-900/40 transition-all duration-300 hover:border-violet-500/30 hover:bg-slate-900/70 hover:-translate-y-1 hover:shadow-2xl hover:shadow-violet-500/5">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:border-violet-300 hover:shadow-lg hover:shadow-violet-100 hover:-translate-y-1 shadow-sm">
     <Link
       to={`/courses/${course.id}`}
       className="relative flex flex-col p-5"
     >
-      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-gradient-to-br from-violet-500/5 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-gradient-to-br from-violet-50/50 to-transparent rounded-2xl" />
 
       {(isHot || isNew) && !bookmarked && (
         <div className={cn(
           'absolute right-3 top-3 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1',
           isHot
-            ? 'bg-orange-500/20 border-orange-500/30 text-orange-400'
-            : 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400'
+            ? 'bg-orange-50 border-orange-200 text-orange-600'
+            : 'bg-emerald-50 border-emerald-200 text-emerald-700'
         )}>
           {isHot ? '🔥 Hot' : 'New'}
         </div>
@@ -804,16 +796,15 @@ function CourseCard({ course, progressPct, lastAccessedAt, nextLessonId, onTagCl
           className={cn(
             'absolute right-3 top-3 z-10 rounded-lg p-1.5 transition-all',
             bookmarked
-              ? 'text-amber-400 bg-amber-500/15 opacity-100'
-              : 'text-slate-600 opacity-0 group-hover:opacity-100 hover:text-slate-400 hover:bg-slate-800/60'
+              ? 'text-amber-600 bg-amber-50 opacity-100'
+              : 'text-slate-400 opacity-0 group-hover:opacity-100 hover:text-slate-600 hover:bg-slate-100'
           )}
         >
-          <Bookmark className={cn('h-4 w-4', bookmarked && 'fill-amber-400')} />
+          <Bookmark className={cn('h-4 w-4', bookmarked && 'fill-amber-500 text-amber-500')} />
         </button>
       )}
 
       <div className="relative flex-1 flex flex-col">
-        {/* Taxonomy with color */}
         <div className="mb-3 flex items-center gap-1.5 text-xs">
           {cat ? (
             <span className={cn('flex items-center gap-1 rounded-lg px-2 py-1 font-medium', cat.bgColor, cat.color)}>
@@ -821,46 +812,42 @@ function CourseCard({ course, progressPct, lastAccessedAt, nextLessonId, onTagCl
               {course.taxonomy.l1}
             </span>
           ) : (
-            <span className="rounded-lg bg-slate-800 px-2 py-1 font-medium text-slate-300">{course.taxonomy.l1}</span>
+            <span className="rounded-lg bg-slate-100 px-2 py-1 font-medium text-slate-600">{course.taxonomy.l1}</span>
           )}
-          <span className="text-slate-600">›</span>
-          <span className="text-slate-500">{course.taxonomy.l2}</span>
+          <span className="text-slate-300">›</span>
+          <span className="text-slate-400">{course.taxonomy.l2}</span>
         </div>
 
-        {/* Title */}
-        <h2 className="mb-2 text-base font-semibold text-white transition-colors group-hover:text-violet-300 leading-snug">
+        <h2 className="mb-2 text-base font-semibold text-slate-900 transition-colors group-hover:text-violet-700 leading-snug">
           {course.title}
         </h2>
 
-        {/* Description */}
         <p className="mb-3 flex-1 text-xs text-slate-500 line-clamp-2 leading-relaxed">{course.description}</p>
 
-        {/* Tags */}
         {course.tags && course.tags.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-1">
             {course.tags.slice(0, 3).map(tag => (
               <button
                 key={tag}
                 onClick={e => { e.preventDefault(); e.stopPropagation(); onTagClick?.(tag); }}
-                className="rounded-full bg-slate-800/60 px-2 py-0.5 text-[10px] text-slate-600 transition hover:bg-slate-700/60 hover:text-slate-400"
+                className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
               >
                 #{tag}
               </button>
             ))}
             {course.tags.length > 3 && (
-              <span className="rounded-full bg-slate-800/60 px-2 py-0.5 text-[10px] text-slate-700">
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-400">
                 +{course.tags.length - 3}
               </span>
             )}
           </div>
         )}
 
-        {/* Author + lesson count + last studied */}
-        <div className="mb-3 flex items-center justify-between text-xs text-slate-600">
+        <div className="mb-3 flex items-center justify-between text-xs text-slate-500">
           <span>by {course.authorName}</span>
           <div className="flex items-center gap-2">
             {lastAccessedAt && progressPct !== undefined && progressPct > 0 && (
-              <span className="text-slate-600 italic">studied {relativeTime(lastAccessedAt)}</span>
+              <span className="text-slate-400 italic">studied {relativeTime(lastAccessedAt)}</span>
             )}
             <span className="flex items-center gap-1">
               <BookOpen className="h-3 w-3" />
@@ -869,17 +856,16 @@ function CourseCard({ course, progressPct, lastAccessedAt, nextLessonId, onTagCl
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-between">
           <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${diff.classes}`}>
             {diff.label}
           </span>
-          <div className="flex items-center gap-3 text-xs text-slate-600">
+          <div className="flex items-center gap-3 text-xs text-slate-500">
             {course.ratingCount > 0 && (
-              <span className="flex items-center gap-1 text-amber-400/80 font-medium">
-                <Star className="h-3 w-3 fill-amber-400/80" />
+              <span className="flex items-center gap-1 text-amber-600 font-medium">
+                <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
                 {course.ratingAverage.toFixed(1)}
-                <span className="text-slate-600 font-normal">({course.ratingCount})</span>
+                <span className="text-slate-400 font-normal">({course.ratingCount})</span>
               </span>
             )}
             <span className="flex items-center gap-1">
@@ -897,7 +883,7 @@ function CourseCard({ course, progressPct, lastAccessedAt, nextLessonId, onTagCl
       <Link
         to={`/courses/${course.id}/lessons/${nextLessonId}`}
         onClick={e => e.stopPropagation()}
-        className="flex items-center justify-between border-t border-violet-500/20 bg-violet-500/8 px-5 py-2.5 text-xs font-semibold text-violet-300 transition hover:bg-violet-500/12 hover:text-violet-200"
+        className="flex items-center justify-between border-t border-violet-100 bg-violet-50 px-5 py-2.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-100"
       >
         <span>Resume where you left off</span>
         <ChevronRight className="h-3.5 w-3.5" />

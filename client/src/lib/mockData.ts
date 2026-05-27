@@ -12905,7 +12905,7 @@ function VirtualCourseList({ courses }: { courses: Course[] }) {
 Under the hood, gRPC uses:
 - **Protocol Buffers (Protobuf)** — a compact binary serialization format for defining message schemas
 - **HTTP/2** — for multiplexed, low-latency transport with built-in flow control
-- **Generated clients and servers** — from your `.proto` schema, the toolchain generates type-safe code for 10+ languages
+- **Generated clients and servers** — from your \`.proto\` schema, the toolchain generates type-safe code for 10+ languages
 
 ### Why gRPC over REST+JSON?
 
