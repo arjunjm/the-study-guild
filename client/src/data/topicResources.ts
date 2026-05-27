@@ -147,6 +147,15 @@ const RESOURCES: Record<string, TopicResource[]> = {
     { title: 'Head First Design Patterns', type: 'book', description: 'Visual, story-driven intro to design patterns — great if the GoF book feels too abstract at first.', url: 'https://www.oreilly.com/library/view/head-first-design/9781492077992/' },
   ],
 
+  // ── Engineering / Python ─────────────────────────────────────────────────
+  'Engineering::Python': [
+    { title: 'Fluent Python', author: 'Luciano Ramalho', type: 'book', description: 'The definitive advanced Python book. Covers data model, iterators, closures, concurrency, and metaprogramming in depth.', url: 'https://www.oreilly.com/library/view/fluent-python-2nd/9781492056348/' },
+    { title: 'Real Python', type: 'blog', description: 'High-quality tutorials on every Python topic — from basics to async, type hints, packaging, and testing.', url: 'https://realpython.com' },
+    { title: 'Python Docs — Standard Library', type: 'docs', description: 'The official Python standard library reference. The itertools and functools modules alone are worth hours of study.', url: 'https://docs.python.org/3/library/' },
+    { title: 'Effective Python', author: 'Brett Slatkin', type: 'book', description: '90 specific, actionable tips for writing Pythonic, idiomatic, and maintainable Python code.', url: 'https://effectivepython.com' },
+    { title: 'Python Type Checking Guide (mypy)', type: 'docs', description: 'The mypy documentation explains Python\'s gradual type system and how to annotate code effectively.', url: 'https://mypy.readthedocs.io/en/stable/' },
+  ],
+
   // ── Engineering / Testing ────────────────────────────────────────────────
   'Engineering::Testing': [
     { title: 'Testing Microservices, the sane way', type: 'blog', description: 'Vladislav Supalov\'s landmark post on the testing pyramid and why unit/integration/e2e should be balanced differently than people think.', url: 'https://saucelabs.com/blog/testing-microservices-the-sane-way' },
