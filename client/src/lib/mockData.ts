@@ -194,9 +194,9 @@ export const MOCK_COURSES: Course[] = [
     published: true,
     publishedAt: '2025-02-01T00:00:00.000Z',
     tags: ['jwt', 'security', 'tokens'],
-    lessonIds: ['lesson-jwt-1', 'lesson-jwt-2', 'lesson-jwt-3'],
-    totalLessons: 3,
-    estimatedMinutes: 36,
+    lessonIds: ['lesson-jwt-1', 'lesson-jwt-2', 'lesson-jwt-3', 'lesson-jwt-4'],
+    totalLessons: 4,
+    estimatedMinutes: 48,
     ratingAverage: 4.6,
     ratingCount: 28,
     createdAt: '2025-02-01T00:00:00.000Z',
@@ -3199,6 +3199,177 @@ const token = await new SignJWT({ sub: userId, role: 'learner' })
               ],
               correctIndex: 1,
               explanation: 'Long-lived tokens amplify every security event — key rotation, breach response, user de-provisioning. Best practice is 5–15 minute access tokens with a refresh token flow so you can respond quickly to incidents without disrupting active sessions.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── JWT Lesson 4: JWT vs. Opaque Tokens ─────────────────────────────────────
+  {
+    id: 'lesson-jwt-4',
+    courseId: 'course-jwt',
+    order: 3,
+    title: 'JWT vs. Opaque Tokens — When to Use Which',
+    estimatedMinutes: 12,
+    createdAt: '2025-02-01T00:00:00.000Z',
+    updatedAt: '2025-02-01T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Two fundamentally different token designs
+
+Not all tokens are JWTs. Before JWT became ubiquitous, **opaque tokens** were the norm — and they're still the right choice for certain situations. Choosing wisely depends on understanding what each design trades off.
+
+| | **JWT (self-contained)** | **Opaque token (reference)** |
+|---|---|---|
+| **Format** | Structured JSON, base64url-encoded | Random string (no embedded data) |
+| **Validation** | Local — cryptographic signature check | Remote — must call introspection endpoint |
+| **Revocation** | Eventual (waits for expiry) | Immediate (auth server marks invalid) |
+| **Payload visible to** | Anyone who decodes it | Only the auth server |
+| **Scales to** | Many resource servers, no shared state | Fine for single resource server |
+| **Typical lifetime** | Short (5–60 min) | Varies |`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'JWT: self-contained validation (no auth server round-trip)',
+          nodes: [
+            { id: 'j1', label: 'API receives\nBearer JWT', type: 'input', position: { x: 0, y: 80 } },
+            { id: 'j2', label: 'Verify signature\nwith cached JWKS\npublic key', position: { x: 220, y: 80 } },
+            { id: 'j3', label: 'Check claims\niss · aud · exp · scp', type: 'decision', position: { x: 440, y: 80 } },
+            { id: 'j4', label: '✅ Serve request\n(0 network calls)', type: 'output', position: { x: 660, y: 40 } },
+            { id: 'j5', label: '❌ 401', type: 'output', position: { x: 660, y: 120 }, style: { background: '#450a0a', color: '#fca5a5', border: '1px solid #991b1b' } },
+          ],
+          edges: [
+            { id: 'ej1', source: 'j1', target: 'j2' },
+            { id: 'ej2', source: 'j2', target: 'j3', animated: true },
+            { id: 'ej3', source: 'j3', target: 'j4', label: 'valid' },
+            { id: 'ej4', source: 'j3', target: 'j5', label: 'invalid' },
+          ],
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Opaque token: every request calls the auth server',
+          nodes: [
+            { id: 'o1', label: 'API receives\nBearer token123abc', type: 'input', position: { x: 0, y: 80 } },
+            { id: 'o2', label: 'POST /introspect\n{token: "token123abc"}', position: { x: 220, y: 80 } },
+            { id: 'o3', label: 'Auth Server\nchecks token store', type: 'decision', position: { x: 440, y: 80 } },
+            { id: 'o4', label: '✅ { active: true,\nsub, scope, exp }', type: 'output', position: { x: 660, y: 40 } },
+            { id: 'o5', label: '❌ { active: false }', type: 'output', position: { x: 660, y: 120 }, style: { background: '#450a0a', color: '#fca5a5', border: '1px solid #991b1b' } },
+          ],
+          edges: [
+            { id: 'eo1', source: 'o1', target: 'o2' },
+            { id: 'eo2', source: 'o2', target: 'o3', animated: true, label: '~100ms RTT' },
+            { id: 'eo3', source: 'o3', target: 'o4', label: 'found & valid' },
+            { id: 'eo4', source: 'o3', target: 'o5', label: 'not found\nor revoked' },
+          ],
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'The JWT revocation problem',
+          content: 'JWTs are valid until their `exp` claim — there is no built-in revocation mechanism. If you issue a 1-hour JWT and the user is compromised 2 minutes later, that JWT remains valid for 58 more minutes. Solutions: (1) **Very short lifetimes** (5–15 min access tokens + refresh rotation), (2) **Allowlist/denylist** stored in Redis (but then every validation needs Redis — you lose the stateless benefit), or (3) **Opaque tokens** where you need instant revocation.',
+        },
+        {
+          type: 'text',
+          content: `## The "opaque at the edge, JWT internally" pattern
+
+Large systems often use both. The **Auth Server issues an opaque token** to the client. When the client calls the **API Gateway**, the gateway calls the auth server's introspection endpoint — once per external request. The gateway then mints an internal short-lived JWT for downstream microservices. This gives you:
+
+- **Immediate revocation** at the edge (opaque + introspection)
+- **Fast local validation** inside your system (JWTs between microservices)
+- **No sensitive claims exposed** to clients (opaque tokens contain nothing)`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Token Translation Pattern — opaque outside, JWT inside',
+          nodes: [
+            { id: 'tt1', label: 'Client\n(browser / mobile)', type: 'input', position: { x: 0, y: 120 } },
+            { id: 'tt2', label: 'API Gateway', position: { x: 200, y: 120 } },
+            { id: 'tt3', label: 'Auth Server\n/introspect', position: { x: 200, y: 240 } },
+            { id: 'tt4', label: 'Gateway mints\nshort-lived JWT', position: { x: 400, y: 120 } },
+            { id: 'tt5', label: 'Microservice A\n(validates JWT locally)', type: 'output', position: { x: 600, y: 60 } },
+            { id: 'tt6', label: 'Microservice B\n(validates JWT locally)', type: 'output', position: { x: 600, y: 180 } },
+          ],
+          edges: [
+            { id: 'ett1', source: 'tt1', target: 'tt2', label: 'opaque token' },
+            { id: 'ett2', source: 'tt2', target: 'tt3', label: 'introspect\n(1x per request)' },
+            { id: 'ett3', source: 'tt3', target: 'tt2', label: 'sub, scope, exp' },
+            { id: 'ett4', source: 'tt2', target: 'tt4' },
+            { id: 'ett5', source: 'tt4', target: 'tt5', label: 'JWT (5min)', animated: true },
+            { id: 'ett6', source: 'tt4', target: 'tt6', label: 'JWT (5min)', animated: true },
+          ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'Token introspection call — RFC 7662',
+          code: `// Your API Gateway calls this on every inbound opaque token
+async function introspectToken(token: string): Promise<{ active: boolean; sub?: string; scope?: string; exp?: number }> {
+  const response = await fetch(\`\${AUTH_SERVER}/oauth/introspect\`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      // Auth servers require the caller to authenticate too (prevents fishing)
+      'Authorization': \`Basic \${btoa(\`\${CLIENT_ID}:\${CLIENT_SECRET}\`)}\`,
+    },
+    body: new URLSearchParams({ token }),
+  });
+
+  if (!response.ok) throw new Error('Introspection failed');
+  return response.json();
+}
+
+// Usage
+const { active, sub, scope } = await introspectToken(bearerToken);
+if (!active) return res.status(401).json({ error: 'Token inactive or revoked' });
+
+// Cache the result briefly (e.g. 30s) to avoid hitting the auth server on every retry
+// But not too long — you lose the revocation benefit`,
+        },
+        {
+          type: 'quiz',
+          title: 'JWT vs. Opaque Tokens Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'jvso-q1',
+              question: 'A financial services company requires that compromised user accounts be locked out within seconds. Which token type is better suited?',
+              options: [
+                'JWT — fast local validation handles this efficiently',
+                'Opaque token with introspection — revocation is immediate',
+                'JWT with a 5-minute lifetime — close enough to instant',
+                'Either — both offer the same revocation speed',
+              ],
+              correctIndex: 1,
+              explanation: 'Opaque tokens with introspection support immediate revocation — the auth server marks the token invalid and all subsequent introspection calls return `{ active: false }`. JWTs (even short-lived ones) remain valid until their `exp` claim regardless of server-side revocation. For financial systems where account compromise must be responded to in seconds, opaque + introspection is the safer choice.',
+            },
+            {
+              id: 'jvso-q2',
+              question: 'Your architecture has 20 microservices that each validate tokens on every request. 10,000 requests/second total. Which token type minimizes latency and load?',
+              options: [
+                'Opaque tokens — standard and widely supported',
+                'JWT — local validation requires no network call, scales horizontally without auth server load',
+                'Both are equivalent at scale',
+                'JWTs should be avoided at high request rates due to signature computation cost',
+              ],
+              correctIndex: 1,
+              explanation: 'With opaque tokens, 10,000 req/s means 10,000 introspection calls/s to the auth server — a massive load and a single point of failure. With JWTs, each service validates locally in microseconds using a cached public key. The auth server is only hit when the JWKS needs refreshing. This is why microservices architectures almost universally use JWTs internally.',
+            },
+            {
+              id: 'jvso-q3',
+              question: 'In the "opaque at edge, JWT internally" pattern, what is the main benefit of keeping the opaque token facing the client?',
+              options: [
+                'Opaque tokens are smaller than JWTs',
+                'The client cannot decode an opaque token, so sensitive claims (user roles, internal IDs) stay private; and instant revocation works at the gateway',
+                'Opaque tokens are required by OAuth2 spec for client-facing use',
+                'JWTs cannot be used across different domains',
+              ],
+              correctIndex: 1,
+              explanation: 'JWTs are self-contained and base64-decoded by anyone — every claim is readable. In regulated industries or when you want to keep internal data models private, issuing an opaque token to the client hides that data. Combined with immediate revocability at the gateway, it gives you both privacy and security that JWTs alone cannot provide.',
             },
           ],
         },
