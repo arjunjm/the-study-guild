@@ -4276,6 +4276,25 @@ An index is a separate data structure (usually a **B-tree**) that maps column va
 Think of it like the index at the back of a book: instead of reading every page to find "OAuth2," you look it up alphabetically and jump directly to the right pages.`,
         },
         {
+          type: 'flowDiagram',
+          title: 'Seq scan vs index scan — cost comparison',
+          nodes: [
+            { id: 'query', position: { x: 0, y: 100 }, label: 'SELECT * FROM users\nWHERE email = ?', type: 'input' },
+            { id: 'seq', position: { x: 220, y: 40 }, label: 'No index\n(seq scan)', type: 'default' },
+            { id: 'idx', position: { x: 220, y: 160 }, label: 'Index on email\n(B-tree)', type: 'default' },
+            { id: 'all_rows', position: { x: 440, y: 40 }, label: 'Read all 10M rows\nO(n) — slow', type: 'output' },
+            { id: 'btree', position: { x: 440, y: 160 }, label: 'B-tree lookup\nO(log n) — 24 reads', type: 'default' },
+            { id: 'row', position: { x: 660, y: 160 }, label: 'Direct row fetch\n(heap page pointer)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'query', target: 'seq', label: 'without index' },
+            { id: 'e2', source: 'query', target: 'idx', label: 'with index' },
+            { id: 'e3', source: 'seq', target: 'all_rows' },
+            { id: 'e4', source: 'idx', target: 'btree', label: 'traverse' },
+            { id: 'e5', source: 'btree', target: 'row' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'B-tree indexes are the default',
@@ -4374,6 +4393,25 @@ Execution Time: 0.1 ms
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Transaction lifecycle: commit vs rollback',
+          nodes: [
+            { id: 'begin', position: { x: 0, y: 100 }, label: 'BEGIN', type: 'input' },
+            { id: 'stmt1', position: { x: 200, y: 100 }, label: 'UPDATE accounts\n(debit Alice)', type: 'default' },
+            { id: 'stmt2', position: { x: 400, y: 100 }, label: 'UPDATE accounts\n(credit Bob)', type: 'default' },
+            { id: 'ok', position: { x: 600, y: 40 }, label: 'COMMIT\n(both changes persist)', type: 'output' },
+            { id: 'fail', position: { x: 600, y: 180 }, label: 'ROLLBACK\n(all changes undone)', type: 'output' },
+            { id: 'crash', position: { x: 400, y: 200 }, label: 'Server crash /\nerror mid-tx', type: 'default' },
+          ],
+          edges: [
+            { id: 'e1', source: 'begin', target: 'stmt1' },
+            { id: 'e2', source: 'stmt1', target: 'stmt2', label: 'success' },
+            { id: 'e3', source: 'stmt2', target: 'ok', label: 'success' },
+            { id: 'e4', source: 'crash', target: 'fail', label: 'auto rollback\non recovery' },
+            { id: 'e5', source: 'stmt1', target: 'fail', label: 'error' },
+          ],
+        },
         {
           type: 'text',
           content: `## Transactions: all-or-nothing operations
@@ -6450,6 +6488,24 @@ Tests are not about proving code works — they're about **preventing regression
 The real value emerges when you change code: a passing test suite tells you everything that used to work still works. Without tests, every change is a leap of faith.`,
         },
         {
+          type: 'flowDiagram',
+          title: 'Testing pyramid: trade-offs between speed and fidelity',
+          nodes: [
+            { id: 'unit', position: { x: 0, y: 180 }, label: 'Unit tests\n(many, fast, isolated)', type: 'input' },
+            { id: 'integ', position: { x: 0, y: 100 }, label: 'Integration tests\n(fewer, real dependencies)', type: 'default' },
+            { id: 'e2e', position: { x: 0, y: 20 }, label: 'E2E tests\n(few, slow, full UI)', type: 'default' },
+            { id: 'speed', position: { x: 300, y: 180 }, label: 'Fast feedback\n(<1s per test)', type: 'output' },
+            { id: 'conf', position: { x: 300, y: 20 }, label: 'High confidence\n(tests real behavior)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'unit', target: 'speed', label: '1000s of tests' },
+            { id: 'e2', source: 'integ', target: 'speed', label: 'slower' },
+            { id: 'e3', source: 'e2e', target: 'conf', label: 'minutes each' },
+            { id: 'e4', source: 'integ', target: 'conf', label: 'moderate' },
+            { id: 'e5', source: 'unit', target: 'conf', label: 'mocks reduce\nfidelity' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'Why Vitest over Jest?',
@@ -6582,6 +6638,23 @@ Unit tests are fastest when they test **pure functions** — functions that take
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Mock replaces real dependency at the boundary',
+          nodes: [
+            { id: 'test', position: { x: 0, y: 100 }, label: 'Test code\n(unit under test)', type: 'input' },
+            { id: 'handler', position: { x: 200, y: 100 }, label: 'completeLessonHandler\n(function being tested)', type: 'default' },
+            { id: 'mock', position: { x: 440, y: 60 }, label: 'Mock DB\n(vi.fn() returns known data)', type: 'default' },
+            { id: 'real', position: { x: 440, y: 160 }, label: 'Real CosmosDB\n(used in production)', type: 'output' },
+            { id: 'assert', position: { x: 660, y: 60 }, label: 'Assert XP awarded\n(fast, deterministic)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'test', target: 'handler', label: 'calls' },
+            { id: 'e2', source: 'handler', target: 'mock', label: 'dep injected\n(test env)' },
+            { id: 'e3', source: 'handler', target: 'real', label: 'real dep\n(production)' },
+            { id: 'e4', source: 'mock', target: 'assert' },
+          ],
+        },
         {
           type: 'text',
           content: `## What is mocking?
@@ -7428,6 +7501,27 @@ setDifficulty('expert');     // ❌ Argument of type '"expert"' is not assignabl
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'REST vs GraphQL: client controls the data shape',
+          nodes: [
+            { id: 'client', position: { x: 0, y: 100 }, label: 'Client\n(needs title + 3 fields)', type: 'input' },
+            { id: 'rest1', position: { x: 220, y: 40 }, label: 'GET /courses\n(returns 20 fields)', type: 'default' },
+            { id: 'rest2', position: { x: 220, y: 140 }, label: 'GET /courses/:id/lessons\n(second request)', type: 'default' },
+            { id: 'gql', position: { x: 220, y: 240 }, label: 'POST /graphql\n{ course { title lessons { id } } }', type: 'default' },
+            { id: 'over', position: { x: 460, y: 40 }, label: 'Over-fetching\n17 unused fields', type: 'output' },
+            { id: 'under', position: { x: 460, y: 140 }, label: 'Under-fetching\n2 round trips', type: 'output' },
+            { id: 'exact', position: { x: 460, y: 240 }, label: 'Exact shape\n1 round trip', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'client', target: 'rest1', label: 'REST' },
+            { id: 'e2', source: 'client', target: 'rest2', label: 'REST' },
+            { id: 'e3', source: 'client', target: 'gql', label: 'GraphQL' },
+            { id: 'e4', source: 'rest1', target: 'over' },
+            { id: 'e5', source: 'rest2', target: 'under' },
+            { id: 'e6', source: 'gql', target: 'exact' },
+          ],
+        },
         {
           type: 'text',
           content: `## What problem does GraphQL solve?
