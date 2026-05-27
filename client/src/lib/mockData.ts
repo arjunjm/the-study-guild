@@ -6817,6 +6817,23 @@ describe('GET /api/courses', () => {
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Testing Library query priority: accessible first',
+          nodes: [
+            { id: 'a11y', position: { x: 0, y: 100 }, label: 'getByRole\ngetByLabelText\n(accessible — preferred)', type: 'input' },
+            { id: 'text', position: { x: 240, y: 100 }, label: 'getByText\ngetByPlaceholder\n(semantic — ok)', type: 'default' },
+            { id: 'testid', position: { x: 480, y: 100 }, label: 'getByTestId\n(data-testid — last resort)', type: 'default' },
+            { id: 'user', position: { x: 0, y: 220 }, label: 'User sees\n"Submit" button', type: 'output' },
+            { id: 'pass', position: { x: 480, y: 220 }, label: 'Refactor-resistant\ntest', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'a11y', target: 'user', label: 'mirrors how\nscreen readers work' },
+            { id: 'e2', source: 'a11y', target: 'pass', label: 'survives CSS refactor' },
+            { id: 'e3', source: 'text', target: 'pass' },
+            { id: 'e4', source: 'testid', target: 'pass', label: 'fragile to\nrenderer changes' },
+          ],
+        },
+        {
           type: 'text',
           content: `## Test behavior, not implementation
 
@@ -6949,6 +6966,25 @@ Avoid \`getByTestId\` when possible: it couples tests to implementation details 
           content: `## Why E2E tests?
 
 Unit and integration tests verify that individual pieces work. E2E tests verify that the **whole system** works together — browser, frontend, API, database — from the user's perspective. They're the only tests that can catch integration issues like CORS misconfigurations, broken auth flows, or API contract mismatches.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'E2E test: exercises the full stack end to end',
+          nodes: [
+            { id: 'pw', position: { x: 0, y: 100 }, label: 'Playwright\n(test runner)', type: 'input' },
+            { id: 'browser', position: { x: 200, y: 100 }, label: 'Real browser\n(Chromium / Firefox)', type: 'default' },
+            { id: 'spa', position: { x: 400, y: 100 }, label: 'React SPA\n(UI interactions)', type: 'default' },
+            { id: 'api', position: { x: 600, y: 100 }, label: 'Express API\n(real HTTP)', type: 'default' },
+            { id: 'db', position: { x: 800, y: 100 }, label: 'Test DB\n(seeded data)', type: 'output' },
+            { id: 'assert', position: { x: 400, y: 220 }, label: 'Assert visible text\nURL, network calls', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'pw', target: 'browser', label: 'drives' },
+            { id: 'e2', source: 'browser', target: 'spa', label: 'loads' },
+            { id: 'e3', source: 'spa', target: 'api', label: 'fetch requests' },
+            { id: 'e4', source: 'api', target: 'db', label: 'queries' },
+            { id: 'e5', source: 'spa', target: 'assert', label: 'pw.expect()' },
+          ],
         },
         {
           type: 'callout',
@@ -10130,6 +10166,27 @@ def train(X, y, learning_rate=0.01, epochs=1000):
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Three ML paradigms: data source and feedback type',
+          nodes: [
+            { id: 'data', position: { x: 0, y: 100 }, label: 'Training data', type: 'input' },
+            { id: 'sup', position: { x: 220, y: 40 }, label: 'Supervised\n(labeled X → y)', type: 'default' },
+            { id: 'unsup', position: { x: 220, y: 120 }, label: 'Unsupervised\n(unlabeled X only)', type: 'default' },
+            { id: 'rl', position: { x: 220, y: 200 }, label: 'Reinforcement\n(agent + environment)', type: 'default' },
+            { id: 'class', position: { x: 460, y: 40 }, label: 'Classification\nRegression', type: 'output' },
+            { id: 'cluster', position: { x: 460, y: 120 }, label: 'Clustering\nDimensionality reduction', type: 'output' },
+            { id: 'policy', position: { x: 460, y: 200 }, label: 'Policy (action → reward)\nGame playing / robotics', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'data', target: 'sup', label: 'labels provided' },
+            { id: 'e2', source: 'data', target: 'unsup', label: 'no labels' },
+            { id: 'e3', source: 'data', target: 'rl', label: 'reward signal' },
+            { id: 'e4', source: 'sup', target: 'class' },
+            { id: 'e5', source: 'unsup', target: 'cluster' },
+            { id: 'e6', source: 'rl', target: 'policy' },
+          ],
+        },
+        {
           type: 'text',
           content: `## The three learning paradigms
 
@@ -11452,6 +11509,28 @@ function verify(data: string, signature: string, publicKey: string): boolean {
   return verifier.verify(publicKey, signature, 'base64');
 }
 \`\`\``,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Digital signature: sign with private key, verify with public key',
+          nodes: [
+            { id: 'msg', position: { x: 0, y: 100 }, label: 'Message\n(document / JWT payload)', type: 'input' },
+            { id: 'hash', position: { x: 200, y: 100 }, label: 'SHA-256 hash\n(digest)', type: 'default' },
+            { id: 'sign', position: { x: 400, y: 100 }, label: 'Encrypt digest\nwith private key → Signature', type: 'default' },
+            { id: 'send', position: { x: 600, y: 100 }, label: 'Send:\nmessage + signature', type: 'default' },
+            { id: 'verify', position: { x: 800, y: 100 }, label: 'Decrypt sig\nwith public key → digest', type: 'default' },
+            { id: 'rehash', position: { x: 800, y: 220 }, label: 'Re-hash message\nCompare digests', type: 'default' },
+            { id: 'valid', position: { x: 1000, y: 100 }, label: 'Match ✓\n(authentic + unmodified)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'msg', target: 'hash', label: 'sender' },
+            { id: 'e2', source: 'hash', target: 'sign' },
+            { id: 'e3', source: 'sign', target: 'send' },
+            { id: 'e4', source: 'send', target: 'verify', label: 'receiver' },
+            { id: 'e5', source: 'send', target: 'rehash' },
+            { id: 'e6', source: 'verify', target: 'valid', label: 'digest matches' },
+            { id: 'e7', source: 'rehash', target: 'valid' },
+          ],
         },
         {
           type: 'callout',
@@ -14823,6 +14902,29 @@ A database query that takes 50ms might be fast, but if 10,000 users hit the same
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Redis data structures: use case mapping',
+          nodes: [
+            { id: 'string', position: { x: 0, y: 20 }, label: 'String\nGET/SET/INCR', type: 'input' },
+            { id: 'hash', position: { x: 0, y: 100 }, label: 'Hash\nHGET/HSET', type: 'input' },
+            { id: 'list', position: { x: 0, y: 180 }, label: 'List\nLPUSH/RPOP', type: 'input' },
+            { id: 'set', position: { x: 0, y: 260 }, label: 'Set\nSADD/SINTER', type: 'input' },
+            { id: 'zset', position: { x: 0, y: 340 }, label: 'Sorted Set\nZADD/ZRANGE', type: 'input' },
+            { id: 'uc_string', position: { x: 280, y: 20 }, label: 'Session tokens\nCounters, rate limits', type: 'output' },
+            { id: 'uc_hash', position: { x: 280, y: 100 }, label: 'User objects\nPartial field updates', type: 'output' },
+            { id: 'uc_list', position: { x: 280, y: 180 }, label: 'Message queues\nRecent activity feed', type: 'output' },
+            { id: 'uc_set', position: { x: 280, y: 260 }, label: 'Unique tags\nFriend lists, dedup', type: 'output' },
+            { id: 'uc_zset', position: { x: 280, y: 340 }, label: 'Leaderboards\nPriority queues', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'string', target: 'uc_string' },
+            { id: 'e2', source: 'hash', target: 'uc_hash' },
+            { id: 'e3', source: 'list', target: 'uc_list' },
+            { id: 'e4', source: 'set', target: 'uc_set' },
+            { id: 'e5', source: 'zset', target: 'uc_zset' },
+          ],
+        },
         {
           type: 'text',
           content: `## Redis Is Not Just a Key-Value Store
