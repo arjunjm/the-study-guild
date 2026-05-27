@@ -2272,6 +2272,67 @@ The resource server **verifies** the signature using the corresponding public ke
           title: 'The "alg: none" attack',
           content: 'Early JWT libraries trusted the "alg" header from the token itself. An attacker could set alg to "none", strip the signature, and the library would accept it as valid. Always specify the expected algorithm in your verification config — never accept whatever the token claims.',
         },
+        {
+          type: 'flowDiagram',
+          title: 'JWT Verification Flow',
+          nodes: [
+            { id: 'recv', label: 'Receive JWT\n(3 dot-separated parts)', type: 'input', position: { x: 30, y: 40 } },
+            { id: 'split', label: 'Split into\nHeader · Payload · Sig', position: { x: 30, y: 130 } },
+            { id: 'alg', label: 'Check alg\nagainst allowlist', type: 'decision', position: { x: 30, y: 220 } },
+            { id: 'verify', label: 'Verify signature\nusing public key', type: 'decision', position: { x: 30, y: 320 } },
+            { id: 'claims', label: 'Check iss, aud,\nexp, nbf claims', type: 'decision', position: { x: 30, y: 420 } },
+            { id: 'accept', label: 'Token accepted\n→ extract user', type: 'output', position: { x: 240, y: 420 } },
+            { id: 'reject', label: 'Reject\n401', type: 'output', position: { x: 240, y: 270 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'recv', target: 'split' },
+            { id: 'e2', source: 'split', target: 'alg' },
+            { id: 'e3', source: 'alg', target: 'reject', label: 'not in allowlist' },
+            { id: 'e4', source: 'alg', target: 'verify', label: 'pass' },
+            { id: 'e5', source: 'verify', target: 'reject', label: 'mismatch' },
+            { id: 'e6', source: 'verify', target: 'claims', label: 'pass' },
+            { id: 'e7', source: 'claims', target: 'reject', label: 'expired / wrong aud' },
+            { id: 'e8', source: 'claims', target: 'accept', label: 'pass', animated: true },
+          ],
+        },
+        {
+          type: 'quiz',
+          title: 'JWT Structure Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'jwt1-q1',
+              question: 'A colleague base64-decodes a JWT payload and reads the user\'s email address. Should this be possible?',
+              options: [
+                'No — JWTs are encrypted so the payload should be unreadable',
+                'Yes — JWTs are encoded, not encrypted. The payload is readable by anyone who has the token',
+                'Only if they know the signing key',
+                'Only in development; production JWTs are always encrypted',
+              ],
+              correctIndex: 1,
+              explanation: 'Base64url encoding is just encoding, not encryption — it\'s trivially reversible. Anyone who possesses the token can decode and read the payload. Never put sensitive data (passwords, card numbers, PII you want hidden) in a JWT unless you use JWE (JSON Web Encryption) on top.',
+            },
+            {
+              id: 'jwt1-q2',
+              question: 'Which part of a JWT proves it hasn\'t been tampered with?',
+              options: ['The header', 'The payload', 'The signature', 'The Base64url encoding'],
+              correctIndex: 2,
+              explanation: 'The signature is computed over base64url(header) + "." + base64url(payload) using the private key. Any change to header or payload — even a single character — produces a completely different signature that won\'t match the public key verification.',
+            },
+            {
+              id: 'jwt1-q3',
+              question: 'What is the "aud" claim used for?',
+              options: [
+                'Identifies who issued the token',
+                'Identifies the user (subject)',
+                'Identifies the intended recipient — the resource server that should accept this token',
+                'Audio codec used to encode the payload',
+              ],
+              correctIndex: 2,
+              explanation: '"aud" (audience) declares which service the token is meant for. Your API should reject any token where aud doesn\'t match your own identifier. Without this check, a token issued for Service A could be replayed at Service B if both verify the same issuer.',
+            },
+          ],
+        },
       ],
     },
   },
@@ -2334,6 +2395,27 @@ Public key pairs are rotated periodically (Azure AD rotates every 6 weeks). Your
 1. **Cache** the JWKS response (avoid fetching on every request)
 2. **Retry with a fresh fetch** when verification fails with an unknown key ID
 3. **Never hard-code** the public key — always resolve from the JWKS endpoint`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Asymmetric JWT: Sign Once, Verify Anywhere',
+          nodes: [
+            { id: 'idp', label: 'Identity Provider\n(Azure AD / Auth0)', type: 'input', position: { x: 30, y: 160 } },
+            { id: 'sign', label: 'Signs JWT with\nprivate key', position: { x: 200, y: 80 } },
+            { id: 'jwks', label: 'Publishes public keys\nat /.well-known/jwks.json', position: { x: 200, y: 240 } },
+            { id: 'client', label: 'Client receives\nJWT', position: { x: 390, y: 80 } },
+            { id: 'api1', label: 'API A\nverifies', type: 'output', position: { x: 390, y: 200 } },
+            { id: 'api2', label: 'API B\nverifies', type: 'output', position: { x: 390, y: 300 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'idp', target: 'sign', label: 'private key' },
+            { id: 'e2', source: 'idp', target: 'jwks' },
+            { id: 'e3', source: 'sign', target: 'client', label: 'JWT', animated: true },
+            { id: 'e4', source: 'client', target: 'api1', label: 'Bearer token', animated: true },
+            { id: 'e5', source: 'client', target: 'api2', label: 'Bearer token', animated: true },
+            { id: 'e6', source: 'jwks', target: 'api1', label: 'public key' },
+            { id: 'e7', source: 'jwks', target: 'api2', label: 'public key' },
+          ],
         },
         {
           type: 'quiz',
@@ -7184,6 +7266,29 @@ spec:
   type: ClusterIP             # internal only; use LoadBalancer for external`,
         },
         {
+          type: 'flowDiagram',
+          title: 'Kubernetes Object Hierarchy',
+          nodes: [
+            { id: 'dep', label: 'Deployment\n(desired state)', type: 'input', position: { x: 200, y: 20 } },
+            { id: 'rs', label: 'ReplicaSet\n(owns N pods)', position: { x: 200, y: 110 } },
+            { id: 'p1', label: 'Pod 1\n:3001', position: { x: 60, y: 200 } },
+            { id: 'p2', label: 'Pod 2\n:3001', position: { x: 200, y: 200 } },
+            { id: 'p3', label: 'Pod 3\n:3001', position: { x: 340, y: 200 } },
+            { id: 'svc', label: 'Service\n(label selector)', type: 'decision', position: { x: 200, y: 300 } },
+            { id: 'ext', label: 'External\ntraffic', type: 'output', position: { x: 200, y: 390 } },
+          ],
+          edges: [
+            { id: 'e-dep-rs', source: 'dep', target: 'rs', label: 'manages' },
+            { id: 'e-rs-p1', source: 'rs', target: 'p1' },
+            { id: 'e-rs-p2', source: 'rs', target: 'p2' },
+            { id: 'e-rs-p3', source: 'rs', target: 'p3' },
+            { id: 'e-p1-svc', source: 'p1', target: 'svc', animated: true },
+            { id: 'e-p2-svc', source: 'p2', target: 'svc', animated: true },
+            { id: 'e-p3-svc', source: 'p3', target: 'svc', animated: true },
+            { id: 'e-svc-ext', source: 'svc', target: 'ext', label: 'round-robin', animated: true },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'warning',
           title: 'Always set resource requests and limits',
@@ -7278,6 +7383,27 @@ readinessProbe:          # Is the container ready for traffic? Remove from Servi
 - **Readiness**: "Can this pod serve requests?" — fail → K8s removes it from Service endpoints (no restart)
 
 Your \`/health\` endpoint should return 200 if the app is running. Your \`/ready\` should also verify DB connectivity, caches, and dependencies.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Liveness vs Readiness Probe Behaviour',
+          nodes: [
+            { id: 'start', label: 'Pod starts', type: 'input', position: { x: 200, y: 20 } },
+            { id: 'delay', label: 'initialDelaySeconds\nwait', position: { x: 200, y: 100 } },
+            { id: 'live', label: 'Liveness\nprobe runs', type: 'decision', position: { x: 60, y: 200 } },
+            { id: 'ready', label: 'Readiness\nprobe runs', type: 'decision', position: { x: 340, y: 200 } },
+            { id: 'restart', label: 'Container\nrestarted', type: 'output', position: { x: 60, y: 320 } },
+            { id: 'remove', label: 'Removed from\nService endpoints', type: 'output', position: { x: 340, y: 320 } },
+            { id: 'traffic', label: 'Receives\ntraffic', type: 'output', position: { x: 200, y: 320 } },
+          ],
+          edges: [
+            { id: 'e-s-d', source: 'start', target: 'delay' },
+            { id: 'e-d-l', source: 'delay', target: 'live' },
+            { id: 'e-d-r', source: 'delay', target: 'ready' },
+            { id: 'e-l-restart', source: 'live', target: 'restart', label: 'fail × 3' },
+            { id: 'e-r-remove', source: 'ready', target: 'remove', label: 'fail' },
+            { id: 'e-r-traffic', source: 'ready', target: 'traffic', label: 'pass', animated: true },
+          ],
         },
         {
           type: 'quiz',
@@ -7385,6 +7511,25 @@ helm upgrade --install studyguild ./helm/chart \\
 helm list -A
 helm rollback studyguild 1    # rollback to revision 1
 \`\`\``,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Rolling Update — Zero-Downtime Deploy',
+          nodes: [
+            { id: 'old1', label: 'Pod v1', type: 'input', position: { x: 30, y: 40 } },
+            { id: 'old2', label: 'Pod v1', type: 'input', position: { x: 30, y: 120 } },
+            { id: 'old3', label: 'Pod v1', type: 'input', position: { x: 30, y: 200 } },
+            { id: 'surge', label: '+Pod v2\n(maxSurge=1)', type: 'decision', position: { x: 200, y: 40 } },
+            { id: 'term', label: 'Terminate\n1× Pod v1', position: { x: 200, y: 140 } },
+            { id: 'repeat', label: 'Repeat until\nall pods = v2', position: { x: 200, y: 230 } },
+            { id: 'done', label: 'All 3× Pod v2\nrunning', type: 'output', position: { x: 370, y: 140 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'old1', target: 'surge', label: 'trigger' },
+            { id: 'e2', source: 'surge', target: 'term', label: 'new pod ready' },
+            { id: 'e3', source: 'term', target: 'repeat' },
+            { id: 'e4', source: 'repeat', target: 'done', animated: true },
+          ],
         },
         {
           type: 'callout',
