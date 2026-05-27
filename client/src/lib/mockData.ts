@@ -142,9 +142,9 @@ export const MOCK_COURSES: Course[] = [
     published: true,
     publishedAt: '2025-01-10T00:00:00.000Z',
     tags: ['oauth2', 'security', 'authentication', 'pkce'],
-    lessonIds: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004', 'lesson-005'],
-    totalLessons: 5,
-    estimatedMinutes: 52,
+    lessonIds: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004', 'lesson-005', 'lesson-006', 'lesson-007'],
+    totalLessons: 7,
+    estimatedMinutes: 79,
     ratingAverage: 4.8,
     ratingCount: 42,
     createdAt: '2025-01-01T00:00:00.000Z',
@@ -1225,6 +1225,356 @@ sessionStorage.setItem('pkce_verifier', codeVerifier);`,
               options: ['Only SPAs and mobile apps', 'Only confidential server-side apps', 'All clients using the authorization code flow', 'Only apps without a client secret'],
               correctIndex: 2,
               explanation: 'OAuth 2.1 requires PKCE for all authorization code flow clients — confidential and public alike. It adds defence-in-depth even when a client secret is present.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── OAuth2 Lesson 6: Token Storage & Security ────────────────────────────────
+  {
+    id: 'lesson-006',
+    courseId: 'course-oauth2',
+    order: 5,
+    title: 'Token Storage & Security',
+    estimatedMinutes: 13,
+    createdAt: '2025-01-01T00:00:00.000Z',
+    updatedAt: '2025-01-01T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Where should you store tokens?
+
+This is one of the most debated questions in web security. The answer involves a tradeoff between two attack vectors:
+
+- **XSS (Cross-Site Scripting)** — malicious JavaScript running in your page can read anything JavaScript can access (localStorage, sessionStorage, in-memory variables)
+- **CSRF (Cross-Site Request Forgery)** — a malicious site tricks the browser into making authenticated requests using cookies it can't read but the browser sends automatically
+
+| Storage | XSS accessible | CSRF risk | Survives refresh | Recommendation |
+|---------|---------------|-----------|-----------------|----------------|
+| \`localStorage\` | ✅ Yes | ❌ No | ✅ Yes | ❌ Avoid for tokens |
+| \`sessionStorage\` | ✅ Yes | ❌ No | ❌ No | ⚠️ Short sessions only |
+| In-memory (JS var) | ✅ Yes | ❌ No | ❌ No | ✅ Best for access tokens |
+| \`httpOnly\` cookie | ❌ No | ✅ Yes | ✅ Yes | ✅ Best for refresh tokens |`,
+        },
+        {
+          type: 'callout',
+          variant: 'danger',
+          title: 'Never store tokens in localStorage',
+          content: "localStorage persists across tabs and browser restarts. Any XSS vulnerability — including in a third-party script — can exfiltrate all tokens instantly. The OWASP guidance is unambiguous: don't store sensitive tokens in localStorage.",
+        },
+        {
+          type: 'text',
+          content: `## The recommended pattern
+
+**Access tokens** → Keep in JavaScript memory (a closure or module-level variable). They're short-lived anyway, so losing them on refresh is acceptable — just silently acquire a new one.
+
+**Refresh tokens** → Store in an \`httpOnly\`, \`Secure\`, \`SameSite=Strict\` cookie. JavaScript can't read it, but your server can use it to issue new access tokens.
+
+This combination means XSS can steal the current access token (already in memory) but **cannot steal the refresh token** to create new sessions.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'Setting a secure httpOnly refresh token cookie (Express)',
+          code: `app.post('/auth/token', async (req, res) => {
+  const { code } = req.body;
+
+  // Exchange code for tokens at the Authorization Server
+  const tokens = await exchangeCodeForTokens(code);
+
+  // Store refresh token in httpOnly cookie — JS cannot read this
+  res.cookie('refresh_token', tokens.refresh_token, {
+    httpOnly: true,      // not accessible to JavaScript
+    secure: true,        // HTTPS only
+    sameSite: 'strict',  // blocks CSRF from cross-site requests
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    path: '/auth',       // only sent to /auth/* endpoints
+  });
+
+  // Return access token in JSON — the SPA stores this in memory
+  res.json({ access_token: tokens.access_token });
+});`,
+        },
+        {
+          type: 'callout',
+          variant: 'info',
+          title: 'CSRF protection with cookies',
+          content: "When using cookies, always set SameSite=Strict (or at minimum Lax). For state-changing operations, add a CSRF token in a request header — an attacker's site can trigger the cookie but can't set custom headers.",
+        },
+        {
+          type: 'text',
+          content: `## Silent token refresh
+
+When an access token expires, your SPA should silently fetch a new one without redirecting the user. The flow:
+
+1. API call returns \`401 Unauthorized\`
+2. Axios/fetch interceptor catches the 401
+3. Interceptor calls \`/auth/refresh\` (which uses the httpOnly cookie)
+4. Server exchanges refresh token for a new access token
+5. Retry the original request with the new token`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'Axios interceptor for silent token refresh',
+          code: `let accessToken: string | null = null;
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const original = error.config;
+
+    if (error.response?.status === 401 && !original._retry) {
+      original._retry = true;
+
+      try {
+        // The httpOnly cookie is sent automatically
+        const { data } = await axios.post('/auth/refresh');
+        accessToken = data.access_token;
+
+        // Retry the failed request with the new token
+        original.headers['Authorization'] = \`Bearer \${accessToken}\`;
+        return apiClient(original);
+      } catch {
+        // Refresh failed — redirect to login
+        window.location.href = '/login';
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);`,
+        },
+        {
+          type: 'quiz',
+          title: 'Token Storage Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'storage-q1',
+              question: 'Why is localStorage considered unsafe for storing refresh tokens?',
+              options: [
+                'It is too slow for frequent reads',
+                'Any JavaScript on the page — including third-party scripts — can read it',
+                'It is cleared when the browser closes',
+                'It does not support string values',
+              ],
+              correctIndex: 1,
+              explanation: 'localStorage is readable by any JavaScript running on the page. An XSS vulnerability anywhere on your site — or in a third-party script — can exfiltrate all stored tokens. Refresh tokens are especially dangerous to leak as they can generate new access tokens.',
+            },
+            {
+              id: 'storage-q2',
+              question: 'What cookie attribute prevents JavaScript from reading the cookie value?',
+              options: ['Secure', 'SameSite=Strict', 'httpOnly', 'Path=/auth'],
+              correctIndex: 2,
+              explanation: 'The httpOnly attribute tells the browser to exclude the cookie from the document.cookie API. It is still sent on every matching HTTP request but JavaScript code cannot read its value — protecting it from XSS.',
+            },
+            {
+              id: 'storage-q3',
+              question: 'What is the recommended storage for access tokens in a SPA?',
+              options: [
+                'localStorage for persistence across tabs',
+                'sessionStorage to limit scope',
+                'In JavaScript memory (module-level variable)',
+                'An httpOnly cookie',
+              ],
+              correctIndex: 2,
+              explanation: "Access tokens are short-lived, so losing them on page refresh is acceptable — the app silently fetches a new one using the refresh token. Storing in memory prevents XSS from exfiltrating them to another origin.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── OAuth2 Lesson 7: Putting It All Together ──────────────────────────────────
+  {
+    id: 'lesson-007',
+    courseId: 'course-oauth2',
+    order: 6,
+    title: 'Putting It All Together',
+    estimatedMinutes: 14,
+    createdAt: '2025-01-01T00:00:00.000Z',
+    updatedAt: '2025-01-01T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## From theory to production
+
+You now understand the OAuth2 concepts. Let's walk through what a complete, production-ready implementation looks like using **MSAL.js** — Microsoft's official library for Azure AD (Entra ID) OAuth2 flows.
+
+The same patterns apply to Auth0, Okta, and any other OIDC-compliant provider; only the config changes.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'MSAL configuration (src/lib/msalConfig.ts)',
+          code: `import { Configuration, LogLevel } from '@azure/msal-browser';
+
+export const msalConfig: Configuration = {
+  auth: {
+    clientId: import.meta.env.VITE_AZURE_CLIENT_ID,
+    authority: \`https://login.microsoftonline.com/\${import.meta.env.VITE_AZURE_TENANT_ID}\`,
+    redirectUri: window.location.origin,
+  },
+  cache: {
+    cacheLocation: 'sessionStorage', // safer than localStorage
+    storeAuthStateInCookie: false,
+  },
+  system: {
+    loggerOptions: {
+      loggerCallback: (level, message) => {
+        if (level === LogLevel.Error) console.error(message);
+      },
+    },
+  },
+};
+
+// Scopes to request — align these with your API registration
+export const loginRequest = {
+  scopes: ['openid', 'profile', 'email', \`api://\${import.meta.env.VITE_AZURE_API_CLIENT_ID}/access_as_user\`],
+};`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'Silent token acquisition in an Axios interceptor',
+          code: `import { msalInstance } from './msalConfig';
+
+apiClient.interceptors.request.use(async (config) => {
+  const accounts = msalInstance.getAllAccounts();
+  if (!accounts.length) return config; // not signed in
+
+  try {
+    // Try to get a token silently (from cache or refresh)
+    const result = await msalInstance.acquireTokenSilent({
+      ...loginRequest,
+      account: accounts[0],
+    });
+    config.headers['Authorization'] = \`Bearer \${result.accessToken}\`;
+  } catch (err) {
+    // Silent acquisition failed — fall back to popup
+    if (err instanceof InteractionRequiredAuthError) {
+      const result = await msalInstance.acquireTokenPopup(loginRequest);
+      config.headers['Authorization'] = \`Bearer \${result.accessToken}\`;
+    }
+  }
+
+  return config;
+});`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'acquireTokenSilent does the heavy lifting',
+          content: "MSAL caches tokens and handles refresh automatically. acquireTokenSilent checks the cache first, then uses the refresh token if needed. You only hit the network when tokens are actually expired or missing — so call it before every request without worrying about performance.",
+        },
+        {
+          type: 'text',
+          content: `## Server-side: validating the JWT
+
+Your API must validate every incoming access token. The token is a signed JWT — you verify it against the Authorization Server's public keys (fetched from its JWKS endpoint).
+
+| Step | What to check |
+|------|---------------|
+| Signature | Verify against the Authorization Server's public key |
+| \`iss\` (issuer) | Must match your tenant's expected issuer URL |
+| \`aud\` (audience) | Must match your API's client ID |
+| \`exp\` (expiry) | Must not be in the past |
+| \`scp\` or \`roles\` | Must include the required scope for the endpoint |`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'JWT validation middleware (Express + jwks-rsa)',
+          code: `import jwt from 'jsonwebtoken';
+import jwksRsa from 'jwks-rsa';
+
+const jwksClient = jwksRsa({
+  jwksUri: \`https://login.microsoftonline.com/\${TENANT_ID}/discovery/v2.0/keys\`,
+  cache: true,
+  rateLimit: true,
+});
+
+function getSigningKey(header: jwt.JwtHeader, cb: jwt.SigningKeyCallback) {
+  jwksClient.getSigningKey(header.kid, (err, key) => {
+    cb(err, key?.getPublicKey());
+  });
+}
+
+export function requireAuth(req: Request, res: Response, next: NextFunction) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  jwt.verify(token, getSigningKey, {
+    audience: \`api://\${CLIENT_ID}\`,
+    issuer: \`https://login.microsoftonline.com/\${TENANT_ID}/v2.0\`,
+  }, (err, decoded) => {
+    if (err) return res.status(401).json({ error: 'Invalid token' });
+    req.user = decoded;
+    next();
+  });
+}`,
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'Never skip signature verification',
+          content: 'Decoding a JWT without verifying the signature is dangerous. A JWT is just base64 — anyone can create one with arbitrary claims. Always verify the signature against the JWKS endpoint before trusting any claims in the payload.',
+        },
+        {
+          type: 'quiz',
+          title: 'Final Review Quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'final-q1',
+              question: 'What does PKCE protect against in OAuth2 flows?',
+              options: [
+                'Brute-force attacks on the client secret',
+                'Interception of the authorization code by a malicious party',
+                'Token expiry being too short',
+                'CORS errors during token exchange',
+              ],
+              correctIndex: 1,
+              explanation: 'PKCE ensures that only the party that initiated the authorization request (and thus holds the code_verifier) can exchange the authorization code for tokens. An intercepted code is useless without the matching verifier.',
+            },
+            {
+              id: 'final-q2',
+              question: 'Your SPA calls an API and gets back a 401. What should the Axios interceptor do?',
+              options: [
+                'Immediately redirect the user to the login page',
+                'Retry the request with the same access token',
+                'Silently acquire a new access token, then retry the original request',
+                'Clear all cookies and localStorage',
+              ],
+              correctIndex: 2,
+              explanation: 'A 401 typically means the access token expired. The correct response is to silently request a new access token (using the refresh token or MSAL silent acquisition), then replay the original request — transparent to the user.',
+            },
+            {
+              id: 'final-q3',
+              question: 'Which JWT claim should your API validate to ensure the token was issued for your service and not another?',
+              options: ['iss (issuer)', 'sub (subject)', 'aud (audience)', 'iat (issued at)'],
+              correctIndex: 2,
+              explanation: "The aud (audience) claim identifies the intended recipient. A token issued for api://app-A must be rejected by api://app-B. Without audience validation, a token stolen from another service in the same tenant could be used against yours.",
+            },
+            {
+              id: 'final-q4',
+              question: 'What is the main purpose of the authorization code flow\'s back-channel token exchange?',
+              options: [
+                'To reduce network latency',
+                'To allow the token to be cached at the CDN layer',
+                'To keep the token out of the browser URL and logs',
+                'To validate the user\'s IP address',
+              ],
+              correctIndex: 2,
+              explanation: 'The authorization code is returned in the browser redirect and can appear in URL bars, browser history, and server logs. Exchanging it for a token server-to-server (back-channel) ensures the actual token never touches the browser address bar.',
             },
           ],
         },
