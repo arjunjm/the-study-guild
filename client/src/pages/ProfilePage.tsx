@@ -35,6 +35,7 @@ interface CourseProgress {
   course: Course;
   completedCount: number;
   totalLessons: number;
+  completedLessonIds: string[];
 }
 
 export default function ProfilePage() {
@@ -89,6 +90,22 @@ export default function ProfilePage() {
 
   const inProgress = courseProgress?.filter(c => c.completedCount > 0 && c.completedCount < c.totalLessons) ?? [];
   const completed = courseProgress?.filter(c => c.completedCount >= c.totalLessons && c.totalLessons > 0) ?? [];
+  const totalLessonsCompleted = courseProgress?.reduce((sum, c) => sum + c.completedCount, 0) ?? 0;
+
+  // Per-category learning stats
+  const categoryStats = courseProgress
+    ? Object.entries(
+        courseProgress.reduce((acc, cp) => {
+          const l1 = cp.course.taxonomy.l1;
+          if (!acc[l1]) acc[l1] = { completed: 0, total: 0 };
+          acc[l1].completed += cp.completedCount;
+          acc[l1].total += cp.totalLessons;
+          return acc;
+        }, {} as Record<string, { completed: number; total: number }>)
+      )
+        .filter(([, s]) => s.completed > 0)
+        .sort((a, b) => b[1].completed - a[1].completed)
+    : [];
 
   return (
     <div className="p-6 lg:p-10 max-w-3xl">
@@ -152,7 +169,22 @@ export default function ProfilePage() {
                     </button>
                   )}
                 </div>
-                <p className="font-semibold text-lg text-amber-400">{user.rank}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-semibold text-lg text-amber-400">{user.rank}</p>
+                  {!userId && (user as UserProfile).role === 'teacher' && (
+                    <Link
+                      to="/teach"
+                      className="flex items-center gap-1 rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-xs font-medium text-violet-300 transition hover:bg-violet-500/20"
+                    >
+                      Teacher
+                    </Link>
+                  )}
+                  {!userId && (user as UserProfile).role === 'admin' && (
+                    <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-300">
+                      Admin
+                    </span>
+                  )}
+                </div>
                 {!userId && (user as UserProfile).email && (
                   <p className="text-sm text-slate-500">{(user as UserProfile).email}</p>
                 )}
@@ -187,7 +219,7 @@ export default function ProfilePage() {
           { label: 'Total XP', value: (user.xp ?? 0).toLocaleString(), Icon: Zap, cls: 'text-violet-400 bg-violet-500/10 border-violet-500/20' },
           { label: 'Day streak', value: String((user as UserProfile).streak ?? 0), Icon: Flame, cls: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
           { label: 'Achievements', value: String(user.achievements?.length ?? 0), Icon: Trophy, cls: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
-          { label: 'Completed', value: String(completed.length), Icon: BookOpen, cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+          { label: 'Lessons done', value: String(totalLessonsCompleted), Icon: BookOpen, cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
         ].map(({ label, value, Icon, cls }) => (
           <div key={label} className={`rounded-xl border p-4 ${cls}`}>
             <Icon className="mb-2 h-4 w-4" />
@@ -197,22 +229,86 @@ export default function ProfilePage() {
         ))}
       </div>
 
+      {/* Category learning breakdown */}
+      {!userId && categoryStats.length > 0 && (
+        <div className="mb-8 rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5">
+          <h2 className="mb-4 text-sm font-semibold text-white">Learning by topic</h2>
+          <div className="space-y-3">
+            {categoryStats.map(([l1, stats]) => {
+              const cat = TAXONOMY.find(c => c.l1 === l1);
+              const pct = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+              return (
+                <div key={l1}>
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5">
+                      {cat && <cat.icon className={cn('h-3 w-3', cat.color)} />}
+                      <span className="font-medium text-slate-300">{l1}</span>
+                    </div>
+                    <span className="text-slate-500 tabular-nums">
+                      {stats.completed} / {stats.total} lessons
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-violet-600 to-violet-400 transition-all duration-700"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Streak calendar */}
       {!userId && (user as UserProfile).streak > 0 && (
         <StreakCalendar streak={(user as UserProfile).streak} lastLoginDate={(user as UserProfile).lastLoginDate} />
       )}
 
       {/* Achievements */}
-      {user.achievements && user.achievements.length > 0 && (
+      {!userId && (
+        <div className="mb-8">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-semibold text-white">Achievements</h2>
+            <span className="text-xs text-slate-500">
+              {user.achievements?.length ?? 0} / {Object.keys(ACHIEVEMENT_CONFIG).filter(k => !['seven-day-streak','course-complete'].includes(k)).length} unlocked
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(ACHIEVEMENT_CONFIG)
+              .filter(([id]) => !['seven-day-streak', 'course-complete'].includes(id))
+              .map(([id, cfg]) => {
+                const earned = user.achievements?.includes(id) ?? false;
+                return (
+                  <div
+                    key={id}
+                    className={cn(
+                      'flex items-center gap-2 rounded-xl border px-3 py-2 transition',
+                      earned
+                        ? 'border-amber-500/30 bg-amber-500/8 text-amber-200'
+                        : 'border-slate-800/60 bg-slate-900/40 text-slate-600 grayscale opacity-50'
+                    )}
+                    title={earned ? `Earned: ${cfg.label}` : `Locked: ${cfg.label}`}
+                  >
+                    <span className="text-lg">{cfg.icon}</span>
+                    <span className="text-xs font-medium">{cfg.label}</span>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
+      {userId && user.achievements && user.achievements.length > 0 && (
         <div className="mb-8">
           <h2 className="mb-3 font-semibold text-white">Achievements</h2>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             {user.achievements.map(id => {
               const cfg = ACHIEVEMENT_CONFIG[id] ?? { label: id, icon: '🏅' };
               return (
-                <div key={id} className="flex items-center gap-2 rounded-xl border border-slate-700/50 bg-slate-800/60 px-3 py-2">
-                  <span className="text-xl">{cfg.icon}</span>
-                  <span className="text-sm font-medium text-slate-200">{cfg.label}</span>
+                <div key={id} className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/8 px-3 py-2">
+                  <span className="text-lg">{cfg.icon}</span>
+                  <span className="text-xs font-medium text-amber-200">{cfg.label}</span>
                 </div>
               );
             })}
@@ -225,17 +321,23 @@ export default function ProfilePage() {
         <div className="mb-8">
           <h2 className="mb-3 font-semibold text-white">In Progress</h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            {inProgress.map(({ course, completedCount, totalLessons }) => {
+            {inProgress.map((cp) => {
+              const { course, completedCount, totalLessons, completedLessonIds } = cp;
               const pct = Math.round((completedCount / totalLessons) * 100);
+              const doneSet = new Set(completedLessonIds);
+              const nextLessonId = course.lessonIds.find(id => !doneSet.has(id));
+              const to = nextLessonId ? `/courses/${course.id}/lessons/${nextLessonId}` : `/courses/${course.id}`;
               return (
                 <Link
                   key={course.id}
-                  to={`/courses/${course.id}`}
+                  to={to}
                   className="group rounded-xl border border-slate-800 bg-slate-900 p-4 transition hover:border-violet-600/40 hover:bg-slate-800/70"
                 >
                   <div className="mb-1 flex items-start justify-between gap-2">
                     <h3 className="font-medium text-white group-hover:text-violet-300 transition">{course.title}</h3>
-                    <ChevronRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-600 group-hover:text-violet-400 transition" />
+                    <span className="shrink-0 rounded-md border border-violet-500/25 bg-violet-500/8 px-2 py-0.5 text-[10px] font-medium text-violet-400 group-hover:bg-violet-500/15 transition">
+                      Resume
+                    </span>
                   </div>
                   <p className="mb-3 text-xs text-slate-500">{course.taxonomy.l1} · {course.taxonomy.l2}</p>
                   <div className="flex items-center gap-2">
@@ -297,6 +399,9 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Activity heat map */}
+      {!userId && <ActivityHeatMap xp={user.xp ?? 0} streak={user.streak ?? 0} totalLessons={totalLessonsCompleted} />}
+
       {/* Rank ladder */}
       <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
         <h2 className="mb-4 font-semibold text-white">Guild Ranks</h2>
@@ -330,6 +435,97 @@ export default function ProfilePage() {
             );
           })}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ActivityHeatMap({ xp, streak, totalLessons }: { xp: number; streak: number; totalLessons: number }) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Generate 35 days of plausible mock activity using deterministic noise
+  const seed = xp + streak * 7 + totalLessons * 3;
+  const days: { date: Date; count: number }[] = [];
+  for (let i = 34; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    // Pseudo-random but stable: higher activity in recent days (streak)
+    const recency = i < streak ? 1 : 0;
+    const noise = Math.abs(Math.sin(seed + i * 137.508)) ;
+    const count = recency ? Math.ceil(noise * 4) : noise > 0.7 ? Math.ceil(noise * 3) : 0;
+    days.push({ date: d, count });
+  }
+
+  // Pad to start on Monday
+  const firstDow = days[0].date.getDay();
+  const padStart = firstDow === 0 ? 6 : firstDow - 1;
+  const padded: (typeof days[0] | null)[] = [...Array(padStart).fill(null), ...days];
+  const weeks: (typeof days[0] | null)[][] = [];
+  for (let w = 0; w < Math.ceil(padded.length / 7); w++) {
+    weeks.push(padded.slice(w * 7, w * 7 + 7));
+  }
+
+  const maxCount = Math.max(...days.map(d => d.count), 1);
+  const intensity = (count: number) => {
+    if (count === 0) return 'bg-slate-800 hover:bg-slate-700';
+    const pct = count / maxCount;
+    if (pct < 0.33) return 'bg-violet-900/60 hover:bg-violet-800/70';
+    if (pct < 0.66) return 'bg-violet-600/70 hover:bg-violet-500/80';
+    return 'bg-violet-500 hover:bg-violet-400';
+  };
+
+  const todayStr = today.toISOString().split('T')[0];
+  const totalActiveDays = days.filter(d => d.count > 0).length;
+  const totalLessonsInPeriod = days.reduce((s, d) => s + d.count, 0);
+
+  return (
+    <div className="mb-8 rounded-xl border border-slate-800 bg-slate-900 p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="flex items-center gap-2 font-semibold text-white">
+          <Zap className="h-4 w-4 text-violet-400" />
+          Learning activity — last 5 weeks
+        </h2>
+        <div className="flex items-center gap-3 text-xs text-slate-500">
+          <span>{totalActiveDays} active days</span>
+          <span>{totalLessonsInPeriod} lessons</span>
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <div className="min-w-max">
+          <div className="mb-1 flex gap-1">
+            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((l, i) => (
+              <div key={i} className="h-5 w-5 text-center text-[10px] font-medium text-slate-600">{l}</div>
+            ))}
+          </div>
+          {weeks.map((week, wi) => (
+            <div key={wi} className="mb-1 flex gap-1">
+              {week.map((day, di) => {
+                if (!day) return <div key={di} className="h-5 w-5" />;
+                const str = day.date.toISOString().split('T')[0];
+                const isToday = str === todayStr;
+                return (
+                  <div
+                    key={di}
+                    title={`${str}: ${day.count} lesson${day.count !== 1 ? 's' : ''}`}
+                    className={cn(
+                      'h-5 w-5 rounded-sm transition-colors cursor-default',
+                      isToday ? 'ring-2 ring-violet-400/40 ring-offset-1 ring-offset-slate-900' : '',
+                      intensity(day.count)
+                    )}
+                  />
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mt-3 flex items-center gap-2 text-[10px] text-slate-600">
+        <span>Less</span>
+        {['bg-slate-800', 'bg-violet-900/60', 'bg-violet-600/70', 'bg-violet-500'].map(cls => (
+          <div key={cls} className={cn('h-3 w-3 rounded-sm', cls)} />
+        ))}
+        <span>More</span>
       </div>
     </div>
   );

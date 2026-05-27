@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Search, Star, Clock, X, BookOpen, ChevronRight } from 'lucide-react';
+import { Search, Star, Clock, X, BookOpen, ChevronRight, Bookmark } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { cn } from '../lib/utils';
 import { TAXONOMY } from '../data/taxonomy';
@@ -23,10 +23,34 @@ export default function CoursesPage() {
   const filterL1 = searchParams.get('l1') ?? '';
   const filterL2 = searchParams.get('l2') ?? '';
   const filterDiff = searchParams.get('difficulty') ?? '';
+  const filterTag = searchParams.get('tag') ?? '';
+  const sortBy = (searchParams.get('sort') ?? 'newest') as 'newest' | 'rating' | 'popular';
 
   // Local search state with debounced URL sync
   const [search, setSearch] = useState(searchParams.get('search') ?? '');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestionIdx, setSuggestionIdx] = useState(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const [recentCourses] = useState<Array<{ id: string; title: string; l1: string; l2: string; difficulty: string }>>(() => {
+    try { return JSON.parse(localStorage.getItem('sg-recent-courses') ?? '[]'); }
+    catch { return []; }
+  });
+
+  const [bookmarks, setBookmarks] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('sg-bookmarks') ?? '[]')); }
+    catch { return new Set(); }
+  });
+  const toggleBookmark = useCallback((courseId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setBookmarks(prev => {
+      const next = new Set(prev);
+      if (next.has(courseId)) next.delete(courseId); else next.add(courseId);
+      localStorage.setItem('sg-bookmarks', JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
 
   // Press '/' anywhere to focus search (skip when typing in another input)
   useEffect(() => {
@@ -71,6 +95,24 @@ export default function CoursesPage() {
     }, { replace: true });
   }
 
+  function setSort(s: string) {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (s === 'newest') next.delete('sort');
+      else next.set('sort', s);
+      return next;
+    }, { replace: true });
+  }
+
+  function setTag(tag: string) {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (filterTag === tag) next.delete('tag');
+      else next.set('tag', tag);
+      return next;
+    }, { replace: true });
+  }
+
   function clearAll() {
     setSearch('');
     setSearchParams({});
@@ -78,7 +120,7 @@ export default function CoursesPage() {
 
   const activeCat = TAXONOMY.find(c => c.l1 === filterL1);
   const activeItem = activeCat?.items.find(i => i.l2 === filterL2);
-  const hasFilters = !!(filterL1 || filterL2 || filterDiff || search.trim());
+  const hasFilters = !!(filterL1 || filterL2 || filterDiff || search.trim() || filterTag);
 
   const { data: courses, isLoading } = useQuery<Course[]>({
     queryKey: ['courses', filterL1, filterL2, filterDiff, search],
@@ -104,7 +146,7 @@ export default function CoursesPage() {
     enabled: isAuthenticated,
   });
 
-  const progressMap = allProgress
+  const progressMap = Array.isArray(allProgress)
     ? new Map(allProgress.map(p => [
         p.courseId,
         { completed: p.completedLessonIds.length, lastAccessed: p.lastAccessedAt, completedIds: new Set(p.completedLessonIds) },
@@ -118,42 +160,166 @@ export default function CoursesPage() {
       }, {} as Record<string, number>)
     : {};
 
+  const difficultyCounts = allCourses
+    ? DIFFICULTIES.reduce((acc, d) => {
+        acc[d] = allCourses.filter(c => c.difficulty === d).length;
+        return acc;
+      }, {} as Record<string, number>)
+    : {};
+
+  const suggestions = search.trim().length >= 2 && allCourses
+    ? allCourses
+        .filter(c => c.title.toLowerCase().includes(search.toLowerCase().trim()))
+        .slice(0, 6)
+    : [];
+
+  // Top 10 tags by frequency across all courses
+  const popularTags = allCourses
+    ? Object.entries(
+        allCourses.flatMap(c => c.tags ?? []).reduce((acc, t) => { acc[t] = (acc[t] ?? 0) + 1; return acc; }, {} as Record<string, number>)
+      )
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([tag]) => tag)
+    : [];
+
+  const totalHours = allCourses
+    ? Math.round(allCourses.reduce((s, c) => s + (c.estimatedMinutes ?? 0), 0) / 60)
+    : 0;
+
+  const sortedCourses = courses ? [...courses].sort((a, b) => {
+    if (sortBy === 'rating') return (b.ratingAverage ?? 0) - (a.ratingAverage ?? 0);
+    if (sortBy === 'popular') return (b.ratingCount ?? 0) - (a.ratingCount ?? 0);
+    // newest: sort by publishedAt or createdAt descending
+    const dateA = new Date(a.publishedAt ?? a.createdAt ?? 0).getTime();
+    const dateB = new Date(b.publishedAt ?? b.createdAt ?? 0).getTime();
+    return dateB - dateA;
+  }) : courses;
+
+  const showBookmarkedOnly = searchParams.get('saved') === '1';
+  const displayCourses = (() => {
+    let list = filterTag ? sortedCourses?.filter(c => c.tags?.includes(filterTag)) : sortedCourses;
+    if (showBookmarkedOnly) list = list?.filter(c => bookmarks.has(c.id));
+    return list;
+  })();
+
   return (
     <div className="min-h-full px-4 py-8 lg:px-10 lg:py-10">
       {/* Header */}
       <div className="mb-7">
         <h1 className="mb-1 text-2xl font-bold text-white lg:text-3xl">Browse courses</h1>
         <p className="text-sm text-slate-400">
-          {courses ? `${courses.length} course${courses.length !== 1 ? 's' : ''} available` : 'Loading…'}
+          {displayCourses
+            ? `${displayCourses.length} course${displayCourses.length !== 1 ? 's' : ''} available`
+            : 'Loading…'}
+          {!hasFilters && totalHours > 0 && (
+            <span className="ml-2 text-slate-600">· {totalHours}+ hours of content</span>
+          )}
         </p>
       </div>
 
       {/* Search bar */}
       <div className="mb-4 relative max-w-2xl">
-        <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 pointer-events-none" />
+        <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 pointer-events-none z-10" />
         <input
           ref={searchInputRef}
           type="search"
           placeholder="Search courses… (press / to focus)"
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => { setSearch(e.target.value); setShowSuggestions(true); setSuggestionIdx(-1); }}
+          onFocus={() => setShowSuggestions(true)}
+          onBlur={() => setTimeout(() => { setShowSuggestions(false); setSuggestionIdx(-1); }, 150)}
+          onKeyDown={e => {
+            if (!showSuggestions || suggestions.length === 0) return;
+            if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              setSuggestionIdx(i => Math.min(i + 1, suggestions.length - 1));
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              setSuggestionIdx(i => Math.max(i - 1, -1));
+            } else if (e.key === 'Enter' && suggestionIdx >= 0) {
+              e.preventDefault();
+              navigate(`/courses/${suggestions[suggestionIdx].id}`);
+              setShowSuggestions(false);
+            } else if (e.key === 'Escape') {
+              setShowSuggestions(false);
+              setSuggestionIdx(-1);
+            }
+          }}
           className="w-full rounded-2xl border border-slate-700/60 bg-slate-900/60 py-3 pl-11 pr-4 text-sm text-white placeholder-slate-500 outline-none transition focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500/30"
         />
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-slate-500 hover:text-slate-300 transition"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-slate-500 hover:text-slate-300 transition z-10"
           >
             <X className="h-4 w-4" />
           </button>
         )}
+        {/* Autocomplete dropdown */}
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="absolute top-full left-0 right-0 z-30 mt-1.5 overflow-hidden rounded-xl border border-slate-700/60 bg-slate-900 shadow-2xl shadow-black/50">
+            {suggestions.map((c, idx) => {
+              const cat = TAXONOMY.find(t => t.l1 === c.taxonomy.l1);
+              return (
+                <button
+                  key={c.id}
+                  onMouseDown={() => navigate(`/courses/${c.id}`)}
+                  className={cn(
+                    'flex w-full items-center gap-3 px-4 py-2.5 text-left transition',
+                    idx === suggestionIdx ? 'bg-slate-800/80' : 'hover:bg-slate-800/60'
+                  )}
+                >
+                  {cat && (
+                    <span className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-md', cat.bgColor)}>
+                      <cat.icon className={cn('h-3 w-3', cat.color)} />
+                    </span>
+                  )}
+                  <span className="flex-1 truncate text-sm text-slate-200">{c.title}</span>
+                  <span className="shrink-0 text-xs text-slate-600 capitalize">{c.difficulty}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
+
+      {/* Popular tags strip */}
+      {!hasFilters && popularTags.length > 0 && (
+        <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-0.5 -mx-1 px-1 scrollbar-thin">
+          <span className="shrink-0 text-[11px] font-medium text-slate-600">Popular:</span>
+          {popularTags.map(tag => (
+            <button
+              key={tag}
+              onClick={() => setTag(tag)}
+              className="shrink-0 rounded-full border border-slate-700/60 bg-slate-900/40 px-3 py-1 text-xs text-slate-400 transition hover:border-violet-500/40 hover:bg-violet-500/8 hover:text-violet-300"
+            >
+              #{tag}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Active tag chip */}
+      {filterTag && (
+        <div className="mb-3 flex items-center gap-2">
+          <span className="text-xs text-slate-500">Tag:</span>
+          <button
+            onClick={() => setTag(filterTag)}
+            className="flex items-center gap-1 rounded-full border border-violet-500/40 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-300 transition hover:bg-violet-500/20"
+          >
+            #{filterTag}
+            <X className="ml-0.5 h-3 w-3" />
+          </button>
+        </div>
+      )}
 
       {/* Difficulty chips */}
       <div className="mb-6 flex flex-wrap items-center gap-2">
         <span className="text-xs text-slate-600 font-medium">Level:</span>
         {DIFFICULTIES.map(d => {
           const isActive = filterDiff === d;
+          const count = difficultyCounts[d] ?? 0;
           return (
             <button
               key={d}
@@ -166,19 +332,88 @@ export default function CoursesPage() {
               )}
             >
               {DIFFICULTY_STYLES[d].label}
+              {count > 0 && (
+                <span className={cn('ml-1 font-normal', isActive ? 'opacity-70' : 'text-slate-700')}>
+                  ({count})
+                </span>
+              )}
             </button>
           );
         })}
+        <div className="ml-auto flex items-center gap-2">
+          {bookmarks.size > 0 && (
+            <button
+              onClick={() => setSearchParams(prev => {
+                const next = new URLSearchParams(prev);
+                if (showBookmarkedOnly) next.delete('saved'); else next.set('saved', '1');
+                return next;
+              }, { replace: true })}
+              className={cn(
+                'flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all duration-150',
+                showBookmarkedOnly
+                  ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
+                  : 'border-slate-700/60 text-slate-500 hover:border-slate-600 hover:text-slate-300'
+              )}
+            >
+              <Bookmark className="h-3 w-3" />
+              Saved ({bookmarks.size})
+            </button>
+          )}
+          <span className="text-xs text-slate-600 font-medium">Sort:</span>
+          {(['newest', 'rating', 'popular'] as const).map(s => (
+            <button
+              key={s}
+              onClick={() => setSort(s)}
+              className={cn(
+                'rounded-full border px-3 py-1 text-xs font-medium capitalize transition-all duration-150',
+                sortBy === s
+                  ? 'border-violet-500/50 bg-violet-500/10 text-violet-400'
+                  : 'border-slate-700/60 text-slate-500 hover:border-slate-600 hover:text-slate-300'
+              )}
+            >
+              {s === 'newest' ? 'Newest' : s === 'rating' ? 'Top rated' : 'Popular'}
+            </button>
+          ))}
+        </div>
         {hasFilters && (
           <button
             onClick={clearAll}
-            className="ml-auto flex items-center gap-1.5 rounded-full border border-slate-700/40 px-3 py-1 text-xs text-slate-500 transition hover:border-red-500/30 hover:text-red-400"
+            className="flex items-center gap-1.5 rounded-full border border-slate-700/40 px-3 py-1 text-xs text-slate-500 transition hover:border-red-500/30 hover:text-red-400"
           >
             <X className="h-3 w-3" />
             Clear all
           </button>
         )}
       </div>
+
+      {/* Recently viewed strip */}
+      {!hasFilters && recentCourses.length > 0 && (
+        <div className="mb-8">
+          <h2 className="mb-3 text-sm font-semibold text-slate-400">Recently viewed</h2>
+          <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 snap-x">
+            {recentCourses.map(c => {
+              const cat = TAXONOMY.find(t => t.l1 === c.l1);
+              const diffColor = { beginner: 'text-emerald-400', intermediate: 'text-amber-400', advanced: 'text-red-400' }[c.difficulty as 'beginner' | 'intermediate' | 'advanced'] ?? 'text-slate-400';
+              return (
+                <Link
+                  key={c.id}
+                  to={`/courses/${c.id}`}
+                  className="group snap-start shrink-0 w-48 rounded-xl border border-slate-800/60 bg-slate-900/50 p-3.5 transition-all hover:border-violet-500/30 hover:bg-slate-900/80 hover:-translate-y-0.5"
+                >
+                  {cat && (
+                    <span className={cn('mb-2 inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium', cat.bgColor, cat.color)}>
+                      <cat.icon className="h-2.5 w-2.5" />
+                      {c.l1}
+                    </span>
+                  )}
+                  <p className="text-xs font-semibold text-slate-200 group-hover:text-white transition line-clamp-2 leading-snug">{c.title}</p>
+                  <p className={`mt-1 text-[11px] capitalize ${diffColor}`}>{c.difficulty}</p>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* In-progress resume strip */}
       {!hasFilters && isAuthenticated && (() => {
@@ -235,6 +470,58 @@ export default function CoursesPage() {
       })()}
 
       {/* Category overview — shown only when no filters are active */}
+      {/* Top-rated strip — shown only when no filters active */}
+      {!hasFilters && !isLoading && allCourses && allCourses.length > 0 && (() => {
+        const topRated = [...allCourses]
+          .filter(c => c.ratingCount >= 30)
+          .sort((a, b) => (b.ratingAverage * Math.log(b.ratingCount + 1)) - (a.ratingAverage * Math.log(a.ratingCount + 1)))
+          .slice(0, 3);
+        if (topRated.length === 0) return null;
+        return (
+          <div className="mb-8">
+            <h2 className="mb-3 text-sm font-semibold text-slate-400 flex items-center gap-1.5">
+              <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+              Top rated this week
+            </h2>
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+              {topRated.map((course, i) => {
+                const cat = TAXONOMY.find(c => c.l1 === course.taxonomy.l1);
+                const diff = DIFFICULTY_STYLES[course.difficulty];
+                return (
+                  <Link
+                    key={course.id}
+                    to={`/courses/${course.id}`}
+                    className="group flex items-center gap-3 rounded-2xl border border-amber-500/15 bg-gradient-to-r from-amber-500/5 to-slate-900/40 p-4 transition-all hover:border-amber-500/30 hover:bg-amber-500/8"
+                  >
+                    <div className="relative flex-shrink-0">
+                      <span className={cn('flex h-10 w-10 items-center justify-center rounded-xl', cat?.bgColor ?? 'bg-slate-800')}>
+                        {cat ? <cat.icon className={cn('h-5 w-5', cat.color)} /> : <BookOpen className="h-5 w-5 text-slate-500" />}
+                      </span>
+                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-slate-900">
+                        {i + 1}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-semibold text-slate-200 group-hover:text-white transition leading-snug">{course.title}</p>
+                      <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-600">
+                        <span className="flex items-center gap-0.5 text-amber-400">
+                          <Star className="h-2.5 w-2.5 fill-amber-400" />
+                          {course.ratingAverage.toFixed(1)}
+                        </span>
+                        <span>·</span>
+                        <span className={cn('capitalize font-medium', diff.classes.split(' ')[0])}>{course.difficulty}</span>
+                        <span>·</span>
+                        <span>{course.estimatedMinutes}m</span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       {!hasFilters && !isLoading && (
         <div className="mb-8">
           <h2 className="mb-3 text-sm font-semibold text-slate-400">Browse by topic</h2>
@@ -338,25 +625,77 @@ export default function CoursesPage() {
       )}
 
       {/* Empty state */}
-      {!isLoading && courses?.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="mb-4 rounded-2xl bg-slate-900/50 p-5">
-            <Search className="h-8 w-8 text-slate-600" />
+      {!isLoading && (displayCourses?.length === 0) && (() => {
+        // Build suggestions: courses that share any word with the search query or match the tag filter
+        const queryWords = search.trim().toLowerCase().split(/\s+/).filter(w => w.length >= 3);
+        const suggestions = allCourses
+          ? allCourses
+              .filter(c => {
+                if (filterTag && c.tags?.includes(filterTag)) return true;
+                if (queryWords.some(w =>
+                  c.title.toLowerCase().includes(w) ||
+                  c.taxonomy.l1.toLowerCase().includes(w) ||
+                  c.tags?.some(t => t.includes(w))
+                )) return true;
+                if (filterL1 && c.taxonomy.l1 === filterL1) return true;
+                return false;
+              })
+              .slice(0, 3)
+          : [];
+        return (
+          <div className="py-12 text-center">
+            <div className="mb-4 inline-flex rounded-2xl bg-slate-900/50 p-4">
+              <Search className="h-7 w-7 text-slate-600" />
+            </div>
+            <p className="font-medium text-slate-400">No courses found</p>
+            <p className="mt-1 text-sm text-slate-600">
+              {search.trim() ? `No matches for "${search.trim()}"` : 'Try adjusting your filters'}
+            </p>
+            {suggestions.length > 0 && (
+              <div className="mt-8 text-left max-w-xl mx-auto">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">You might like</p>
+                <div className="space-y-2">
+                  {suggestions.map(c => {
+                    const cat = TAXONOMY.find(t => t.l1 === c.taxonomy.l1);
+                    return (
+                      <Link
+                        key={c.id}
+                        to={`/courses/${c.id}`}
+                        className="flex items-center gap-3 rounded-xl border border-slate-800/60 bg-slate-900/40 p-3 transition hover:border-violet-500/30 hover:bg-slate-900/70"
+                      >
+                        {cat ? (
+                          <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', cat.bgColor)}>
+                            <cat.icon className={cn('h-4 w-4', cat.color)} />
+                          </span>
+                        ) : (
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-800">
+                            <BookOpen className="h-4 w-4 text-slate-500" />
+                          </span>
+                        )}
+                        <div className="min-w-0 flex-1 text-left">
+                          <p className="truncate text-sm font-medium text-slate-200">{c.title}</p>
+                          <p className="text-xs text-slate-500">{c.taxonomy.l1} · {c.difficulty}</p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-slate-600" />
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {hasFilters && (
+              <button onClick={clearAll} className="mt-6 text-xs text-violet-400 hover:text-violet-300 transition">
+                Clear all filters
+              </button>
+            )}
           </div>
-          <p className="text-slate-400 font-medium">No courses found</p>
-          <p className="mt-1 text-sm text-slate-600">Try adjusting your filters or search terms</p>
-          {hasFilters && (
-            <button onClick={clearAll} className="mt-4 text-xs text-violet-400 hover:text-violet-300 transition">
-              Clear all filters
-            </button>
-          )}
-        </div>
-      )}
+        );
+      })()}
 
       {/* Course grid */}
-      {!isLoading && courses && courses.length > 0 && (
+      {!isLoading && displayCourses && displayCourses.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {courses.map(course => {
+          {displayCourses.map(course => {
             const p = progressMap.get(course.id);
             const pct = p && course.totalLessons > 0 ? Math.round((p.completed / course.totalLessons) * 100) : 0;
             const nextLessonId = p && pct > 0 && pct < 100
@@ -369,6 +708,9 @@ export default function CoursesPage() {
                 progressPct={pct}
                 lastAccessedAt={p?.lastAccessed}
                 nextLessonId={nextLessonId}
+                onTagClick={tag => setTag(tag)}
+                bookmarked={bookmarks.has(course.id)}
+                onBookmark={e => toggleBookmark(course.id, e)}
               />
             );
           })}
@@ -421,17 +763,21 @@ function relativeTime(iso: string): string {
   return `${Math.floor(days / 30)}mo ago`;
 }
 
-function CourseCard({ course, progressPct, lastAccessedAt, nextLessonId }: {
+function CourseCard({ course, progressPct, lastAccessedAt, nextLessonId, onTagClick, bookmarked, onBookmark }: {
   course: Course;
   progressPct?: number;
   lastAccessedAt?: string;
+  onTagClick?: (tag: string) => void;
   nextLessonId?: string;
+  bookmarked?: boolean;
+  onBookmark?: (e: React.MouseEvent) => void;
 }) {
   const diff = DIFFICULTY_STYLES[course.difficulty];
   const cat = TAXONOMY.find(c => c.l1 === course.taxonomy.l1);
   const isNew = course.publishedAt
     ? (Date.now() - new Date(course.publishedAt).getTime()) < 30 * 24 * 60 * 60 * 1000
     : false;
+  const isHot = course.ratingAverage >= 4.5 && course.ratingCount >= 40;
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-900/40 transition-all duration-300 hover:border-violet-500/30 hover:bg-slate-900/70 hover:-translate-y-1 hover:shadow-2xl hover:shadow-violet-500/5">
@@ -441,10 +787,29 @@ function CourseCard({ course, progressPct, lastAccessedAt, nextLessonId }: {
     >
       <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-gradient-to-br from-violet-500/5 to-transparent" />
 
-      {isNew && (
-        <div className="absolute right-3 top-3 rounded-full bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
-          New
+      {(isHot || isNew) && !bookmarked && (
+        <div className={cn(
+          'absolute right-3 top-3 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1',
+          isHot
+            ? 'bg-orange-500/20 border-orange-500/30 text-orange-400'
+            : 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400'
+        )}>
+          {isHot ? '🔥 Hot' : 'New'}
         </div>
+      )}
+      {onBookmark && (
+        <button
+          onClick={onBookmark}
+          title={bookmarked ? 'Remove bookmark' : 'Save course'}
+          className={cn(
+            'absolute right-3 top-3 z-10 rounded-lg p-1.5 transition-all',
+            bookmarked
+              ? 'text-amber-400 bg-amber-500/15 opacity-100'
+              : 'text-slate-600 opacity-0 group-hover:opacity-100 hover:text-slate-400 hover:bg-slate-800/60'
+          )}
+        >
+          <Bookmark className={cn('h-4 w-4', bookmarked && 'fill-amber-400')} />
+        </button>
       )}
 
       <div className="relative flex-1 flex flex-col">
@@ -468,7 +833,27 @@ function CourseCard({ course, progressPct, lastAccessedAt, nextLessonId }: {
         </h2>
 
         {/* Description */}
-        <p className="mb-4 flex-1 text-xs text-slate-500 line-clamp-2 leading-relaxed">{course.description}</p>
+        <p className="mb-3 flex-1 text-xs text-slate-500 line-clamp-2 leading-relaxed">{course.description}</p>
+
+        {/* Tags */}
+        {course.tags && course.tags.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-1">
+            {course.tags.slice(0, 3).map(tag => (
+              <button
+                key={tag}
+                onClick={e => { e.preventDefault(); e.stopPropagation(); onTagClick?.(tag); }}
+                className="rounded-full bg-slate-800/60 px-2 py-0.5 text-[10px] text-slate-600 transition hover:bg-slate-700/60 hover:text-slate-400"
+              >
+                #{tag}
+              </button>
+            ))}
+            {course.tags.length > 3 && (
+              <span className="rounded-full bg-slate-800/60 px-2 py-0.5 text-[10px] text-slate-700">
+                +{course.tags.length - 3}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Author + lesson count + last studied */}
         <div className="mb-3 flex items-center justify-between text-xs text-slate-600">

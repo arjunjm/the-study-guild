@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
-import { useState } from 'react';
-import { Share2, Star, Clock, CheckCircle, Circle, ChevronLeft, BookOpen, ArrowRight, Zap, Code2, HelpCircle, GitFork, Award } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Share2, Star, Clock, CheckCircle, Circle, ChevronLeft, BookOpen, ArrowRight, Zap, Code2, HelpCircle, GitFork, Award, Download, X } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { TAXONOMY } from '../data/taxonomy';
 import { cn } from '../lib/utils';
@@ -14,6 +14,7 @@ export default function CourseDetailPage() {
   const toast = useToast();
   const [hoveredRating, setHoveredRating] = useState(0);
   const [submittedRating, setSubmittedRating] = useState(0);
+  const [showCert, setShowCert] = useState(false);
 
   const { data: course } = useQuery<Course>({
     queryKey: ['course', courseId],
@@ -45,12 +46,25 @@ export default function CourseDetailPage() {
     },
   });
 
+  useEffect(() => {
+    if (!course) return;
+    try {
+      const key = 'sg-recent-courses';
+      const prev = JSON.parse(localStorage.getItem(key) ?? '[]') as Array<{ id: string; title: string; l1: string; l2: string; difficulty: string }>;
+      const next = [{ id: course.id, title: course.title, l1: course.taxonomy.l1, l2: course.taxonomy.l2, difficulty: course.difficulty }, ...prev.filter(c => c.id !== course.id)].slice(0, 6);
+      localStorage.setItem(key, JSON.stringify(next));
+    } catch { /* ignore */ }
+  }, [course?.id]);
+
   if (!course) return <CourseDetailSkeleton />;
 
   const completed = progress?.completedLessonIds.length ?? 0;
   const total = lessons?.length ?? 0;
   const pct = total ? Math.round((completed / total) * 100) : 0;
   const firstIncomplete = lessons?.find(l => !progress?.completedLessonIds.includes(l.id));
+  const remainingMinutes = lessons && pct > 0 && pct < 100
+    ? lessons.filter(l => !progress?.completedLessonIds.includes(l.id)).reduce((s, l) => s + l.estimatedMinutes, 0)
+    : 0;
   const diffStyle = { beginner: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20', intermediate: 'text-amber-400 bg-amber-400/10 border-amber-400/20', advanced: 'text-red-400 bg-red-400/10 border-red-400/20' }[course.difficulty];
   const cat = TAXONOMY.find(c => c.l1 === course.taxonomy.l1);
 
@@ -81,7 +95,13 @@ export default function CourseDetailPage() {
           {course.tags && course.tags.length > 0 && (
             <div className="mb-4 flex flex-wrap gap-1.5">
               {course.tags.map(tag => (
-                <span key={tag} className="rounded-full bg-slate-800/80 px-2 py-0.5 text-xs text-slate-500">#{tag}</span>
+                <Link
+                  key={tag}
+                  to={`/courses?search=${encodeURIComponent(tag)}`}
+                  className="rounded-full bg-slate-800/80 px-2 py-0.5 text-xs text-slate-500 transition hover:bg-slate-700/80 hover:text-slate-300"
+                >
+                  #{tag}
+                </Link>
               ))}
             </div>
           )}
@@ -102,22 +122,73 @@ export default function CourseDetailPage() {
       <div className="px-4 py-8 lg:px-10 lg:py-10 max-w-3xl">
         {/* Course completion celebration banner */}
         {pct === 100 && total > 0 && (
-          <div className="mb-8 relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-900/30 via-slate-900 to-slate-900 p-6">
-            <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-emerald-500/10 blur-2xl" />
-            <div className="pointer-events-none absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-amber-500/8 blur-xl" />
-            <div className="relative flex items-center gap-5">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15">
-                <Award className="h-7 w-7 text-emerald-400" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-500 mb-0.5">Course Complete</p>
-                <h2 className="text-lg font-bold text-white">{course.title}</h2>
-                <p className="text-sm text-slate-400">
-                  You've completed all {total} lessons · {course.estimatedMinutes} min of learning
-                </p>
+          <>
+            <div className="mb-6 relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-900/30 via-slate-900 to-slate-900 p-6">
+              <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-emerald-500/10 blur-2xl" />
+              <div className="pointer-events-none absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-amber-500/8 blur-xl" />
+              <div className="relative flex items-center gap-5">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15">
+                  <Award className="h-7 w-7 text-emerald-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-500 mb-0.5">Course Complete</p>
+                  <h2 className="text-lg font-bold text-white">{course.title}</h2>
+                  <p className="text-sm text-slate-400">
+                    You've completed all {total} lessons · {course.estimatedMinutes} min of learning
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowCert(true)}
+                  className="shrink-0 flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
+                >
+                  <Award className="h-4 w-4" />
+                  Certificate
+                </button>
               </div>
             </div>
-          </div>
+            {/* What to learn next */}
+            {relatedCourses && relatedCourses.length > 0 && (() => {
+              const DIFFICULTY_ORDER = { beginner: 0, intermediate: 1, advanced: 2 };
+              const nextLevel = relatedCourses
+                .filter(rc => (DIFFICULTY_ORDER[rc.difficulty] ?? 0) >= (DIFFICULTY_ORDER[course.difficulty] ?? 0))
+                .sort((a, b) => (DIFFICULTY_ORDER[a.difficulty] ?? 0) - (DIFFICULTY_ORDER[b.difficulty] ?? 0))
+                .slice(0, 2);
+              if (nextLevel.length === 0) return null;
+              return (
+                <div className="mb-8 rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5">
+                  <p className="mb-3 text-xs font-bold uppercase tracking-widest text-violet-400">What to learn next</p>
+                  <div className="grid gap-2.5 sm:grid-cols-2">
+                    {nextLevel.map(rc => {
+                      const diff = { beginner: 'text-emerald-400', intermediate: 'text-amber-400', advanced: 'text-red-400' }[rc.difficulty];
+                      const rcCat = TAXONOMY.find(c => c.l1 === rc.taxonomy.l1);
+                      return (
+                        <Link
+                          key={rc.id}
+                          to={`/courses/${rc.id}`}
+                          className="group flex items-center gap-3 rounded-xl border border-slate-800/60 bg-slate-900/60 p-3.5 transition hover:border-violet-500/30 hover:bg-slate-900/80"
+                        >
+                          {rcCat && (
+                            <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg', rcCat.bgColor)}>
+                              <rcCat.icon className={cn('h-4 w-4', rcCat.color)} />
+                            </span>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-slate-200 group-hover:text-violet-200 transition leading-snug">{rc.title}</p>
+                            <div className="mt-0.5 flex items-center gap-2 text-xs">
+                              <span className={cn('font-medium capitalize', diff)}>{rc.difficulty}</span>
+                              <span className="text-slate-600">·</span>
+                              <span className="text-slate-500">{rc.estimatedMinutes}m</span>
+                            </div>
+                          </div>
+                          <ArrowRight className="h-4 w-4 shrink-0 text-slate-600 group-hover:text-violet-400 transition" />
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+          </>
         )}
 
         {/* Progress + CTA */}
@@ -128,7 +199,14 @@ export default function CourseDetailPage() {
                 <p className="text-sm font-medium text-slate-200">
                   {pct === 100 ? 'Course complete!' : pct === 0 ? 'Not started' : 'In progress'}
                 </p>
-                <p className="text-xs text-slate-500 mt-0.5">{completed} of {total} lessons done</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {completed} of {total} lessons done
+                  {remainingMinutes > 0 && (
+                    <span className="ml-1.5">
+                      · <Clock className="inline h-2.5 w-2.5 -mt-0.5" /> {remainingMinutes} min remaining
+                    </span>
+                  )}
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -153,6 +231,21 @@ export default function CourseDetailPage() {
                 className="h-full rounded-full bg-gradient-to-r from-violet-600 to-violet-400 transition-all duration-700"
                 style={{ width: `${pct}%` }}
               />
+            </div>
+          </div>
+        )}
+
+        {/* What you'll learn */}
+        {lessons && lessons.length >= 4 && (
+          <div className="mb-8 rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5">
+            <h2 className="mb-3 text-sm font-semibold text-white">What you'll learn</h2>
+            <div className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+              {lessons.map(lesson => (
+                <div key={lesson.id} className="flex items-start gap-2 text-xs text-slate-400">
+                  <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500/60" />
+                  <span className="leading-relaxed">{lesson.title}</span>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -199,7 +292,18 @@ export default function CourseDetailPage() {
                       )}
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-slate-700 opacity-0 group-hover:opacity-100 transition" />
+                  <div className="flex items-center gap-2 shrink-0">
+                    {done ? (
+                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-500">
+                        earned
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-400">
+                        +{hasQuiz ? '10–40' : '10'} XP
+                      </span>
+                    )}
+                    <ArrowRight className="h-4 w-4 text-slate-700 opacity-0 group-hover:opacity-100 transition" />
+                  </div>
                 </Link>
               );
             })}
@@ -281,13 +385,21 @@ export default function CourseDetailPage() {
                     className="group rounded-xl border border-slate-800/60 bg-slate-900/40 p-4 transition-all hover:border-violet-500/30 hover:bg-slate-900/70"
                   >
                     <p className="mb-1 text-xs text-slate-500">{rc.taxonomy.l2}</p>
-                    <h3 className="mb-2 text-sm font-semibold text-slate-200 group-hover:text-violet-300 transition leading-snug">{rc.title}</h3>
+                    <h3 className="mb-2 text-sm font-semibold text-slate-200 group-hover:text-violet-300 transition leading-snug line-clamp-2">{rc.title}</h3>
                     <div className="flex items-center justify-between text-xs">
                       <span className={cn('font-medium capitalize', diff)}>{rc.difficulty}</span>
-                      <span className="flex items-center gap-1 text-slate-600">
-                        <Clock className="h-3 w-3" />
-                        {rc.estimatedMinutes}m
-                      </span>
+                      <div className="flex items-center gap-2 text-slate-600">
+                        {rc.ratingAverage > 0 && (
+                          <span className="flex items-center gap-0.5 text-amber-400">
+                            <Star className="h-3 w-3 fill-current" />
+                            <span className="text-slate-400">{rc.ratingAverage.toFixed(1)}</span>
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {rc.estimatedMinutes}m
+                        </span>
+                      </div>
                     </div>
                   </Link>
                 );
@@ -297,6 +409,77 @@ export default function CourseDetailPage() {
         )}
       </div>
     </div>
+
+    {/* Certificate modal */}
+    {showCert && course && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+        onClick={e => { if (e.target === e.currentTarget) setShowCert(false); }}
+      >
+        <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 shadow-2xl shadow-emerald-500/10">
+          {/* Decorative background */}
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-emerald-500/8 blur-3xl" />
+            <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-amber-500/8 blur-3xl" />
+          </div>
+
+          <button
+            onClick={() => setShowCert(false)}
+            className="absolute right-4 top-4 z-10 rounded-lg p-1.5 text-slate-600 transition hover:text-slate-400"
+          >
+            <X className="h-4 w-4" />
+          </button>
+
+          {/* Certificate body */}
+          <div className="relative px-10 py-12 text-center">
+            {/* Guild seal */}
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border-2 border-amber-500/40 bg-amber-500/10 shadow-lg shadow-amber-500/10">
+              <Award className="h-10 w-10 text-amber-400" />
+            </div>
+
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.25em] text-slate-500">Certificate of Completion</p>
+            <p className="mb-1 text-sm text-slate-400">This certifies that</p>
+            <p className="mb-3 font-display text-2xl font-bold text-white">Guild Member</p>
+            <p className="mb-1 text-sm text-slate-400">has successfully completed</p>
+            <p className="mb-6 font-display text-xl font-bold text-amber-300 leading-snug">{course.title}</p>
+
+            <div className="mb-8 flex justify-center gap-8 text-center text-xs text-slate-500">
+              <div>
+                <p className="font-semibold text-slate-300">{total}</p>
+                <p>Lessons</p>
+              </div>
+              <div>
+                <p className="font-semibold text-slate-300">{course.estimatedMinutes} min</p>
+                <p>Study time</p>
+              </div>
+              <div>
+                <p className="font-semibold capitalize text-slate-300">{course.difficulty}</p>
+                <p>Level</p>
+              </div>
+            </div>
+
+            {/* Decorative border line */}
+            <div className="mb-6 flex items-center gap-3">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+              <Star className="h-3 w-3 text-amber-500/60 fill-amber-500/60" />
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+            </div>
+
+            <p className="mb-6 text-xs text-slate-600">The Study Guild · {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`I just completed "${course.title}" on The Study Guild! 🎓`).then(() => toast.success('Copied to clipboard!', 'Share your achievement'));
+              }}
+              className="flex items-center gap-2 mx-auto rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
+            >
+              <Download className="h-4 w-4" />
+              Share achievement
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   );
 }
 

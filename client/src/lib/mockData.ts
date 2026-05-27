@@ -11,6 +11,7 @@ let _displayName = 'Dev Guildmate';
 let _bio: string | undefined = undefined;
 const _completedLessons = new Set<string>();
 const _achievements = new Set<string>(['first-lesson', 'seven-day-streak']);
+const _lessonOverrides = new Map<string, Partial<Lesson>>();
 
 const BASE_USER = {
   id: 'dev-user-001',
@@ -104,6 +105,26 @@ export function getMockProgress(courseId: string): UserCourseProgress {
     lastAccessedAt: new Date().toISOString(),
     quizScores: {},
   };
+}
+
+export function getAllMockProgress(): UserCourseProgress[] {
+  return MOCK_COURSES
+    .map(course => getMockProgress(course.id))
+    .filter(p => p.completedLessonIds.length > 0);
+}
+
+export function getMockLesson(lessonId: string): Lesson | undefined {
+  const base = MOCK_LESSONS.find(l => l.id === lessonId);
+  if (!base) return undefined;
+  const override = _lessonOverrides.get(lessonId);
+  return override ? { ...base, ...override } : base;
+}
+
+export function putMockLesson(lessonId: string, updates: Partial<Lesson>): Lesson | undefined {
+  const base = MOCK_LESSONS.find(l => l.id === lessonId);
+  if (!base) return undefined;
+  _lessonOverrides.set(lessonId, { ..._lessonOverrides.get(lessonId), ...updates });
+  return getMockLesson(lessonId)!;
 }
 
 // ---------------------------------------------------------------------------
@@ -738,6 +759,44 @@ export const MOCK_COURSES: Course[] = [
     updatedAt: '2025-05-26T00:00:00.000Z',
   },
   {
+    id: 'course-redis',
+    title: 'Redis & Caching Strategies',
+    description: 'Master Redis data structures, learn when and how to cache, implement cache invalidation patterns, and avoid the pitfalls that trip up teams in production.',
+    taxonomy: { l1: 'Databases', l2: 'NoSQL' },
+    difficulty: 'intermediate',
+    authorId: 'teacher-001',
+    authorName: 'The Guild',
+    published: true,
+    publishedAt: '2025-05-26T00:00:00.000Z',
+    tags: ['redis', 'caching', 'databases', 'performance', 'nosql'],
+    lessonIds: ['lesson-redis-1', 'lesson-redis-2', 'lesson-redis-3'],
+    totalLessons: 3,
+    estimatedMinutes: 43,
+    ratingAverage: 4.7,
+    ratingCount: 41,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
+  },
+  {
+    id: 'course-docker',
+    title: 'Docker Fundamentals',
+    description: 'Understand containers from the ground up — how images are built in layers, how containers are isolated from the host, how networking works, and how Docker Compose orchestrates multi-container apps.',
+    taxonomy: { l1: 'Cloud', l2: 'Kubernetes' },
+    difficulty: 'beginner',
+    authorId: 'teacher-001',
+    authorName: 'The Guild',
+    published: true,
+    publishedAt: '2025-05-26T00:00:00.000Z',
+    tags: ['docker', 'containers', 'devops', 'kubernetes', 'cloud'],
+    lessonIds: ['lesson-docker-1', 'lesson-docker-2', 'lesson-docker-3'],
+    totalLessons: 3,
+    estimatedMinutes: 42,
+    ratingAverage: 4.8,
+    ratingCount: 52,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
+  },
+  {
     id: 'course-sys-perf',
     title: 'Systems Performance & Profiling',
     description: 'Learn to find and fix performance bottlenecks in production systems. Master profiling tools, understand CPU caches, I/O patterns, and how to reason about latency at scale.',
@@ -755,6 +814,82 @@ export const MOCK_COURSES: Course[] = [
     ratingCount: 36,
     createdAt: '2025-05-26T00:00:00.000Z',
     updatedAt: '2025-05-26T00:00:00.000Z',
+  },
+  {
+    id: 'course-react-perf',
+    title: 'React Performance Optimization',
+    description: 'Learn to build React apps that stay fast as they grow. Master memoization, code splitting, virtual list rendering, concurrent features, and how to use DevTools to identify real bottlenecks.',
+    taxonomy: { l1: 'Web Development', l2: 'Frontend' },
+    difficulty: 'advanced',
+    authorId: 'teacher-001',
+    authorName: 'The Guild',
+    published: true,
+    publishedAt: '2026-05-23T00:00:00.000Z',
+    tags: ['react', 'performance', 'memoization', 'code-splitting', 'profiler', 'concurrent'],
+    lessonIds: ['lesson-rperf-1', 'lesson-rperf-2', 'lesson-rperf-3'],
+    totalLessons: 3,
+    estimatedMinutes: 48,
+    ratingAverage: 4.9,
+    ratingCount: 31,
+    createdAt: '2026-05-23T00:00:00.000Z',
+    updatedAt: '2026-05-23T00:00:00.000Z',
+  },
+  {
+    id: 'course-grpc',
+    title: 'gRPC & Protocol Buffers',
+    description: 'Learn the modern way to build fast, typed service-to-service APIs. Master Protocol Buffers schema design, gRPC service definitions, streaming patterns, and how gRPC compares to REST.',
+    taxonomy: { l1: 'Web Development', l2: 'APIs' },
+    difficulty: 'intermediate',
+    authorId: 'teacher-001',
+    authorName: 'The Guild',
+    published: true,
+    publishedAt: '2026-05-25T00:00:00.000Z',
+    tags: ['grpc', 'protobuf', 'protocol-buffers', 'microservices', 'streaming', 'api'],
+    lessonIds: ['lesson-grpc-1', 'lesson-grpc-2', 'lesson-grpc-3'],
+    totalLessons: 3,
+    estimatedMinutes: 44,
+    ratingAverage: 4.8,
+    ratingCount: 22,
+    createdAt: '2026-05-25T00:00:00.000Z',
+    updatedAt: '2026-05-25T00:00:00.000Z',
+  },
+  {
+    id: 'course-observability',
+    title: 'Observability & Monitoring in Production',
+    description: 'Learn how to understand what your systems are doing in production. Master the three pillars — logs, metrics, and traces — and wire them up with Prometheus, Grafana, and OpenTelemetry.',
+    taxonomy: { l1: 'Systems', l2: 'Architecture' },
+    difficulty: 'intermediate',
+    authorId: 'teacher-001',
+    authorName: 'The Guild',
+    published: true,
+    publishedAt: '2026-05-24T00:00:00.000Z',
+    tags: ['observability', 'prometheus', 'grafana', 'opentelemetry', 'logging', 'tracing', 'monitoring'],
+    lessonIds: ['lesson-obs-1', 'lesson-obs-2', 'lesson-obs-3'],
+    totalLessons: 3,
+    estimatedMinutes: 45,
+    ratingAverage: 4.6,
+    ratingCount: 19,
+    createdAt: '2026-05-24T00:00:00.000Z',
+    updatedAt: '2026-05-24T00:00:00.000Z',
+  },
+  {
+    id: 'course-websockets',
+    title: 'WebSockets & Real-time Communication',
+    description: 'Master full-duplex real-time communication in the browser and on the server. Learn the WebSocket protocol, build a live chat backend, and explore patterns like pub/sub and presence channels.',
+    taxonomy: { l1: 'Web Development', l2: 'APIs' },
+    difficulty: 'intermediate',
+    authorId: 'teacher-001',
+    authorName: 'The Guild',
+    published: true,
+    publishedAt: '2026-05-20T00:00:00.000Z',
+    tags: ['websockets', 'real-time', 'node.js', 'socket.io', 'pubsub', 'chat'],
+    lessonIds: ['lesson-ws-1', 'lesson-ws-2', 'lesson-ws-3'],
+    totalLessons: 3,
+    estimatedMinutes: 42,
+    ratingAverage: 4.7,
+    ratingCount: 28,
+    createdAt: '2026-05-20T00:00:00.000Z',
+    updatedAt: '2026-05-20T00:00:00.000Z',
   },
 ];
 
@@ -11675,12 +11810,2461 @@ const repo = new LoggingUserRepository(
     },
   },
 
+  // --- Redis & Caching ---
+  {
+    id: 'lesson-redis-1',
+    courseId: 'course-redis',
+    order: 0,
+    title: 'Why Cache? Cache Strategies Explained',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## The Cache Problem
+
+A database query that takes 50ms might be fast, but if 10,000 users hit the same endpoint per second, that's 10,000 × 50ms = 500 seconds of database work per second. A cache stores the result so the second request returns it in < 1ms without touching the database.
+
+## Four Caching Strategies
+
+| Strategy | How it works | Best for |
+|---|---|---|
+| **Cache-aside** | App checks cache first; on miss, reads DB and writes to cache | General-purpose reads |
+| **Write-through** | Every DB write also updates the cache | Data that's read often after write |
+| **Write-behind** | App writes to cache only; async flush to DB | High write throughput |
+| **Read-through** | Cache layer fetches from DB on miss automatically | Simplified app logic |
+
+**Cache-aside** is the most common pattern — explicit, predictable, easy to reason about.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Cache-aside (lazy loading) pattern',
+          nodes: [
+            { id: 'app', position: { x: 0, y: 80 }, label: 'Application', type: 'input' },
+            { id: 'cache', position: { x: 200, y: 30 }, label: 'Redis Cache', type: 'default' },
+            { id: 'db', position: { x: 200, y: 130 }, label: 'Database', type: 'default' },
+            { id: 'hit', position: { x: 400, y: 30 }, label: 'Cache HIT\nReturn cached value', type: 'output' },
+            { id: 'miss', position: { x: 400, y: 130 }, label: 'Cache MISS\nRead DB → Write cache', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'app', target: 'cache', label: 'GET key' },
+            { id: 'e2', source: 'cache', target: 'hit', label: 'found' },
+            { id: 'e3', source: 'cache', target: 'db', label: 'not found' },
+            { id: 'e4', source: 'db', target: 'miss', label: 'query result' },
+          ],
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'Cache stampede (thundering herd)',
+          content: 'When a popular cache key expires, all concurrent requests miss simultaneously, flood the database with the same query, and then all try to write the result back to cache. Solutions: probabilistic early expiry (PER), a distributed lock ("cache mutex"), or background refresh before expiry.',
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'redis1-q1',
+              question: 'In cache-aside strategy, who is responsible for updating the cache after a database read?',
+              options: [
+                'The database automatically pushes updates to the cache',
+                'The application code: on a cache miss, the app reads from DB and writes the result to cache',
+                'Redis pulls from the database on a schedule',
+                'A background sync process',
+              ],
+              correctIndex: 1,
+              explanation: 'In cache-aside (lazy loading), the cache is "dumb" — it only stores what the application explicitly puts in it. The app checks the cache first; on a miss it reads the DB, then writes the result to cache for future requests. This gives the app full control over what gets cached and for how long.',
+            },
+            {
+              id: 'redis1-q2',
+              question: 'What is a cache stampede?',
+              options: [
+                'When the cache fills up and evicts too many keys at once',
+                'When a popular key expires and many concurrent requests all miss simultaneously, flooding the database',
+                'When Redis crashes under high write load',
+                'When cache invalidation removes too many keys',
+              ],
+              correctIndex: 1,
+              explanation: 'Cache stampede happens at expiry: the moment a hot key expires, every pending request that checks the cache misses and goes to the database. With high traffic this can mean hundreds of identical queries hitting the DB at once. Mitigation: use a short distributed lock on the first miss so only one request populates the cache.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-redis-2',
+    courseId: 'course-redis',
+    order: 1,
+    title: 'Redis Data Structures',
+    estimatedMinutes: 15,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Redis Is Not Just a Key-Value Store
+
+Redis has six primary data structures. Choosing the right one for the job is what separates good Redis usage from naive string serialisation.
+
+| Type | Commands | Use case |
+|---|---|---|
+| **String** | GET/SET/INCR | Session tokens, counters, simple cache values |
+| **Hash** | HGET/HSET/HMGET | User objects, config, partial updates |
+| **List** | LPUSH/RPOP/LRANGE | Message queues, recent activity feed |
+| **Set** | SADD/SMEMBERS/SINTER | Unique tags, friend lists, deduplication |
+| **Sorted Set** | ZADD/ZRANGE/ZRANK | Leaderboards, rate limiting, priority queues |
+| **Stream** | XADD/XREAD | Append-only event log, pub/sub |`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'bash',
+          caption: 'Redis CLI — one command per data structure',
+          code: `# String — cache a user profile for 5 minutes
+SET user:42 '{"name":"Alice","xp":1200}' EX 300
+
+# Hash — partial field updates (no need to deserialise entire object)
+HSET user:42 xp 1250
+HGETALL user:42
+
+# Sorted Set — leaderboard
+ZADD leaderboard 1250 user:42
+ZADD leaderboard 980 user:7
+ZRANGE leaderboard 0 9 REV WITHSCORES   # top 10
+
+# List — activity queue (job queue pattern)
+LPUSH jobs:email '{"to":"alice@example.com","template":"welcome"}'
+BRPOP jobs:email 30                      # blocking pop, 30s timeout
+
+# Set — unique daily active users
+SADD dau:2025-05-26 user:42
+SCARD dau:2025-05-26                     # count unique users today
+
+# INCR — atomic counter (no race condition)
+INCR page:views:/courses/oauth2          # returns new value`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Use SCAN instead of KEYS in production',
+          content: 'KEYS * blocks Redis (single-threaded) while it scans the entire keyspace. On a large instance this can cause seconds of downtime. SCAN cursor [MATCH pattern] [COUNT hint] iterates incrementally — safe for production. Also: set maxmemory and maxmemory-policy (e.g. allkeys-lru) so Redis evicts gracefully instead of crashing when full.',
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'redis2-q1',
+              question: 'You need to build a leaderboard that returns the top 10 users by XP score in real time. Which Redis data structure is the natural fit?',
+              options: ['Hash — store each user\'s XP as a field', 'Sorted Set (ZSET) — scores are stored sorted, ZRANGE with REV returns top N in O(log N)', 'List — append scores and sort client-side', 'Set — store userId:xp strings and parse client-side'],
+              correctIndex: 1,
+              explanation: 'Sorted Sets keep elements ordered by score automatically. ZADD updates a member\'s score, and ZRANGE 0 9 REV WITHSCORES returns the top 10 in order — all in O(log N). This is exactly the leaderboard pattern. Lists and Sets don\'t maintain order; Hashes don\'t sort by value.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-redis-3',
+    courseId: 'course-redis',
+    order: 2,
+    title: 'Cache Invalidation & TTL Patterns',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## "There are only two hard things in Computer Science: cache invalidation and naming things."
+
+Cache invalidation means deciding when cached data is stale and must be removed or updated. Get it wrong in one direction and users see stale data; get it wrong in the other and you kill your cache hit rate.
+
+## Three Invalidation Approaches
+
+**1. Time-to-live (TTL)**
+Set an expiry when writing: \`SET key value EX 300\`. Simple, but stale data can persist up to TTL seconds after an update.
+
+**2. Event-driven invalidation**
+When data changes in the DB, explicitly delete the cache key: \`DEL user:42\`. Next read repopulates from DB. Requires discipline: every write path must also invalidate.
+
+**3. Cache versioning**
+Embed a version in the key: \`user:42:v3\`. On schema change, bump the version. Old keys expire naturally. No explicit invalidation needed — just version changes.
+
+## Key Naming Conventions
+
+\`\`\`
+{resource}:{id}            user:42
+{resource}:{id}:{field}    user:42:profile
+{resource}:{action}:{id}   course:progress:user:42
+{env}:{resource}:{id}      prod:session:abc123
+\`\`\`
+
+Consistent naming lets you use SCAN patterns to invalidate whole object families.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'Cache-aside with TTL and invalidation in Node.js',
+          code: `import { createClient } from 'redis';
+
+const redis = createClient({ url: process.env.REDIS_URL });
+await redis.connect();
+
+const CACHE_TTL = 300; // 5 minutes
+
+async function getUserProfile(userId: string) {
+  const key = \`user:\${userId}:profile\`;
+
+  // 1. Check cache
+  const cached = await redis.get(key);
+  if (cached) return JSON.parse(cached);
+
+  // 2. Cache miss — read from database
+  const user = await db.users.findById(userId);
+  if (!user) throw new Error('User not found');
+
+  // 3. Populate cache
+  await redis.setEx(key, CACHE_TTL, JSON.stringify(user));
+  return user;
+}
+
+async function updateUserXP(userId: string, xpDelta: number) {
+  // Update database
+  await db.users.incrementXP(userId, xpDelta);
+
+  // Invalidate cache — next read will repopulate from DB
+  await redis.del(\`user:\${userId}:profile\`);
+
+  // Also update leaderboard sorted set atomically
+  await redis.zIncrBy('leaderboard:global', xpDelta, \`user:\${userId}\`);
+}`,
+        },
+        {
+          type: 'callout',
+          variant: 'danger',
+          title: 'Never cache security-sensitive state without short TTLs',
+          content: 'Session tokens, permission sets, and role data must have short TTLs (≤ 60 seconds) or event-driven invalidation. A user whose permissions are revoked should not continue to have access because their cached permissions are still valid. Always err toward shorter TTLs for auth/authz data.',
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'redis3-q1',
+              question: 'A user\'s profile is cached with a 5-minute TTL. They update their display name. What is the problem with TTL-only invalidation here?',
+              options: ['The cache will grow too large', 'The old display name will still be shown for up to 5 minutes after the update', 'Redis will crash if too many TTLs expire simultaneously', 'TTLs cannot be combined with user profile data'],
+              correctIndex: 1,
+              explanation: 'TTL-only invalidation means the cache is only refreshed when the key expires — not when the underlying data changes. A 5-minute TTL means users may see stale data for up to 5 minutes after an update. For user-visible mutations, explicitly DELETE the cache key in the same operation as the DB write (event-driven invalidation) to ensure immediate consistency.',
+            },
+            {
+              id: 'redis3-q2',
+              question: 'Why should permission and role data have short TTLs or event-driven invalidation?',
+              options: ['Because role data is large and wastes memory', 'Because a revoked user would retain access until the cache expires — a security risk', 'Because permissions change too frequently to cache at all', 'Because Redis doesn\'t support complex objects'],
+              correctIndex: 1,
+              explanation: 'If you cache a user\'s permissions and they are revoked (fired, subscription cancelled, banned), they will continue to have access to protected resources until the cached permission set expires. For security-sensitive data, always use event-driven invalidation (delete the cache key immediately on change) or a very short TTL (seconds, not minutes).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // --- Docker Fundamentals ---
+  {
+    id: 'lesson-docker-1',
+    courseId: 'course-docker',
+    order: 0,
+    title: 'Containers vs Virtual Machines',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## The Container Revolution
+
+Before containers, deploying software meant shipping entire virtual machines (VMs) — full OS copies that could be gigabytes in size and took minutes to boot.
+
+**Containers share the host OS kernel.** A container is just a process (or group of processes) running on the host, isolated using two Linux primitives:
+- **namespaces** — limit what the process can *see* (network, filesystem, process tree, users)
+- **cgroups** — limit what the process can *use* (CPU, memory, I/O)
+
+This makes containers start in milliseconds and use megabytes instead of gigabytes.
+
+| | Virtual Machine | Container |
+|---|---|---|
+| Boot time | 30–60 seconds | < 1 second |
+| Size | 1–10 GB | 5–500 MB |
+| Isolation | Full (hardware virtualisation) | Process-level (kernel shared) |
+| Overhead | High (hypervisor) | Near-zero |
+| Portability | Moderate | Excellent |`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'VM vs Container architecture',
+          nodes: [
+            { id: 'hw', position: { x: 250, y: 220 }, label: 'Physical Hardware', type: 'input' },
+            { id: 'hos', position: { x: 80, y: 140 }, label: 'Host OS\n(VM model)', type: 'default' },
+            { id: 'hyp', position: { x: 80, y: 60 }, label: 'Hypervisor\n(VMware/HyperV)', type: 'default' },
+            { id: 'vm1', position: { x: 0, y: 0 }, label: 'Guest OS\n+ App A', type: 'output' },
+            { id: 'vm2', position: { x: 160, y: 0 }, label: 'Guest OS\n+ App B', type: 'output' },
+            { id: 'kos', position: { x: 420, y: 140 }, label: 'Host OS + Docker\n(Container model)', type: 'default' },
+            { id: 'c1', position: { x: 360, y: 60 }, label: 'Container A\n(App only)', type: 'output' },
+            { id: 'c2', position: { x: 480, y: 60 }, label: 'Container B\n(App only)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'hw', target: 'hos' },
+            { id: 'e2', source: 'hos', target: 'hyp' },
+            { id: 'e3', source: 'hyp', target: 'vm1' },
+            { id: 'e4', source: 'hyp', target: 'vm2' },
+            { id: 'e5', source: 'hw', target: 'kos' },
+            { id: 'e6', source: 'kos', target: 'c1' },
+            { id: 'e7', source: 'kos', target: 'c2' },
+          ],
+        },
+        {
+          type: 'callout',
+          variant: 'info',
+          title: 'Images are the blueprint; containers are the instance',
+          content: 'A Docker image is a read-only snapshot — like a class definition. Running docker run creates a container, which is a live instance of that image. Multiple containers can run from the same image simultaneously, each with its own isolated writable layer.',
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'docker1-q1',
+              question: 'Why do containers start faster and use less memory than VMs?',
+              options: [
+                'Containers compress their filesystems more aggressively',
+                'Containers share the host OS kernel — no guest OS to boot or allocate memory for',
+                'Containers run on faster CPUs',
+                'Containers skip the network stack entirely',
+              ],
+              correctIndex: 1,
+              explanation: 'A VM includes a full guest OS (kernel, init system, libraries) which must be booted and given dedicated RAM. A container is just a process on the host kernel, isolated via namespaces and cgroups — startup is a fork(), not a boot sequence.',
+            },
+            {
+              id: 'docker1-q2',
+              question: 'What Linux primitives does Docker use to isolate containers?',
+              options: ['iptables and systemd', 'namespaces (limit visibility) and cgroups (limit resource usage)', 'SELinux policies', 'Virtual network interfaces only'],
+              correctIndex: 1,
+              explanation: 'namespaces isolate what a process can see: separate network stack, process tree (PID 1 inside the container), filesystem mount points, and users. cgroups control resource limits: CPU shares, memory cap, I/O bandwidth. Together they give the illusion of an isolated machine.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-docker-2',
+    courseId: 'course-docker',
+    order: 1,
+    title: 'Building Images & Running Containers',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Docker Images are Built in Layers
+
+Every line in a Dockerfile creates an immutable layer. Layers are cached — if a layer hasn't changed, Docker reuses the cached version. This makes rebuilds fast when only code changes (not dependencies).
+
+**Layer order matters:** put things that change rarely (OS packages, dependencies) early, and things that change often (source code) late.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'dockerfile',
+          caption: 'Optimised multi-stage Dockerfile for a Node.js app',
+          code: `# Stage 1: Build
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+# Copy dependency manifests first (cached unless package.json changes)
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy source (invalidates cache only when code changes)
+COPY . .
+RUN npm run build
+
+# Stage 2: Runtime (minimal image — no build tools)
+FROM node:20-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+
+EXPOSE 3000
+CMD ["node", "dist/index.js"]`,
+        },
+        {
+          type: 'text',
+          content: `## Essential Docker Commands
+
+\`\`\`bash
+# Build an image tagged as "my-app:v1"
+docker build -t my-app:v1 .
+
+# Run a container (detached, port mapping, named)
+docker run -d -p 3000:3000 --name my-app my-app:v1
+
+# View running containers
+docker ps
+
+# View logs (follow)
+docker logs -f my-app
+
+# Execute a command inside a running container
+docker exec -it my-app sh
+
+# Stop and remove
+docker stop my-app && docker rm my-app
+
+# Remove the image
+docker rmi my-app:v1
+
+# List images + sizes
+docker images
+\`\`\`
+
+The \`-p 3000:3000\` flag maps **host port 3000** to **container port 3000**. Without it, the container is unreachable from outside the Docker network.`,
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'Never run as root inside containers',
+          content: 'Containers run as root by default. If an attacker escapes the container they gain root on the host. Add a USER directive to your Dockerfile: `RUN addgroup -S app && adduser -S app -G app` then `USER app`. Also: never store secrets in environment variables — use Docker secrets or a vault.',
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'docker2-q1',
+              question: 'In a Dockerfile, why should COPY package.json ./ and RUN npm install come BEFORE COPY . .?',
+              options: [
+                'It\'s just a convention with no practical impact',
+                'So the npm install layer is cached — it only re-runs when package.json changes, not when source code changes',
+                'Docker requires dependencies to be installed before copying source',
+                'To reduce the final image size',
+              ],
+              correctIndex: 1,
+              explanation: 'Docker rebuilds all layers from the first changed layer onwards. If you copy source first, every code change invalidates the npm install cache and triggers a full reinstall. Separating the package.json copy from the source copy means npm ci only re-runs when dependencies actually change.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-docker-3',
+    courseId: 'course-docker',
+    order: 2,
+    title: 'Docker Compose & Multi-container Apps',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Real Apps Need Multiple Containers
+
+A web app typically has several components that should run in separate containers (one process per container is a best practice):
+- **App server** — Node.js / Python / Go process
+- **Database** — PostgreSQL / MongoDB
+- **Cache** — Redis
+- **Reverse proxy** — Nginx (for SSL termination, static files)
+
+Running these manually with \`docker run\` is error-prone. **Docker Compose** lets you define the whole stack in a single YAML file.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'yaml',
+          caption: 'docker-compose.yml for a full-stack app',
+          code: `version: '3.9'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://user:pass@db:5432/myapp
+      REDIS_URL: redis://cache:6379
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_started
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: myapp
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d myapp"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  cache:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+volumes:
+  postgres_data:
+  redis_data:`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Docker Compose networking',
+          nodes: [
+            { id: 'client', position: { x: 0, y: 80 }, label: 'Browser / Client', type: 'input' },
+            { id: 'app', position: { x: 200, y: 80 }, label: 'app:3000\n(Node.js)', type: 'default' },
+            { id: 'db', position: { x: 400, y: 30 }, label: 'db:5432\n(PostgreSQL)', type: 'output' },
+            { id: 'cache', position: { x: 400, y: 130 }, label: 'cache:6379\n(Redis)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'client', target: 'app', label: 'HTTP :3000' },
+            { id: 'e2', source: 'app', target: 'db', label: 'SQL queries' },
+            { id: 'e3', source: 'app', target: 'cache', label: 'cache reads/writes' },
+          ],
+        },
+        {
+          type: 'text',
+          content: `## Essential Compose Commands
+
+\`\`\`bash
+# Start all services (build images if needed), detached
+docker compose up -d --build
+
+# View logs for all services
+docker compose logs -f
+
+# View logs for one service
+docker compose logs -f app
+
+# Stop everything (keeps volumes)
+docker compose down
+
+# Stop and delete volumes (fresh start)
+docker compose down -v
+
+# Run a one-off command in a service
+docker compose exec app sh
+
+# Scale a stateless service to 3 instances
+docker compose up -d --scale app=3
+\`\`\`
+
+Services on the same Compose network resolve each other by **service name** as hostname — the \`app\` container reaches the database at \`db:5432\`, not an IP address.`,
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'docker3-q1',
+              question: 'In Docker Compose, how does the app service connect to the PostgreSQL service? What hostname does it use?',
+              options: ['It must use the container IP address (e.g., 172.17.0.2)', 'It uses the service name as hostname — `db:5432` resolves because Compose puts services on a shared network', 'It uses localhost:5432 because they share a network namespace', 'It must be manually configured with a static IP'],
+              correctIndex: 1,
+              explanation: 'Docker Compose creates a private bridge network for the stack. Each service is registered as a DNS name equal to its service key. So `db` resolves to the PostgreSQL container\'s IP automatically — no hardcoded IPs needed. This also means you can restart containers and the name still resolves.',
+            },
+            {
+              id: 'docker3-q2',
+              question: 'What does `docker compose down -v` do differently from `docker compose down`?',
+              options: ['It removes images in addition to containers', 'It also deletes named volumes (your database data) — use with caution', 'It runs verbose output', 'It forces-kills containers instead of graceful stop'],
+              correctIndex: 1,
+              explanation: 'Named volumes (like postgres_data) persist between `compose down` / `compose up` cycles — that\'s the point. Adding `-v` deletes those volumes too, giving you a completely fresh state. Useful for testing migrations from scratch, dangerous in production.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── React Performance Optimization ────────────────────────────────────────
+  {
+    id: 'lesson-rperf-1',
+    courseId: 'course-react-perf',
+    order: 0,
+    title: 'Finding Bottlenecks with React DevTools Profiler',
+    estimatedMinutes: 14,
+    createdAt: '2026-05-23T00:00:00.000Z',
+    updatedAt: '2026-05-23T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## The golden rule of performance
+
+**Measure first, optimise second.** Applying \`useMemo\`, \`React.memo\`, and \`useCallback\` everywhere is not performance optimisation — it's cargo-culting. These hooks have a cost (memory allocation, comparison work) that can exceed the savings if applied incorrectly. React DevTools Profiler shows you where time is actually spent.
+
+## The React DevTools Profiler
+
+The Profiler tab in React DevTools (browser extension) shows a flame graph of every component render.
+
+### How to use it
+
+1. Open DevTools → **Profiler** tab
+2. Click **Record** (circle)
+3. Interact with your app (the action that feels slow)
+4. Click **Stop**
+5. Study the flame graph
+
+The flame graph shows:
+- **Width** — how long a component took to render (wider = slower)
+- **Colour** — how often it rendered (grey = did not render, yellow/orange = rendered)
+- **Height** — component tree depth
+
+### What to look for
+
+\`\`\`
+TodoList (23.4ms) ← this is the culprit
+├── TodoItem (0.3ms)
+├── TodoItem (0.3ms)
+├── TodoItem (0.3ms) × 200 items  ← 200 renders × 0.3ms = 60ms total
+└── FilterBar (0.1ms)
+\`\`\`
+
+A component that re-renders 200 times when you type in a single input is a classic pattern to fix.
+
+### The \`<Profiler>\` API for production
+
+For production metrics, React exposes a programmatic Profiler:
+
+\`\`\`tsx
+import { Profiler, type ProfilerOnRenderCallback } from 'react';
+
+const onRender: ProfilerOnRenderCallback = (
+  id,         // component tree identifier
+  phase,      // 'mount' | 'update' | 'nested-update'
+  actualDuration,   // ms spent rendering
+  baseDuration,     // ms to render without memoisation
+  startTime,
+  commitTime
+) => {
+  if (actualDuration > 16) {
+    // Log to analytics — this render missed a 60fps frame
+    analytics.track('slow_render', { id, phase, ms: actualDuration });
+  }
+};
+
+function App() {
+  return (
+    <Profiler id="CourseList" onRender={onRender}>
+      <CourseList />
+    </Profiler>
+  );
+}
+\`\`\``,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Enable "Record why each component rendered"',
+          content: 'In DevTools Profiler settings, turn on "Record why each component rendered". This shows you exactly which prop or state change triggered each re-render. It\'s the fastest way to understand unnecessary renders.',
+        },
+        {
+          type: 'text',
+          content: `## Understanding render causes
+
+React re-renders a component when:
+1. Its **own state** changes (\`useState\`, \`useReducer\`)
+2. Its **parent re-renders** (even if props didn't change)
+3. A **context value** it consumes changes
+
+Case 2 is the most common source of unnecessary renders. A parent state change re-renders the entire subtree by default.
+
+### The re-render cascade
+
+\`\`\`tsx
+function Parent() {
+  const [count, setCount] = useState(0);
+  // Every click re-renders Parent AND all its children
+  return (
+    <>
+      <button onClick={() => setCount(c => c + 1)}>Count: {count}</button>
+      <HeavyComponent />  {/* re-renders on every click, even though nothing changed */}
+    </>
+  );
+}
+\`\`\`
+
+The fix — lift slow components up or wrap with \`React.memo\`:
+
+\`\`\`tsx
+const HeavyComponent = React.memo(function HeavyComponent() {
+  // now only re-renders if its props change
+  return <div>...</div>;
+});
+\`\`\``,
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'rperf1-q1',
+              question: 'In the DevTools Profiler flame graph, you see a component coloured bright orange with a width much larger than its siblings. What does this mean?',
+              options: [
+                'The component has an error and needs to be fixed',
+                'The component took significantly longer to render than its siblings — it\'s a candidate for optimisation',
+                'The component never re-renders, so it\'s already optimised',
+                'The component is using server-side rendering',
+              ],
+              correctIndex: 1,
+              explanation: 'In the flame graph, width represents render duration and colour represents render frequency (grey = no render, yellow to orange = rendered, brighter = slower). A wide, bright orange component is slow and rendered — that\'s your bottleneck. But first verify it\'s actually causing user-perceivable slowness before optimising.',
+            },
+            {
+              id: 'rperf1-q2',
+              question: 'Your parent component updates state every second. A child component has no props and renders a static UI. The profiler shows it re-rendering every second. What\'s happening?',
+              options: [
+                'React is broken — child components should never re-render without prop changes',
+                'The child re-renders because its parent renders, even though nothing in the child changed',
+                'The child has a hidden subscription to the parent\'s state',
+                'The child\'s useEffect is forcing a re-render',
+              ],
+              correctIndex: 1,
+              explanation: 'By default, when a parent component renders, all its children render too — regardless of prop changes. This is React\'s default behaviour. It\'s usually fast enough, but for expensive child components, `React.memo` can skip the render when props haven\'t changed.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-rperf-2',
+    courseId: 'course-react-perf',
+    order: 1,
+    title: 'Memoization: useMemo, useCallback & React.memo',
+    estimatedMinutes: 18,
+    createdAt: '2026-05-23T00:00:00.000Z',
+    updatedAt: '2026-05-23T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Three memoization tools
+
+React gives you three tools for avoiding redundant work:
+
+| Hook/API | Memoises | Use when |
+|---|---|---|
+| \`React.memo\` | A component's rendered output | Child component has expensive render + stable props |
+| \`useMemo\` | A computed value | Expensive calculation from state/props |
+| \`useCallback\` | A function reference | Passing callbacks to memoised children |
+
+### React.memo
+
+Wraps a component so it only re-renders when its props change (shallow comparison):
+
+\`\`\`tsx
+// Without memo: re-renders every time parent renders
+function CourseCard({ course, onClick }: Props) {
+  return <div onClick={onClick}>{course.title}</div>;
+}
+
+// With memo: skips render if course and onClick references are stable
+const CourseCard = React.memo(function CourseCard({ course, onClick }: Props) {
+  return <div onClick={onClick}>{course.title}</div>;
+});
+
+// Custom comparison (when shallow equality isn't right)
+const CourseCard = React.memo(CourseCardBase, (prev, next) => {
+  return prev.course.id === next.course.id; // only re-render on different course
+});
+\`\`\`
+
+### The prop stability problem
+
+\`React.memo\` only helps if props are referentially stable. New object/array/function literals are created on every render — they break memoisation:
+
+\`\`\`tsx
+function Parent() {
+  const [search, setSearch] = useState('');
+
+  // ❌ New array reference on every render — breaks React.memo
+  const filters = ['published', 'beginner'];
+
+  // ✅ Stable reference — outside the component or useMemo
+  const handleClick = () => console.log('clicked'); // ❌ new function each render
+
+  return <CourseCard filters={filters} onClick={handleClick} />;
+}
+\`\`\``,
+        },
+        {
+          type: 'codeBlock',
+          language: 'tsx',
+          caption: 'Correct use of useMemo and useCallback — fixing the prop stability problem',
+          code: `function CourseList({ courses, searchQuery }: Props) {
+  const [sortBy, setSortBy] = useState<'rating' | 'newest'>('newest');
+
+  // ✅ useMemo: expensive filter+sort only re-runs when inputs change
+  const displayCourses = useMemo(() => {
+    const filtered = courses.filter(c =>
+      c.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    return sortBy === 'rating'
+      ? [...filtered].sort((a, b) => b.ratingAverage - a.ratingAverage)
+      : filtered; // already sorted by newest from API
+  }, [courses, searchQuery, sortBy]);
+
+  // ✅ useCallback: stable function reference across renders
+  const handleCourseClick = useCallback((courseId: string) => {
+    analytics.track('course_click', { courseId, sortBy });
+  }, [sortBy]); // only changes when sortBy changes
+
+  return (
+    <div>
+      {displayCourses.map(course => (
+        // React.memo + stable callback = no unnecessary re-renders
+        <CourseCard
+          key={course.id}
+          course={course}
+          onClick={handleCourseClick}
+        />
+      ))}
+    </div>
+  );
+}`,
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'Don\'t over-memoize',
+          content: '`useMemo` and `useCallback` allocate memory and run comparison logic on every render. For cheap computations (string concatenation, simple array filter over small lists), the overhead can exceed the savings. Only memoize when the Profiler shows a real problem.',
+        },
+        {
+          type: 'text',
+          content: `## Context performance trap
+
+React context re-renders every consumer when the context value changes — even if the consuming component only cares about part of the value:
+
+\`\`\`tsx
+// ❌ Every consumer re-renders when anything in this context changes
+const AppContext = createContext({ user: null, theme: 'dark', sidebar: true });
+
+// ✅ Split contexts by update frequency
+const UserContext = createContext<User | null>(null);    // changes on login/logout
+const ThemeContext = createContext<'dark' | 'light'>('dark'); // changes rarely
+const UIContext = createContext({ sidebar: true });         // changes often
+\`\`\`
+
+For frequently-updating contexts (e.g., a live counter, real-time data), consider **not** using context at all — pass values via props, use Zustand/Jotai, or use \`useSyncExternalStore\` for external subscriptions.
+
+### Stabilising context values
+
+\`\`\`tsx
+function UserProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+
+  // ✅ Memoize the context value — prevents consumers from re-rendering
+  // on every UserProvider render
+  const value = useMemo(() => ({ user, setUser }), [user]);
+
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
+}
+\`\`\``,
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'rperf2-q1',
+              question: 'You have a memoised `CourseCard` component. Its parent passes `onClick={() => navigate(course.id)}` as a prop. The memoisation has no effect. Why?',
+              options: [
+                'React.memo doesn\'t work with function props',
+                'The arrow function creates a new reference on every parent render, so `React.memo`\'s shallow comparison always sees a changed prop',
+                'The navigate function itself changes reference on every render',
+                'useMemo is needed inside CourseCard, not React.memo on the outside',
+              ],
+              correctIndex: 1,
+              explanation: '`() => navigate(course.id)` is an arrow function literal — a new function object is created every time the parent renders. Since `React.memo` uses shallow comparison (`===`), two different function objects are never equal even if they do the same thing. Fix it with `useCallback(() => navigate(course.id), [course.id, navigate])` in the parent.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-rperf-3',
+    courseId: 'course-react-perf',
+    order: 2,
+    title: 'Code Splitting, Lazy Loading & Virtualization',
+    estimatedMinutes: 16,
+    createdAt: '2026-05-23T00:00:00.000Z',
+    updatedAt: '2026-05-23T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Code splitting
+
+A typical React SPA bundles all code into one JS file. If it's 2MB, the user must download and parse everything before seeing anything — even pages they may never visit.
+
+**Code splitting** breaks the bundle into chunks loaded on demand.
+
+### Route-level splitting with React.lazy
+
+\`\`\`tsx
+import { lazy, Suspense } from 'react';
+import { Routes, Route } from 'react-router-dom';
+
+// Code is fetched only when the route is first visited
+const CoursesPage   = lazy(() => import('./pages/CoursesPage'));
+const LessonPage    = lazy(() => import('./pages/LessonPage'));
+const ProfilePage   = lazy(() => import('./pages/ProfilePage'));
+const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
+
+function App() {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <Routes>
+        <Route path="/"           element={<HomePage />} />
+        <Route path="/courses"    element={<CoursesPage />} />
+        <Route path="/courses/:courseId/lessons/:lessonId" element={<LessonPage />} />
+        <Route path="/profile"    element={<ProfilePage />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+      </Routes>
+    </Suspense>
+  );
+}
+\`\`\`
+
+Vite (and webpack) automatically create separate chunks for each lazy import. The result: the initial bundle might drop from 800KB to 150KB.
+
+### Component-level splitting for heavy components
+
+Use lazy loading for components that are rarely used or large (rich text editors, chart libraries, map SDKs):
+
+\`\`\`tsx
+const FlowDiagram = lazy(() => import('./components/FlowDiagram'));
+const QuizSection = lazy(() => import('./components/QuizSection'));
+
+function LessonRenderer({ sections }: Props) {
+  return (
+    <Suspense fallback={<div className="h-64 rounded-xl bg-slate-800 animate-pulse" />}>
+      {sections.map((s, i) =>
+        s.type === 'flowDiagram' ? <FlowDiagram key={i} section={s} /> :
+        s.type === 'quiz'        ? <QuizSection key={i} section={s} /> :
+        <TextSection key={i} section={s} />
+      )}
+    </Suspense>
+  );
+}
+\`\`\``,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Preload on hover for instant navigation',
+          content: 'Lazy routes feel instant if you preload them before the user clicks. On `<Link>` hover, call the lazy import to kick off the chunk download: `onMouseEnter={() => import("./pages/CoursesPage")}`. By the time they click, the chunk is already cached.',
+        },
+        {
+          type: 'text',
+          content: `## Virtualizing long lists
+
+Rendering 500 \`<CourseCard>\` components creates 500 DOM nodes. Even if they render fast individually, the browser struggles to layout and paint thousands of elements.
+
+**Virtualization** renders only the visible items. As the user scrolls, items are swapped in and out of the DOM.
+
+### TanStack Virtual
+
+\`\`\`tsx
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { useRef } from 'react';
+
+function VirtualCourseList({ courses }: { courses: Course[] }) {
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: courses.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 200, // approximate card height in px
+    overscan: 5,             // render 5 extra items above/below viewport
+  });
+
+  return (
+    <div
+      ref={parentRef}
+      className="h-[80vh] overflow-y-auto"
+    >
+      {/* Total scroll height = all items stacked */}
+      <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
+        {virtualizer.getVirtualItems().map(item => (
+          <div
+            key={item.index}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              transform: \`translateY(\${item.start}px)\`,
+            }}
+          >
+            <CourseCard course={courses[item.index]} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+\`\`\`
+
+### When virtualization matters
+
+| List size | Strategy |
+|---|---|
+| < 100 items | Render all — no optimisation needed |
+| 100–500 items | Consider virtualization if cards are heavy |
+| 500+ items | Virtualize |
+| Infinite scroll | Always virtualize + fetch pages |`,
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'rperf3-q1',
+              question: 'You split your app into lazy-loaded routes. A user navigates to /courses for the first time. What happens?',
+              options: [
+                'React renders a white screen forever because the route is lazy',
+                'React shows the `<Suspense>` fallback while the chunk downloads, then renders the page',
+                'The entire app re-downloads because lazy routes invalidate the main bundle cache',
+                'React.lazy doesn\'t work with React Router — you need a different library',
+              ],
+              correctIndex: 1,
+              explanation: 'When a lazy component is first needed, React kicks off the dynamic import and shows the nearest `<Suspense>` fallback while the network request is in flight. Once the chunk loads, React renders the actual component and hides the fallback. Subsequent visits use the browser cache — the chunk only downloads once.',
+            },
+            {
+              id: 'rperf3-q2',
+              question: 'Your course list has 1,000 items. You virtualize it but the scroll feels jumpy. What\'s the most likely fix?',
+              options: [
+                'Remove virtualization — it doesn\'t work for large lists',
+                'Increase overscan — render more items above and below the viewport so the list prepopulates before the user scrolls to them',
+                'Decrease overscan to render fewer items',
+                'Use windowing instead of virtualization',
+              ],
+              correctIndex: 1,
+              explanation: 'Jumpiness during fast scrolling means items are being mounted after they\'re already visible. Increasing overscan (5–10) renders a buffer of items outside the viewport so they\'re ready before the user scrolls to them. This trades a few extra DOM nodes for smoother scrolling.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── gRPC & Protocol Buffers ───────────────────────────────────────────────
+  {
+    id: 'lesson-grpc-1',
+    courseId: 'course-grpc',
+    order: 0,
+    title: 'Protocol Buffers: Schema-First API Design',
+    estimatedMinutes: 14,
+    createdAt: '2026-05-25T00:00:00.000Z',
+    updatedAt: '2026-05-25T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## What is gRPC?
+
+**gRPC** (Google Remote Procedure Call) is a high-performance, open-source RPC framework developed by Google. Instead of sending HTTP requests with JSON, gRPC clients call methods on remote objects as if they were local — the network is transparent.
+
+Under the hood, gRPC uses:
+- **Protocol Buffers (Protobuf)** — a compact binary serialization format for defining message schemas
+- **HTTP/2** — for multiplexed, low-latency transport with built-in flow control
+- **Generated clients and servers** — from your `.proto` schema, the toolchain generates type-safe code for 10+ languages
+
+### Why gRPC over REST+JSON?
+
+| Aspect | REST + JSON | gRPC + Protobuf |
+|---|---|---|
+| Serialization | Text (human-readable) | Binary (3–10× smaller, faster) |
+| Schema | Optional (OpenAPI) | Required (source of truth) |
+| Streaming | Limited (SSE, WebSockets separate) | Built-in (4 modes) |
+| Type safety | Generated client optional | Always generated, always typed |
+| Browser support | Native | Needs grpc-web proxy |
+| Best for | Public APIs, browser clients | Internal service-to-service |`,
+        },
+        {
+          type: 'callout',
+          variant: 'info',
+          title: 'gRPC is not a replacement for REST',
+          content: 'gRPC excels at high-throughput, internal microservice communication where performance matters and you control both ends. REST remains better for public APIs, browser-first apps, and cases where human-readable payloads aid debugging. Many organizations use both.',
+        },
+        {
+          type: 'text',
+          content: `## Protocol Buffers
+
+Protobuf is a language-neutral, platform-neutral serialization format. You write a \`.proto\` file, and the \`protoc\` compiler generates client/server code in your language of choice.
+
+### Writing your first .proto file
+
+\`\`\`protobuf
+// courses.proto
+syntax = "proto3";
+
+package guild.courses.v1;
+
+option go_package = "github.com/guild/api/courses/v1";
+
+// A message is like a struct — defines the fields
+message Course {
+  string id          = 1;    // field number, not the value
+  string title       = 2;
+  string description = 3;
+  Difficulty difficulty = 4;
+  repeated string tags = 5;  // repeated = list/array
+  int32 total_lessons = 6;
+  int32 estimated_minutes = 7;
+}
+
+// Enums are fully typed
+enum Difficulty {
+  DIFFICULTY_UNSPECIFIED = 0;  // proto3 always needs a zero value
+  DIFFICULTY_BEGINNER    = 1;
+  DIFFICULTY_INTERMEDIATE = 2;
+  DIFFICULTY_ADVANCED    = 3;
+}
+
+// Nested messages
+message ListCoursesRequest {
+  string l1_filter   = 1;
+  string difficulty  = 2;
+  int32  page_size   = 3;
+  string page_token  = 4;
+}
+
+message ListCoursesResponse {
+  repeated Course courses  = 1;
+  string next_page_token   = 2;
+  int32  total_count       = 3;
+}
+\`\`\`
+
+### Field numbers are permanent
+
+The numbers (\`= 1\`, \`= 2\`) are used in the binary encoding — they're **not** values. Once a field number is used, **never reuse it** for a different field even if you delete the original, or old serialized data will be misinterpreted. Deleted field numbers should be marked \`reserved\`.
+
+\`\`\`protobuf
+message Course {
+  reserved 8, 9;           // never reuse these field numbers
+  reserved "old_field";   // never reuse this name
+}
+\`\`\``,
+        },
+        {
+          type: 'codeBlock',
+          language: 'bash',
+          caption: 'Generating TypeScript types from a .proto file using protoc + ts-proto plugin',
+          code: `# Install tooling
+npm install --save-dev ts-proto grpc-tools
+
+# Generate TypeScript from proto
+protoc \\
+  --plugin=./node_modules/.bin/protoc-gen-ts_proto \\
+  --ts_proto_out=./src/generated \\
+  --ts_proto_opt=outputServices=grpc-js \\
+  --ts_proto_opt=esModuleInterop=true \\
+  --proto_path=./proto \\
+  ./proto/courses.proto
+
+# Output: src/generated/courses.ts
+# Contains typed interfaces, enums, and service stubs`,
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'grpc1-q1',
+              question: 'You delete the `description` field (field number 3) from a Protobuf message and later add a new `summary` field. Which field number should `summary` get?',
+              options: [
+                'Field 3 — it\'s free now',
+                'A new field number not previously used, and field 3 should be marked `reserved`',
+                'It doesn\'t matter — Protobuf uses field names for encoding',
+                'Field 0 — that\'s the default for new fields',
+              ],
+              correctIndex: 1,
+              explanation: 'Protobuf encodes data by field number, not field name. If you reuse field number 3 for `summary`, any old messages that still have `description` encoded as field 3 will be misread as `summary`. Mark old numbers and names as `reserved` to prevent accidental reuse. Always assign new, unused field numbers to new fields.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-grpc-2',
+    courseId: 'course-grpc',
+    order: 1,
+    title: 'Defining gRPC Services & Streaming',
+    estimatedMinutes: 16,
+    createdAt: '2026-05-25T00:00:00.000Z',
+    updatedAt: '2026-05-25T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Service definitions
+
+A **service** in Protobuf defines the RPC methods — the API surface. There are four types of gRPC calls:
+
+\`\`\`protobuf
+service CourseService {
+  // 1. Unary — one request, one response (like REST)
+  rpc GetCourse(GetCourseRequest) returns (Course);
+
+  // 2. Server streaming — one request, stream of responses
+  rpc WatchCourseProgress(WatchRequest) returns (stream ProgressUpdate);
+
+  // 3. Client streaming — stream of requests, one response
+  rpc BatchCreateLessons(stream CreateLessonRequest) returns (BatchResult);
+
+  // 4. Bidirectional streaming — both sides stream simultaneously
+  rpc LiveCodeSession(stream CodeEvent) returns (stream CodeEvent);
+}
+\`\`\`
+
+### Implementing a gRPC server in Node.js
+
+\`\`\`typescript
+import * as grpc from '@grpc/grpc-js';
+import { CourseServiceService } from './generated/courses';
+import { db } from './database';
+
+const courseService: typeof CourseServiceService = {
+  async getCourse(call, callback) {
+    try {
+      const course = await db.courses.findById(call.request.id);
+      if (!course) {
+        callback({ code: grpc.status.NOT_FOUND, message: 'Course not found' });
+        return;
+      }
+      callback(null, { course });
+    } catch (err) {
+      callback({ code: grpc.status.INTERNAL, message: 'Internal error' });
+    }
+  },
+
+  // Server streaming: push progress updates as they happen
+  watchCourseProgress(call) {
+    const { courseId, userId } = call.request;
+    const unsubscribe = db.progress.subscribe(courseId, userId, (update) => {
+      call.write(update);
+    });
+    call.on('cancelled', unsubscribe);
+    call.on('close', unsubscribe);
+  },
+};
+
+const server = new grpc.Server();
+server.addService(CourseServiceService, courseService);
+server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
+  server.start();
+  console.log('gRPC server running on :50051');
+});
+\`\`\``,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'gRPC Streaming Modes',
+          nodes: [
+            { id: 'unary', position: { x: 40, y: 60 }, data: { label: 'Unary\n(request → response)' }, style: { background: '#1e3a5f', border: '1px solid #3b82f6', borderRadius: '8px', color: '#93c5fd', padding: '10px 16px', fontSize: '11px' } },
+            { id: 'server-stream', position: { x: 40, y: 180 }, data: { label: 'Server streaming\n(request → stream)' }, style: { background: '#1a2e1a', border: '1px solid #4ade80', borderRadius: '8px', color: '#86efac', padding: '10px 16px', fontSize: '11px' } },
+            { id: 'client-stream', position: { x: 40, y: 300 }, data: { label: 'Client streaming\n(stream → response)' }, style: { background: '#2d1f0a', border: '1px solid #fb923c', borderRadius: '8px', color: '#fdba74', padding: '10px 16px', fontSize: '11px' } },
+            { id: 'bidi', position: { x: 40, y: 420 }, data: { label: 'Bidirectional\n(stream ↔ stream)' }, style: { background: '#2d1f3d', border: '1px solid #a855f7', borderRadius: '8px', color: '#d8b4fe', padding: '10px 16px', fontSize: '11px' } },
+            { id: 'server', position: { x: 340, y: 240 }, data: { label: 'gRPC Server\n:50051' }, style: { background: '#1a1a2e', border: '1px solid #818cf8', borderRadius: '12px', color: '#c7d2fe', padding: '12px 20px', fontSize: '13px', fontWeight: 'bold' } },
+            { id: 'uc1', position: { x: 580, y: 60 }, data: { label: 'getCourse(id)' }, style: { background: '#1e3a5f', border: '1px solid #3b82f6', borderRadius: '8px', color: '#93c5fd', padding: '8px 14px', fontSize: '11px' } },
+            { id: 'uc2', position: { x: 580, y: 180 }, data: { label: 'watchProgress()' }, style: { background: '#1a2e1a', border: '1px solid #4ade80', borderRadius: '8px', color: '#86efac', padding: '8px 14px', fontSize: '11px' } },
+            { id: 'uc3', position: { x: 580, y: 300 }, data: { label: 'batchImport()' }, style: { background: '#2d1f0a', border: '1px solid #fb923c', borderRadius: '8px', color: '#fdba74', padding: '8px 14px', fontSize: '11px' } },
+            { id: 'uc4', position: { x: 580, y: 420 }, data: { label: 'liveCode()' }, style: { background: '#2d1f3d', border: '1px solid #a855f7', borderRadius: '8px', color: '#d8b4fe', padding: '8px 14px', fontSize: '11px' } },
+          ],
+          edges: [
+            { id: 'e1', source: 'unary', target: 'server', animated: true, style: { stroke: '#3b82f6' } },
+            { id: 'e2', source: 'server-stream', target: 'server', animated: true, style: { stroke: '#4ade80' } },
+            { id: 'e3', source: 'client-stream', target: 'server', animated: true, style: { stroke: '#fb923c' } },
+            { id: 'e4', source: 'bidi', target: 'server', animated: true, style: { stroke: '#a855f7' } },
+            { id: 'e5', source: 'server', target: 'uc1', label: 'use case', style: { stroke: '#3b82f6' } },
+            { id: 'e6', source: 'server', target: 'uc2', style: { stroke: '#4ade80' } },
+            { id: 'e7', source: 'server', target: 'uc3', style: { stroke: '#fb923c' } },
+            { id: 'e8', source: 'server', target: 'uc4', style: { stroke: '#a855f7' } },
+          ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'gRPC client — calling a unary RPC and a server-streaming RPC',
+          code: `import * as grpc from '@grpc/grpc-js';
+import { CourseServiceClient } from './generated/courses';
+
+const client = new CourseServiceClient(
+  'localhost:50051',
+  grpc.credentials.createInsecure()
+);
+
+// Unary call — promisify for async/await
+function getCourse(id: string): Promise<Course> {
+  return new Promise((resolve, reject) => {
+    client.getCourse({ id }, (err, response) => {
+      if (err) reject(err);
+      else resolve(response!.course!);
+    });
+  });
+}
+
+// Server streaming — event emitter pattern
+function watchProgress(courseId: string, userId: string) {
+  const stream = client.watchCourseProgress({ courseId, userId });
+
+  stream.on('data', (update: ProgressUpdate) => {
+    console.log(\`Lesson \${update.lessonId} completed — \${update.pct}%\`);
+  });
+
+  stream.on('error', (err) => {
+    console.error('Stream error:', err);
+  });
+
+  stream.on('end', () => {
+    console.log('Stream closed by server');
+  });
+
+  return stream; // call stream.cancel() to stop
+}`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Use status codes, not HTTP semantics',
+          content: 'gRPC has its own status codes: `OK`, `NOT_FOUND`, `INVALID_ARGUMENT`, `UNAUTHENTICATED`, `PERMISSION_DENIED`, `INTERNAL`, `UNAVAILABLE`, etc. These map to HTTP status codes in gRPC-Web proxies but communicate intent clearly in pure gRPC contexts. Always return meaningful codes — don\'t use `INTERNAL` for a 404.',
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-grpc-3',
+    courseId: 'course-grpc',
+    order: 2,
+    title: 'Schema Evolution, Middleware & gRPC-Web',
+    estimatedMinutes: 14,
+    createdAt: '2026-05-25T00:00:00.000Z',
+    updatedAt: '2026-05-25T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Backward-compatible schema evolution
+
+One of Protobuf's biggest strengths is safe schema evolution. If you follow the rules, old clients can talk to new servers and vice versa:
+
+### Safe changes ✅
+- **Add new fields** — old clients ignore unknown fields; new clients get default values from old messages
+- **Rename fields** — the binary encoding uses field numbers, not names, so renaming is invisible on the wire
+- **Add enum values** — old clients get the default (zero) value for unknown variants
+
+### Breaking changes ❌
+- **Remove or renumber a field** — reuse breaks old serialized data
+- **Change a field type** — a \`string\` reinterpreted as \`int32\` is corrupted data
+- **Change a required field to optional** (proto2 only) — proto3 has no required fields, making evolution easier
+
+\`\`\`protobuf
+// v1 Course message
+message Course {
+  string id    = 1;
+  string title = 2;
+}
+
+// v2 — safely extended, fully backward compatible
+message Course {
+  string id          = 1;
+  string title       = 2;
+  string description = 3;  // new — old clients send 0/empty, that's fine
+  repeated string tags = 4; // new — old clients send empty list
+  reserved 5;               // previously deleted field, never reuse
+}
+\`\`\``,
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'Version your packages, not individual messages',
+          content: 'A common pattern is to use package names like `guild.courses.v1`, `guild.courses.v2`. When you need truly breaking changes (changing a field type, restructuring), create a v2 package and migrate clients over time. The versioned package approach keeps old and new clients working simultaneously.',
+        },
+        {
+          type: 'text',
+          content: `## Interceptors — the gRPC equivalent of middleware
+
+gRPC interceptors let you add cross-cutting concerns (auth, logging, tracing, retry) without modifying business logic:
+
+\`\`\`typescript
+import * as grpc from '@grpc/grpc-js';
+
+// Server-side interceptor for authentication
+function authInterceptor(
+  methodDescriptor: grpc.ServerMethodDefinition<unknown, unknown>,
+  call: grpc.ServerUnaryCall<unknown, unknown>,
+  callback: grpc.sendUnaryData<unknown>,
+  next: grpc.handleUnaryCall<unknown, unknown>
+): void {
+  const token = call.metadata.get('authorization')[0];
+  if (!token || !verifyToken(String(token))) {
+    callback({ code: grpc.status.UNAUTHENTICATED, message: 'Invalid token' });
+    return;
+  }
+  next(call, callback);
+}
+
+// Client-side interceptor for adding auth token
+function clientAuthInterceptor(
+  options: grpc.InterceptorOptions,
+  nextCall: (options: grpc.InterceptorOptions) => grpc.InterceptingCall
+) {
+  return new grpc.InterceptingCall(nextCall(options), {
+    start(metadata, listener, next) {
+      metadata.set('authorization', \`Bearer \${getToken()}\`);
+      next(metadata, listener);
+    },
+  });
+}
+
+const client = new CourseServiceClient('localhost:50051', credentials, {
+  interceptors: [clientAuthInterceptor],
+});
+\`\`\`
+
+## gRPC-Web: using gRPC from browsers
+
+Browsers don't support HTTP/2 framing at the level gRPC requires, so a **proxy** is needed. **Envoy** and **grpc-web** are the standard solutions:
+
+\`\`\`
+Browser  ──(HTTP/1.1 + gRPC-Web)──►  Envoy Proxy  ──(HTTP/2 + gRPC)──►  Server
+\`\`\`
+
+The gRPC-Web client is almost identical to the Node.js client — same generated code, different import:
+
+\`\`\`typescript
+import { CourseServiceClient } from './generated/CoursesServiceClientPb';
+import { GetCourseRequest } from './generated/courses_pb';
+
+const client = new CourseServiceClient('https://api.example.com');
+
+const req = new GetCourseRequest();
+req.setId('course-123');
+
+client.getCourse(req, {}, (err, response) => {
+  if (err) console.error(err);
+  else console.log(response.getCourse()?.getTitle());
+});
+\`\`\`
+
+Note: gRPC-Web does **not** support client streaming or bidirectional streaming — only unary and server streaming. For those patterns in the browser, use WebSockets.`,
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'grpc3-q1',
+              question: 'Your gRPC service is on v1. You need to add a new required business rule: a `priority` field that affects server behavior. Old clients won\'t know about it. What should you do?',
+              options: [
+                'Add `priority` with a new field number — old clients will send 0 (the default), which your server can treat as the lowest priority',
+                'Delete the old service and replace it with a v2 that has priority as a required field',
+                'Use a reserved field number for priority so old clients cannot accidentally set it',
+                'There is no way to add required behavior without breaking old clients',
+              ],
+              correctIndex: 0,
+              explanation: 'Proto3 has no "required" fields — every field has a default (0 for numbers, empty string for strings, empty list for repeated). Adding `priority` with a new field number is a safe, backward-compatible change. Old clients send the default value; your server treats 0 as the lowest priority. This is the proto3 philosophy: design your defaults to represent the safe fallback behavior.',
+            },
+            {
+              id: 'grpc3-q2',
+              question: 'A browser client needs to stream events from a gRPC server in real time. Which gRPC streaming mode works with gRPC-Web?',
+              options: [
+                'Bidirectional streaming — the most flexible option',
+                'Client streaming — clients push data, server responds once',
+                'Server streaming — one request, stream of responses',
+                'None — gRPC-Web only supports unary calls',
+              ],
+              correctIndex: 2,
+              explanation: 'gRPC-Web supports unary (request/response) and server streaming (one request, stream of responses). Client streaming and bidirectional streaming are not supported in gRPC-Web because HTTP/1.1 — the transport gRPC-Web uses — doesn\'t allow true client-side streaming. For bidirectional browser communication, use WebSockets instead.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── Observability & Monitoring ────────────────────────────────────────────
+  {
+    id: 'lesson-obs-1',
+    courseId: 'course-observability',
+    order: 0,
+    title: 'The Three Pillars of Observability',
+    estimatedMinutes: 13,
+    createdAt: '2026-05-24T00:00:00.000Z',
+    updatedAt: '2026-05-24T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## What is Observability?
+
+**Observability** is the ability to understand what a system is doing — and *why* — from its external outputs. A system is observable if you can answer questions about it without needing to modify it or add new instrumentation.
+
+The term comes from control theory: a system is observable if its internal state can be determined from its outputs over time.
+
+In practice, observability in software rests on three types of data, often called **the three pillars**:
+
+| Pillar | What it tells you | Examples |
+|---|---|---|
+| **Logs** | What happened, and when | "Request 4f2a failed: DB timeout at 14:23:01" |
+| **Metrics** | How much / how fast / how many | "p99 latency = 230ms, error rate = 0.3%" |
+| **Traces** | How a request flowed across services | "checkout → inventory (18ms) → payment (95ms) → DB (42ms)" |
+
+Each pillar has different strengths. Logs are detailed but expensive to query at scale. Metrics are cheap and queryable but lack context. Traces connect the dots across service boundaries.
+
+### Why monitoring alone isn't enough
+
+Traditional **monitoring** is about known unknowns — you define alerts for conditions you anticipate ("alert if CPU > 80%"). Observability handles **unknown unknowns** — you can explore behavior you didn't predict.
+
+The difference matters in microservices: a cascading failure might not trip any individual threshold, but the traces will show the latency rippling across services.`,
+        },
+        {
+          type: 'callout',
+          variant: 'info',
+          title: 'Monitoring vs Observability',
+          content: 'Monitoring answers "is this service up?" — a yes/no question. Observability answers "what is this service doing, and why is it behaving that way?" The first tells you something is wrong; the second helps you understand what.',
+        },
+        {
+          type: 'text',
+          content: `## Logs
+
+Logs are timestamped, immutable records of events. They're the most familiar pillar but the hardest to do well at scale.
+
+### Structured vs unstructured logs
+
+Unstructured logs are human-readable strings that are painful to parse programmatically:
+\`\`\`
+2026-05-24 14:23:01 ERROR Request to /api/orders failed: connection timeout
+\`\`\`
+
+**Structured logs** (JSON) can be indexed and queried efficiently:
+\`\`\`json
+{
+  "level": "error",
+  "timestamp": "2026-05-24T14:23:01Z",
+  "service": "orders-api",
+  "traceId": "4f2a8b1c",
+  "path": "/api/orders",
+  "error": "connection timeout",
+  "latencyMs": 3001
+}
+\`\`\`
+
+### Log levels
+
+| Level | When to use |
+|---|---|
+| DEBUG | Detailed diagnostic info — never in production |
+| INFO | Normal operation events (request received, job started) |
+| WARN | Unexpected but recoverable conditions |
+| ERROR | Failures that affect a specific operation |
+| FATAL | Failures that cause the service to crash |
+
+### Log aggregation
+
+Send logs from all instances to a central system: **Elasticsearch + Kibana** (ELK), **Loki + Grafana**, or a managed service like Datadog or Splunk. Without aggregation, logs on individual servers are useless in an autoscaling environment.
+
+\`\`\`typescript
+import pino from 'pino';
+
+const log = pino({
+  level: process.env.LOG_LEVEL ?? 'info',
+  base: { service: 'orders-api', env: process.env.NODE_ENV },
+});
+
+// Structured logging with context
+log.info({ orderId: '123', userId: 'abc', amount: 49.99 }, 'Order created');
+log.error({ err, orderId: '123', retryCount: 3 }, 'Payment failed');
+\`\`\``,
+        },
+        {
+          type: 'text',
+          content: `## Metrics
+
+Metrics are numeric measurements over time — lightweight and queryable, perfect for dashboards and alerts.
+
+### The four golden signals (Google SRE)
+
+These four metrics cover most of what you care about in a production service:
+
+1. **Latency** — how long requests take (p50, p95, p99 — not averages)
+2. **Traffic** — how many requests per second
+3. **Errors** — what rate of requests are failing
+4. **Saturation** — how "full" the service is (CPU %, queue depth, connection pool usage)
+
+### Metric types
+
+| Type | Description | Example |
+|---|---|---|
+| Counter | Only goes up; reset on restart | \`http_requests_total\` |
+| Gauge | Goes up or down | \`active_connections\`, \`memory_bytes\` |
+| Histogram | Distribution of values in buckets | \`request_duration_seconds\` |
+| Summary | Like histogram, but computes quantiles client-side | Rarely used now |
+
+### Why p99 beats averages
+
+An average latency of 50ms looks fine — until you realize 1% of users experience 5-second timeouts. Percentile metrics (p95, p99) expose the tail latency that averages hide.`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Start with the golden signals',
+          content: 'For any new service, instrument latency (histogram), error rate (counter), and request rate (counter) first. You can always add more, but these three will catch 90% of production issues.',
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'obs1-q1',
+              question: 'Your service has average latency of 40ms but users are complaining about slow responses. Which metric is most likely revealing the problem?',
+              options: [
+                'The average is wrong — re-measure it',
+                'p99 latency — a small percentage of very slow requests pulls the average up slightly but hurts real users',
+                'Error rate — slow responses are counted as errors',
+                'Traffic — high request volume is causing slowness',
+              ],
+              correctIndex: 1,
+              explanation: 'Averages mask outliers. A p99 of 3 seconds means 1 in 100 requests takes 3 seconds — a terrible user experience that barely moves the average. Always look at percentile metrics (p95, p99) for latency to find tail latency issues.',
+            },
+            {
+              id: 'obs1-q2',
+              question: 'Which pillar of observability would best help you answer: "Why did the checkout service start returning errors at 2:15pm?"',
+              options: [
+                'Metrics alone — they show the error rate spike',
+                'Logs — they contain the error messages and stack traces that explain what went wrong',
+                'Traces alone — they show service call graphs',
+                'None — you need to redeploy with more instrumentation',
+              ],
+              correctIndex: 1,
+              explanation: 'Metrics tell you that errors increased (the "what"). Logs tell you what specific errors occurred, with context like the error message, the request that caused it, and the stack trace (the "why"). Together with traces, you get the full picture, but logs are the pillar that directly answers "what went wrong."',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-obs-2',
+    courseId: 'course-observability',
+    order: 1,
+    title: 'Prometheus & Grafana: Metrics Pipeline',
+    estimatedMinutes: 16,
+    createdAt: '2026-05-24T00:00:00.000Z',
+    updatedAt: '2026-05-24T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Prometheus
+
+Prometheus is an open-source metrics database and alerting toolkit. It uses a **pull model** — Prometheus scrapes a \`/metrics\` endpoint on your services at regular intervals (typically every 15 seconds), rather than having services push to it.
+
+### How it works
+
+1. Your service exposes \`/metrics\` in Prometheus text format
+2. Prometheus scrapes that endpoint on a schedule
+3. Metrics are stored in a time-series database (TSDB) on disk
+4. You query metrics using **PromQL** (Prometheus Query Language)
+5. Grafana visualises PromQL queries in dashboards
+
+### Instrumenting Node.js
+
+\`\`\`bash
+npm install prom-client
+\`\`\`
+
+\`\`\`typescript
+import { register, Counter, Histogram, collectDefaultMetrics } from 'prom-client';
+import express from 'express';
+
+// Collect default metrics (CPU, memory, event loop lag, etc.)
+collectDefaultMetrics({ prefix: 'myapp_' });
+
+// Custom metrics
+const httpRequests = new Counter({
+  name: 'http_requests_total',
+  help: 'Total HTTP requests',
+  labelNames: ['method', 'route', 'status'],
+});
+
+const httpDuration = new Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'HTTP request duration',
+  labelNames: ['method', 'route', 'status'],
+  buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5],
+});
+
+// Middleware
+app.use((req, res, next) => {
+  const end = httpDuration.startTimer({ method: req.method, route: req.path });
+  res.on('finish', () => {
+    const labels = { method: req.method, route: req.path, status: res.statusCode };
+    httpRequests.inc(labels);
+    end(labels);
+  });
+  next();
+});
+
+// Expose /metrics endpoint
+app.get('/metrics', async (_req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
+\`\`\``,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Prometheus + Grafana Architecture',
+          nodes: [
+            { id: 'app1', position: { x: 40, y: 80 }, data: { label: 'Service A\n:3000/metrics' }, style: { background: '#1e3a5f', border: '1px solid #3b82f6', borderRadius: '8px', color: '#93c5fd', padding: '8px 14px', fontSize: '11px' } },
+            { id: 'app2', position: { x: 40, y: 200 }, data: { label: 'Service B\n:4000/metrics' }, style: { background: '#1e3a5f', border: '1px solid #3b82f6', borderRadius: '8px', color: '#93c5fd', padding: '8px 14px', fontSize: '11px' } },
+            { id: 'app3', position: { x: 40, y: 320 }, data: { label: 'Node Exporter\n(host metrics)' }, style: { background: '#1a2e1a', border: '1px solid #4ade80', borderRadius: '8px', color: '#86efac', padding: '8px 14px', fontSize: '11px' } },
+            { id: 'prom', position: { x: 280, y: 200 }, data: { label: 'Prometheus\n(TSDB + Scraper)' }, style: { background: '#2d1a1a', border: '1px solid #f87171', borderRadius: '12px', color: '#fca5a5', padding: '12px 20px', fontSize: '13px', fontWeight: 'bold' } },
+            { id: 'alertmgr', position: { x: 280, y: 380 }, data: { label: 'Alertmanager\n→ PagerDuty/Slack' }, style: { background: '#2d1f0a', border: '1px solid #fb923c', borderRadius: '8px', color: '#fdba74', padding: '8px 14px', fontSize: '11px' } },
+            { id: 'grafana', position: { x: 520, y: 200 }, data: { label: 'Grafana\n(Dashboards)' }, style: { background: '#1a1a2e', border: '1px solid #a855f7', borderRadius: '12px', color: '#d8b4fe', padding: '12px 20px', fontSize: '13px', fontWeight: 'bold' } },
+            { id: 'user', position: { x: 520, y: 380 }, data: { label: 'On-call Engineer\n(browser)' }, style: { background: '#1e3a5f', border: '1px solid #60a5fa', borderRadius: '8px', color: '#93c5fd', padding: '8px 14px', fontSize: '11px' } },
+          ],
+          edges: [
+            { id: 'e1', source: 'prom', target: 'app1', label: 'scrape every 15s', animated: true, style: { stroke: '#f87171' } },
+            { id: 'e2', source: 'prom', target: 'app2', animated: true, style: { stroke: '#f87171' } },
+            { id: 'e3', source: 'prom', target: 'app3', animated: true, style: { stroke: '#f87171' } },
+            { id: 'e4', source: 'prom', target: 'alertmgr', label: 'fire alerts', style: { stroke: '#fb923c' } },
+            { id: 'e5', source: 'grafana', target: 'prom', label: 'PromQL query', animated: true, style: { stroke: '#a855f7' } },
+            { id: 'e6', source: 'user', target: 'grafana', label: 'view dashboards', style: { stroke: '#60a5fa' } },
+            { id: 'e7', source: 'alertmgr', target: 'user', label: 'page/notify', style: { stroke: '#fb923c' } },
+          ],
+        },
+        {
+          type: 'text',
+          content: `## PromQL — querying your metrics
+
+PromQL is a powerful functional query language for time-series data.
+
+\`\`\`promql
+# Current request rate per second over the last 5 minutes
+rate(http_requests_total[5m])
+
+# Request rate, grouped by route
+sum by (route) (rate(http_requests_total[5m]))
+
+# 99th percentile latency
+histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
+
+# Error rate as a percentage
+100 * sum(rate(http_requests_total{status=~"5.."}[5m]))
+    / sum(rate(http_requests_total[5m]))
+
+# Services with latency > 500ms
+histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 0.5
+\`\`\`
+
+### Alerting rules
+
+Define alerts in YAML; Prometheus evaluates them continuously:
+
+\`\`\`yaml
+# prometheus/rules/api.yml
+groups:
+  - name: api
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+          / sum(rate(http_requests_total[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Error rate above 5%"
+          description: "{{ $value | humanizePercentage }} of requests are failing"
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p99 latency above 1 second"
+\`\`\``,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Use the USE method for resource metrics',
+          content: 'For every resource (CPU, disk, network), track **Utilization** (% busy), **Saturation** (work queued), and **Errors** (error rate). This gives you a systematic way to identify bottlenecks without guessing.',
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-obs-3',
+    courseId: 'course-observability',
+    order: 2,
+    title: 'Distributed Tracing with OpenTelemetry',
+    estimatedMinutes: 16,
+    createdAt: '2026-05-24T00:00:00.000Z',
+    updatedAt: '2026-05-24T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Why distributed tracing?
+
+In a monolith, a slow request has one place to look: the application code. In a microservices architecture, a single user action may touch 10+ services. A slow response could originate anywhere. **Distributed tracing** records the full journey of a request across every service it touches.
+
+### Key concepts
+
+- **Trace** — the complete picture of one request's journey (a tree of spans)
+- **Span** — a single unit of work with a start time, duration, and metadata
+- **Trace ID** — a unique ID that flows through all services with the request
+- **Parent span ID** — links a span to its parent, building the tree
+
+### OpenTelemetry
+
+**OpenTelemetry (OTel)** is the vendor-neutral standard for generating traces, metrics, and logs. It provides SDKs for every major language and an **OTel Collector** that receives telemetry and exports it to backends like Jaeger, Zipkin, Honeycomb, Datadog, or Grafana Tempo.
+
+Using OTel means you can switch backends without changing your instrumentation code.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'OpenTelemetry Node.js setup — must be imported before any other modules',
+          code: `// tracing.ts — import this first in your entry point: import './tracing'
+import { NodeSDK } from '@opentelemetry/sdk-node';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { Resource } from '@opentelemetry/resources';
+import { SEMRESATTRS_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+
+const sdk = new NodeSDK({
+  resource: new Resource({
+    [SEMRESATTRS_SERVICE_NAME]: 'orders-service',
+  }),
+  traceExporter: new OTLPTraceExporter({
+    url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:4318/v1/traces',
+  }),
+  // Auto-instrument: http, express, pg, redis, mongoose, grpc, …
+  instrumentations: [getNodeAutoInstrumentations()],
+});
+
+sdk.start();
+process.on('SIGTERM', () => sdk.shutdown());`,
+        },
+        {
+          type: 'text',
+          content: `## Manual instrumentation
+
+Auto-instrumentation covers HTTP and DB calls automatically. For business logic you want to trace, add spans manually:
+
+\`\`\`typescript
+import { trace, SpanStatusCode } from '@opentelemetry/api';
+
+const tracer = trace.getTracer('orders-service');
+
+async function processOrder(orderId: string) {
+  // Start a span for this operation
+  return tracer.startActiveSpan('processOrder', async (span) => {
+    span.setAttribute('order.id', orderId);
+
+    try {
+      // Auto-instrumented — the HTTP call gets its own child span automatically
+      const inventory = await checkInventory(orderId);
+      span.setAttribute('inventory.available', inventory.available);
+
+      if (!inventory.available) {
+        span.setStatus({ code: SpanStatusCode.ERROR, message: 'Out of stock' });
+        throw new Error('Out of stock');
+      }
+
+      const payment = await chargePayment(orderId);
+      span.setAttribute('payment.id', payment.id);
+      span.setStatus({ code: SpanStatusCode.OK });
+
+      return payment;
+    } catch (err) {
+      span.recordException(err as Error);
+      span.setStatus({ code: SpanStatusCode.ERROR });
+      throw err;
+    } finally {
+      span.end(); // Always end the span
+    }
+  });
+}
+\`\`\`
+
+### Propagating context
+
+Context propagation is how the trace ID flows between services. OTel uses the **W3C TraceContext** standard — the \`traceparent\` HTTP header carries the trace and span ID:
+
+\`\`\`
+traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+             ^version ^trace-id (16 bytes)             ^span-id   ^flags
+\`\`\`
+
+OTel's HTTP instrumentation injects and extracts this header automatically.`,
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'Sampling is essential at scale',
+          content: 'Tracing 100% of requests is expensive at high traffic. Most production systems use **head-based sampling** (decide at trace start, e.g., 1% of requests) or **tail-based sampling** (the OTel Collector decides after seeing the full trace, keeping all errors and slow traces). Start with 1–10% head sampling; add tail sampling to keep interesting traces.',
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'obs3-q1',
+              question: 'A checkout request is slow, but the checkout service itself looks healthy in metrics. Tracing shows the span tree: checkout → inventory (5ms) → payment (2s) → email (3ms). What caused the slowness?',
+              options: [
+                'The checkout service — it orchestrated too many calls',
+                'The payment service — its span took 2 seconds, making it the bottleneck',
+                'The email service — it always runs last',
+                'Network latency between services',
+              ],
+              correctIndex: 1,
+              explanation: 'The trace\'s waterfall view shows exactly where time was spent. The payment service span consumed 2 seconds — that\'s the bottleneck. Without traces, you\'d only see the checkout service\'s total latency, not which dependency caused it. This is the core value of distributed tracing.',
+            },
+            {
+              id: 'obs3-q2',
+              question: 'Why does OpenTelemetry use the traceparent HTTP header when a service calls another service?',
+              options: [
+                'To authenticate the request',
+                'To carry the trace ID and span ID so the downstream service can link its spans to the same trace',
+                'To compress the request body',
+                'To route the request to the correct service instance',
+              ],
+              correctIndex: 1,
+              explanation: 'Context propagation is how a distributed trace stays connected. When service A calls service B, it injects the current trace ID and span ID into the traceparent header. Service B extracts this, creates a child span with the same trace ID, and the backend can now reconstruct the full trace tree. Without propagation, every service would create independent, disconnected traces.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── WebSockets & Real-time Communication ──────────────────────────────────
+  {
+    id: 'lesson-ws-1',
+    courseId: 'course-websockets',
+    order: 0,
+    title: 'The WebSocket Protocol',
+    estimatedMinutes: 12,
+    createdAt: '2026-05-20T00:00:00.000Z',
+    updatedAt: '2026-05-20T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## From HTTP to WebSockets
+
+HTTP is a request/response protocol — the client always speaks first. This works fine for loading pages, but breaks down when you need the **server to push data**: live scores, chat messages, stock prices, collaborative edits.
+
+The traditional workaround was **polling** — the client asks "anything new?" every second. This burns bandwidth and adds latency. A much better approach is **WebSockets**.
+
+### The HTTP Upgrade handshake
+
+A WebSocket connection starts as a regular HTTP/1.1 request with special headers:
+
+\`\`\`http
+GET /chat HTTP/1.1
+Host: example.com
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+Sec-WebSocket-Version: 13
+\`\`\`
+
+If the server accepts, it responds with **101 Switching Protocols** and the TCP connection is upgraded — it stays open and becomes bidirectional:
+
+\`\`\`http
+HTTP/1.1 101 Switching Protocols
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+\`\`\`
+
+From this point the HTTP protocol is gone. Both sides can send **frames** at any time.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'WebSocket Connection Lifecycle',
+          nodes: [
+            { id: 'client', position: { x: 80, y: 200 }, data: { label: 'Browser\n(Client)' }, style: { background: '#1e3a5f', border: '1px solid #3b82f6', borderRadius: '8px', color: '#93c5fd', padding: '10px 16px', fontSize: '12px' } },
+            { id: 'http-req', position: { x: 300, y: 80 }, data: { label: 'HTTP GET /ws\nUpgrade: websocket' }, style: { background: '#1a2e1a', border: '1px solid #4ade80', borderRadius: '8px', color: '#86efac', padding: '10px 16px', fontSize: '11px' } },
+            { id: 'server', position: { x: 560, y: 200 }, data: { label: 'Node.js\n(Server)' }, style: { background: '#2d1f3d', border: '1px solid #a855f7', borderRadius: '8px', color: '#d8b4fe', padding: '10px 16px', fontSize: '12px' } },
+            { id: 'handshake', position: { x: 300, y: 200 }, data: { label: '101 Switching\nProtocols ✓' }, style: { background: '#1a2e1a', border: '1px solid #4ade80', borderRadius: '8px', color: '#4ade80', padding: '10px 16px', fontSize: '11px', fontWeight: 'bold' } },
+            { id: 'msg-c', position: { x: 140, y: 360 }, data: { label: 'send("hello")' }, style: { background: '#1e3a5f', border: '1px solid #60a5fa', borderRadius: '8px', color: '#93c5fd', padding: '8px 14px', fontSize: '11px' } },
+            { id: 'msg-s', position: { x: 460, y: 440 }, data: { label: 'send("world")' }, style: { background: '#2d1f3d', border: '1px solid #a855f7', borderRadius: '8px', color: '#d8b4fe', padding: '8px 14px', fontSize: '11px' } },
+            { id: 'close', position: { x: 300, y: 540 }, data: { label: 'Close frame\n(code 1000)' }, style: { background: '#2d1a1a', border: '1px solid #f87171', borderRadius: '8px', color: '#fca5a5', padding: '8px 14px', fontSize: '11px' } },
+          ],
+          edges: [
+            { id: 'e1', source: 'client', target: 'http-req', label: 'upgrade request', animated: true, style: { stroke: '#4ade80' } },
+            { id: 'e2', source: 'http-req', target: 'server', animated: true, style: { stroke: '#4ade80' } },
+            { id: 'e3', source: 'server', target: 'handshake', label: '101 response', animated: true, style: { stroke: '#a855f7' } },
+            { id: 'e4', source: 'handshake', target: 'client', animated: true, style: { stroke: '#a855f7' } },
+            { id: 'e5', source: 'client', target: 'msg-c', style: { stroke: '#60a5fa', strokeDasharray: '4' } },
+            { id: 'e6', source: 'msg-c', target: 'server', label: 'frame →', animated: true, style: { stroke: '#60a5fa' } },
+            { id: 'e7', source: 'server', target: 'msg-s', style: { stroke: '#a855f7', strokeDasharray: '4' } },
+            { id: 'e8', source: 'msg-s', target: 'client', label: '← frame', animated: true, style: { stroke: '#a855f7' } },
+            { id: 'e9', source: 'client', target: 'close', label: 'either side', style: { stroke: '#f87171' } },
+          ],
+        },
+        {
+          type: 'callout',
+          variant: 'info',
+          title: 'Full-duplex vs half-duplex',
+          content: 'HTTP is half-duplex — one side talks, then the other. WebSockets are **full-duplex** — both sides can send data simultaneously on the same connection, just like a phone call rather than walkie-talkies.',
+        },
+        {
+          type: 'text',
+          content: `## The WebSocket API in the browser
+
+The browser exposes a clean \`WebSocket\` constructor:
+
+\`\`\`javascript
+const ws = new WebSocket('wss://example.com/chat');
+
+ws.onopen = () => {
+  console.log('Connected!');
+  ws.send(JSON.stringify({ type: 'join', room: 'general' }));
+};
+
+ws.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
+  console.log('Received:', msg);
+};
+
+ws.onerror = (err) => console.error('WS error:', err);
+
+ws.onclose = (event) => {
+  console.log(\`Disconnected: \${event.code} \${event.reason}\`);
+};
+\`\`\`
+
+### Connection states
+
+| \`ws.readyState\` | Constant | Meaning |
+|---|---|---|
+| 0 | CONNECTING | Handshake in progress |
+| 1 | OPEN | Connection established, ready to send/receive |
+| 2 | CLOSING | Close handshake in progress |
+| 3 | CLOSED | Connection terminated |
+
+Always check \`ws.readyState === WebSocket.OPEN\` before calling \`ws.send()\` — sending on a closed socket throws.
+
+### \`ws://\` vs \`wss://\`
+
+Use **\`wss://\`** (WebSocket Secure, over TLS) in production for the same reasons you use HTTPS. Many proxies and CDNs will drop plain \`ws://\` connections.`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'JSON is just a convention',
+          content: 'WebSocket frames carry raw bytes — you can send text or binary. Sending JSON `{ type, payload }` messages is a popular convention that makes it easy to multiplex different event types on one socket, but it\'s not required by the protocol.',
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-ws-2',
+    courseId: 'course-websockets',
+    order: 1,
+    title: 'Building a Real-time Chat Server',
+    estimatedMinutes: 16,
+    createdAt: '2026-05-20T00:00:00.000Z',
+    updatedAt: '2026-05-20T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## The ws library for Node.js
+
+The \`ws\` package is the most widely-used WebSocket server for Node.js — small, fast, and spec-compliant. Socket.IO builds on top of it but adds a lot of abstraction; for learning purposes, \`ws\` is cleaner to start with.
+
+\`\`\`bash
+npm install ws
+npm install --save-dev @types/ws
+\`\`\`
+
+### Minimal echo server
+
+\`\`\`typescript
+import { WebSocketServer, WebSocket } from 'ws';
+import { createServer } from 'http';
+
+const httpServer = createServer();
+const wss = new WebSocketServer({ server: httpServer });
+
+wss.on('connection', (socket, request) => {
+  const ip = request.socket.remoteAddress;
+  console.log(\`Client connected from \${ip}\`);
+
+  socket.on('message', (data, isBinary) => {
+    // Echo back to the same client
+    socket.send(data, { binary: isBinary });
+  });
+
+  socket.on('close', (code, reason) => {
+    console.log(\`Client disconnected: \${code} \${reason}\`);
+  });
+
+  socket.on('error', console.error);
+});
+
+httpServer.listen(3000, () => console.log('WS server on :3000'));
+\`\`\`
+
+This handles the upgrade automatically. Any HTTP server can be promoted to also handle WebSocket upgrades.`,
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'One connection per socket',
+          content: 'Each `socket` object in the `connection` callback is an independent TCP connection. `wss.clients` is a `Set<WebSocket>` of all currently-connected sockets. To broadcast to everyone you loop over it.',
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'Multi-room chat server — rooms stored in a Map, messages broadcast to room members',
+          code: `import { WebSocketServer, WebSocket } from 'ws';
+import { createServer } from 'http';
+
+interface Client {
+  socket: WebSocket;
+  room: string;
+  name: string;
+}
+
+const httpServer = createServer();
+const wss = new WebSocketServer({ server: httpServer });
+
+// room → Set of client objects
+const rooms = new Map<string, Set<Client>>();
+
+function broadcast(room: string, payload: object, exclude?: WebSocket) {
+  const members = rooms.get(room);
+  if (!members) return;
+  const msg = JSON.stringify(payload);
+  for (const client of members) {
+    if (client.socket !== exclude && client.socket.readyState === WebSocket.OPEN) {
+      client.socket.send(msg);
+    }
+  }
+}
+
+wss.on('connection', (socket) => {
+  let client: Client | null = null;
+
+  socket.on('message', (raw) => {
+    let event: { type: string; [k: string]: unknown };
+    try { event = JSON.parse(raw.toString()); }
+    catch { return; }
+
+    if (event.type === 'join') {
+      const name = String(event.name ?? 'Anon');
+      const room = String(event.room ?? 'general');
+      client = { socket, name, room };
+
+      if (!rooms.has(room)) rooms.set(room, new Set());
+      rooms.get(room)!.add(client);
+
+      socket.send(JSON.stringify({ type: 'joined', room, members: rooms.get(room)!.size }));
+      broadcast(room, { type: 'system', text: \`\${name} joined\` }, socket);
+      return;
+    }
+
+    if (event.type === 'message' && client) {
+      broadcast(client.room, {
+        type: 'message',
+        from: client.name,
+        text: String(event.text),
+        ts: Date.now(),
+      });
+    }
+  });
+
+  socket.on('close', () => {
+    if (!client) return;
+    rooms.get(client.room)?.delete(client);
+    broadcast(client.room, { type: 'system', text: \`\${client.name} left\` });
+    if (rooms.get(client.room)?.size === 0) rooms.delete(client.room);
+  });
+});
+
+httpServer.listen(3000);`,
+        },
+        {
+          type: 'text',
+          content: `## Heartbeats — keeping connections alive
+
+Many load balancers, proxies, and mobile networks silently drop idle TCP connections after 30–60 seconds. WebSockets include a **ping/pong** frame mechanism for keepalives:
+
+\`\`\`typescript
+// Server-side: ping all clients every 30 s, terminate if they don't pong
+const HEARTBEAT_INTERVAL = 30_000;
+
+wss.on('connection', (socket) => {
+  (socket as WebSocket & { isAlive: boolean }).isAlive = true;
+
+  socket.on('pong', () => {
+    (socket as WebSocket & { isAlive: boolean }).isAlive = true;
+  });
+});
+
+const interval = setInterval(() => {
+  for (const socket of wss.clients) {
+    const ws = socket as WebSocket & { isAlive: boolean };
+    if (!ws.isAlive) { ws.terminate(); continue; }
+    ws.isAlive = false;
+    ws.ping();
+  }
+}, HEARTBEAT_INTERVAL);
+
+wss.on('close', () => clearInterval(interval));
+\`\`\`
+
+The server pings every 30 seconds. If a client doesn't pong within the next interval, it gets terminated — preventing ghost connections from accumulating.`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Reconnect from the client',
+          content: 'The `WebSocket` constructor doesn\'t reconnect automatically. Implement exponential back-off on `onclose`: start at 1s, double each attempt up to ~30s. Reset the delay on successful `onopen`. Libraries like `reconnecting-websocket` handle this for you.',
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-ws-3',
+    courseId: 'course-websockets',
+    order: 2,
+    title: 'Real-time Patterns: Pub/Sub & Presence',
+    estimatedMinutes: 14,
+    createdAt: '2026-05-20T00:00:00.000Z',
+    updatedAt: '2026-05-20T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Scaling beyond a single server
+
+The chat server from Lesson 2 stores rooms in memory. That works fine for one process, but fails when you add a second server — clients on different instances can't reach each other.
+
+The standard fix is a **Pub/Sub broker** (Redis is the most common choice) that sits between your WebSocket servers:
+
+- Each server **subscribes** to a Redis channel per room.
+- When a message arrives, the server **publishes** to Redis.
+- Redis delivers the message to all other subscribers (the other servers), who forward it to their local clients.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Multi-server WebSocket with Redis Pub/Sub',
+          nodes: [
+            { id: 'client1', position: { x: 40, y: 120 }, data: { label: 'Client A' }, style: { background: '#1e3a5f', border: '1px solid #3b82f6', borderRadius: '8px', color: '#93c5fd', padding: '8px 14px', fontSize: '11px' } },
+            { id: 'client2', position: { x: 40, y: 280 }, data: { label: 'Client B' }, style: { background: '#1e3a5f', border: '1px solid #3b82f6', borderRadius: '8px', color: '#93c5fd', padding: '8px 14px', fontSize: '11px' } },
+            { id: 'ws1', position: { x: 200, y: 200 }, data: { label: 'WS Server 1' }, style: { background: '#1a2e1a', border: '1px solid #4ade80', borderRadius: '8px', color: '#86efac', padding: '10px 16px', fontSize: '12px' } },
+            { id: 'client3', position: { x: 560, y: 120 }, data: { label: 'Client C' }, style: { background: '#1e3a5f', border: '1px solid #3b82f6', borderRadius: '8px', color: '#93c5fd', padding: '8px 14px', fontSize: '11px' } },
+            { id: 'client4', position: { x: 560, y: 280 }, data: { label: 'Client D' }, style: { background: '#1e3a5f', border: '1px solid #3b82f6', borderRadius: '8px', color: '#93c5fd', padding: '8px 14px', fontSize: '11px' } },
+            { id: 'ws2', position: { x: 400, y: 200 }, data: { label: 'WS Server 2' }, style: { background: '#1a2e1a', border: '1px solid #4ade80', borderRadius: '8px', color: '#86efac', padding: '10px 16px', fontSize: '12px' } },
+            { id: 'redis', position: { x: 280, y: 380 }, data: { label: 'Redis\nPub/Sub' }, style: { background: '#2d1a1a', border: '1px solid #f87171', borderRadius: '12px', color: '#fca5a5', padding: '10px 20px', fontSize: '13px', fontWeight: 'bold' } },
+          ],
+          edges: [
+            { id: 'e1', source: 'client1', target: 'ws1', animated: true, style: { stroke: '#60a5fa' } },
+            { id: 'e2', source: 'client2', target: 'ws1', animated: true, style: { stroke: '#60a5fa' } },
+            { id: 'e3', source: 'client3', target: 'ws2', animated: true, style: { stroke: '#60a5fa' } },
+            { id: 'e4', source: 'client4', target: 'ws2', animated: true, style: { stroke: '#60a5fa' } },
+            { id: 'e5', source: 'ws1', target: 'redis', label: 'PUBLISH', animated: true, style: { stroke: '#f87171' } },
+            { id: 'e6', source: 'redis', target: 'ws2', label: 'SUBSCRIBE', animated: true, style: { stroke: '#f87171' } },
+            { id: 'e7', source: 'ws2', target: 'redis', label: 'PUBLISH', animated: true, style: { stroke: '#f87171' } },
+            { id: 'e8', source: 'redis', target: 'ws1', label: 'SUBSCRIBE', animated: true, style: { stroke: '#f87171' } },
+          ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'Redis-backed pub/sub with ioredis — PUBLISH on receive, SUBSCRIBE to forward to local clients',
+          code: `import Redis from 'ioredis';
+
+const pub = new Redis();   // used for PUBLISH (can't SUBSCRIBE while publishing)
+const sub = new Redis();   // used for SUBSCRIBE
+
+// Map from channel name → set of local WebSocket connections
+const localSubs = new Map<string, Set<WebSocket>>();
+
+export async function subscribe(channel: string, socket: WebSocket) {
+  if (!localSubs.has(channel)) {
+    localSubs.set(channel, new Set());
+    await sub.subscribe(channel);
+  }
+  localSubs.get(channel)!.add(socket);
+}
+
+export async function unsubscribe(channel: string, socket: WebSocket) {
+  const sockets = localSubs.get(channel);
+  if (!sockets) return;
+  sockets.delete(socket);
+  if (sockets.size === 0) {
+    localSubs.delete(channel);
+    await sub.unsubscribe(channel);
+  }
+}
+
+// Forward Redis messages to all local WebSocket subscribers
+sub.on('message', (channel, message) => {
+  for (const socket of localSubs.get(channel) ?? []) {
+    if (socket.readyState === WebSocket.OPEN) socket.send(message);
+  }
+});
+
+// Publish a message (reaches all servers subscribed to this channel)
+export function publish(channel: string, payload: object) {
+  pub.publish(channel, JSON.stringify(payload));
+}`,
+        },
+        {
+          type: 'text',
+          content: `## Presence — who's online?
+
+Presence tells users which other users are currently connected. There are two approaches:
+
+### Client-side count (simple)
+Send \`{ type: "presence", count: N }\` to a room whenever someone joins or leaves. Works fine for coarse "X users online" displays.
+
+### Per-user presence with Redis (robust)
+Store each connected user in a Redis set with a TTL. When they connect, \`SADD presence:room userId\` with \`EXPIRE\`. When they disconnect, \`SREM\`. To get the room list: \`SMEMBERS presence:room\`.
+
+\`\`\`typescript
+// User connects
+await redis.sadd(\`presence:\${room}\`, userId);
+await redis.expire(\`presence:\${room}\`, 300); // 5-min TTL as safety net
+
+// User disconnects
+await redis.srem(\`presence:\${room}\`, userId);
+
+// Get current members
+const members = await redis.smembers(\`presence:\${room}\`);
+\`\`\`
+
+The TTL is a safety net for crashed clients that don't send a clean close frame.
+
+## Reconnection strategy
+
+A production client should reconnect on any unexpected close:
+
+\`\`\`typescript
+function connect(url: string) {
+  const ws = new WebSocket(url);
+  let retryDelay = 1000;
+
+  ws.onclose = (event) => {
+    if (event.code === 1000) return; // Normal close — don't reconnect
+    const delay = retryDelay;
+    retryDelay = Math.min(retryDelay * 2, 30_000); // cap at 30 s
+    setTimeout(() => connect(url), delay);
+  };
+
+  ws.onopen = () => { retryDelay = 1000; }; // Reset on success
+
+  return ws;
+}
+\`\`\``,
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'ws3-q1',
+              question: 'Why do you need two separate Redis connections when using pub/sub — one for PUBLISH and one for SUBSCRIBE?',
+              options: [
+                'For load balancing — Redis distributes commands across connections',
+                'A Redis connection in SUBSCRIBE mode can only receive messages; it cannot send PUBLISH commands until unsubscribed',
+                'PUBLISH is blocked while SUBSCRIBE is running to prevent deadlocks',
+                'It is optional — one connection works fine for both',
+              ],
+              correctIndex: 1,
+              explanation: 'Once a Redis client sends SUBSCRIBE, it enters subscriber mode. In this mode the only commands it can issue are SUBSCRIBE, PSUBSCRIBE, UNSUBSCRIBE, PUNSUBSCRIBE, PING, and QUIT. Any other command (including PUBLISH) will error. That\'s why you maintain two separate connections — one dedicated to subscribing, one for everything else.',
+            },
+            {
+              id: 'ws3-q2',
+              question: 'A WebSocket connection drops unexpectedly (network timeout, not a clean close). What close code does the browser receive, and what should the client do?',
+              options: [
+                'Code 1000 (Normal Closure) — no reconnect needed',
+                'Code 1006 (Abnormal Closure) — the client should reconnect with exponential back-off',
+                'Code 1001 (Going Away) — the server went down, reconnection will fail',
+                'Code 1003 (Unsupported Data) — a protocol error occurred',
+              ],
+              correctIndex: 1,
+              explanation: 'Code 1006 is special — it\'s not actually sent in a close frame (since the connection died abnormally), it\'s synthesized by the browser to indicate an abnormal closure. On 1006 you should absolutely retry: use exponential back-off (start at 1s, double each attempt, cap at ~30s) so you don\'t hammer the server during an outage.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
 ];
 
-export function getMockCourseProgress(): Array<{ course: Course; completedCount: number; totalLessons: number }> {
+export function getMockCourseProgress(): Array<{ course: Course; completedCount: number; totalLessons: number; completedLessonIds: string[] }> {
   return MOCK_COURSES.map(course => {
     const progress = getMockProgress(course.id);
-    return { course, completedCount: progress.completedLessonIds.length, totalLessons: course.totalLessons };
+    return {
+      course,
+      completedCount: progress.completedLessonIds.length,
+      totalLessons: course.totalLessons,
+      completedLessonIds: progress.completedLessonIds,
+    };
   }).filter(c => c.completedCount > 0);
 }
 
@@ -11720,19 +14304,35 @@ const MOCK_LEADERBOARD_BASE: Omit<LeaderboardEntry, 'position' | 'isCurrentUser'
   { userId: 'user-tim',    displayName: 'Tim Berners-Lee', xp:  620, guildRank: 'Scholar',   streak:  6, completedCourses: 2 },
 ];
 
-export function getMockLeaderboard(): LeaderboardEntry[] {
+export function getMockLeaderboard(period: 'alltime' | 'week' | 'month' = 'alltime'): LeaderboardEntry[] {
   const currentUser = getMockUser();
+
+  const weeklyXP: Record<string, number> = {
+    'user-ada': 320, 'user-grace': 290, 'user-linus': 185, 'user-alan': 240, 'user-margaret': 130,
+    'user-bjarne': 170, 'user-guido': 95, 'user-dennis': 210, 'user-ken': 75, 'user-james': 155, 'user-tim': 60,
+  };
+  const monthlyXP: Record<string, number> = {
+    'user-ada': 1240, 'user-grace': 980, 'user-linus': 760, 'user-alan': 830, 'user-margaret': 590,
+    'user-bjarne': 640, 'user-guido': 420, 'user-dennis': 710, 'user-ken': 310, 'user-james': 450, 'user-tim': 230,
+  };
+
   const currentUserEntry: Omit<LeaderboardEntry, 'position' | 'isCurrentUser'> = {
     userId: currentUser.id,
     displayName: currentUser.displayName,
-    xp: currentUser.xp,
+    xp: period === 'week' ? Math.round(currentUser.xp * 0.08) : period === 'month' ? Math.round(currentUser.xp * 0.32) : currentUser.xp,
     guildRank: currentUser.rank,
     streak: currentUser.streak,
     completedCourses: getMockCourseProgress().filter(c => c.completedCount >= c.totalLessons && c.totalLessons > 0).length,
   };
 
-  const all = [...MOCK_LEADERBOARD_BASE, currentUserEntry]
-    .sort((a, b) => b.xp - a.xp);
+  const base = MOCK_LEADERBOARD_BASE.map(e => ({
+    ...e,
+    xp: period === 'week' ? (weeklyXP[e.userId] ?? Math.round(e.xp * 0.06)) :
+        period === 'month' ? (monthlyXP[e.userId] ?? Math.round(e.xp * 0.25)) :
+        e.xp,
+  }));
+
+  const all = [...base, currentUserEntry].sort((a, b) => b.xp - a.xp);
 
   return all.map((entry, i) => ({
     ...entry,

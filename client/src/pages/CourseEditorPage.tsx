@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, Plus, X, Save, CheckCircle } from 'lucide-react';
+import { ChevronLeft, Plus, X, Save, CheckCircle, Globe, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { TAXONOMY } from '../data/taxonomy';
 import type { Course, Lesson } from '@study-guild/shared';
@@ -10,6 +10,7 @@ export default function CourseEditorPage() {
   const { courseId } = useParams<{ courseId: string }>();
   const qc = useQueryClient();
   const [saved, setSaved] = useState(false);
+  const [localLessons, setLocalLessons] = useState<Lesson[]>([]);
 
   const { data: course } = useQuery<Course>({
     queryKey: ['course-edit', courseId],
@@ -20,6 +21,10 @@ export default function CourseEditorPage() {
     queryKey: ['lessons', courseId],
     queryFn: async () => (await apiClient.get<{ data: Lesson[] }>(`/courses/${courseId}/lessons`)).data.data,
   });
+
+  useEffect(() => {
+    if (lessons) setLocalLessons([...lessons].sort((a, b) => a.order - b.order));
+  }, [lessons]);
 
   const updateCourseMutation = useMutation({
     mutationFn: (patch: Partial<Course>) => apiClient.patch(`/courses/${courseId}`, patch),
@@ -44,21 +49,66 @@ export default function CourseEditorPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['lessons', courseId] }),
   });
 
+  const publishMutation = useMutation({
+    mutationFn: () => apiClient.post(`/courses/${courseId}/publish`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['course-edit', courseId] }),
+  });
+
+  const deleteLessonMutation = useMutation({
+    mutationFn: (lessonId: string) => apiClient.delete(`/courses/${courseId}/lessons/${lessonId}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['lessons', courseId] }),
+  });
+
+  const reorderMutation = useMutation({
+    mutationFn: ({ lessonId, order }: { lessonId: string; order: number }) =>
+      apiClient.put(`/courses/${courseId}/lessons/${lessonId}`, { order }),
+  });
+
+  function moveLesson(idx: number, dir: -1 | 1) {
+    const target = idx + dir;
+    if (target < 0 || target >= localLessons.length) return;
+    const next = [...localLessons];
+    [next[idx], next[target]] = [next[target], next[idx]];
+    // Reassign order values to match new positions
+    const reordered = next.map((l, i) => ({ ...l, order: i }));
+    setLocalLessons(reordered);
+    // Persist the two swapped lessons
+    reorderMutation.mutate({ lessonId: reordered[idx].id, order: idx });
+    reorderMutation.mutate({ lessonId: reordered[target].id, order: target });
+  }
+
   if (!course) return <div className="p-10 text-slate-400">Loading…</div>;
 
   const activeCategory = TAXONOMY.find(c => c.l1 === course.taxonomy.l1);
 
   return (
     <div className="p-6 lg:p-10 max-w-3xl">
-      <div className="mb-6 flex items-center justify-between">
-        <Link to="/teach" className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition">
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <Link to="/teach" className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition shrink-0">
           <ChevronLeft className="h-4 w-4" /> Back to dashboard
         </Link>
-        {saved && (
-          <span className="flex items-center gap-1.5 text-xs text-emerald-400">
-            <CheckCircle className="h-3.5 w-3.5" /> Saved
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {saved && (
+            <span className="flex items-center gap-1.5 text-xs text-emerald-400">
+              <CheckCircle className="h-3.5 w-3.5" /> Saved
+            </span>
+          )}
+          {!course.published && (
+            <button
+              onClick={() => publishMutation.mutate()}
+              disabled={publishMutation.isPending}
+              className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-60 transition"
+            >
+              <Globe className="h-3.5 w-3.5" />
+              {publishMutation.isPending ? 'Publishing…' : 'Publish'}
+            </button>
+          )}
+          {course.published && (
+            <span className="flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/8 px-2.5 py-1 text-xs font-medium text-emerald-400">
+              <CheckCircle className="h-3 w-3" /> Published
+            </span>
+          )}
+        </div>
       </div>
 
       <h1 className="mb-6 text-2xl font-bold text-white">Edit course</h1>
@@ -181,11 +231,30 @@ export default function CourseEditorPage() {
       </div>
 
       <div className="space-y-2">
-        {lessons?.map((lesson, i) => (
+        {localLessons.map((lesson, i) => (
           <div
             key={lesson.id}
-            className="flex items-center gap-4 rounded-xl border border-slate-800/60 bg-slate-900/40 p-4"
+            className="flex items-center gap-3 rounded-xl border border-slate-800/60 bg-slate-900/40 p-4"
           >
+            {/* Reorder buttons */}
+            <div className="flex flex-col gap-0.5">
+              <button
+                onClick={() => moveLesson(i, -1)}
+                disabled={i === 0}
+                className="rounded p-0.5 text-slate-700 hover:text-slate-400 disabled:opacity-20 transition"
+                title="Move up"
+              >
+                <ArrowUp className="h-3 w-3" />
+              </button>
+              <button
+                onClick={() => moveLesson(i, 1)}
+                disabled={i === localLessons.length - 1}
+                className="rounded p-0.5 text-slate-700 hover:text-slate-400 disabled:opacity-20 transition"
+                title="Move down"
+              >
+                <ArrowDown className="h-3 w-3" />
+              </button>
+            </div>
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs text-slate-500">
               {String(i + 1).padStart(2, '0')}
             </span>
@@ -194,15 +263,33 @@ export default function CourseEditorPage() {
               <p className="text-xs text-slate-600">{lesson.estimatedMinutes} min · {lesson.content.sections.length} section{lesson.content.sections.length !== 1 ? 's' : ''}</p>
             </div>
             <Link
+              to={`/teach/courses/${courseId}/lessons/${lesson.id}/edit`}
+              className="rounded-lg border border-violet-500/30 bg-violet-500/8 px-3 py-1.5 text-xs text-violet-400 hover:border-violet-500/50 hover:text-violet-300 transition"
+            >
+              Edit
+            </Link>
+            <Link
               to={`/courses/${courseId}/lessons/${lesson.id}`}
-              className="rounded-lg border border-slate-700/40 px-3 py-1.5 text-xs text-slate-400 hover:border-violet-500/40 hover:text-violet-300 transition"
+              className="rounded-lg border border-slate-700/40 px-3 py-1.5 text-xs text-slate-400 hover:border-slate-600 hover:text-slate-200 transition"
             >
               Preview
             </Link>
+            <button
+              onClick={() => {
+                if (confirm(`Delete "${lesson.title}"? This cannot be undone.`)) {
+                  deleteLessonMutation.mutate(lesson.id);
+                }
+              }}
+              disabled={deleteLessonMutation.isPending}
+              className="rounded-lg border border-slate-700/40 p-1.5 text-slate-600 hover:border-red-500/30 hover:text-red-400 transition disabled:opacity-40"
+              title="Delete lesson"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
           </div>
         ))}
 
-        {!lessons?.length && (
+        {!localLessons.length && (
           <div className="rounded-xl border border-dashed border-slate-800 p-8 text-center">
             <p className="text-sm text-slate-500">No lessons yet. Add your first lesson to get started.</p>
           </div>

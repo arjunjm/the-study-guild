@@ -1,7 +1,7 @@
 import type { AxiosInstance } from 'axios';
 import {
-  getMockUser, getMockProgress, completeMockLesson, getMockCourseProgress, getMockLeaderboard,
-  patchMockUser, MOCK_COURSES, MOCK_LESSONS, MOCK_TAXONOMIES,
+  getMockUser, getMockProgress, getAllMockProgress, completeMockLesson, getMockCourseProgress, getMockLeaderboard,
+  patchMockUser, getMockLesson, putMockLesson, MOCK_COURSES, MOCK_LESSONS, MOCK_TAXONOMIES,
 } from './mockData';
 
 export function installMockInterceptors(client: AxiosInstance) {
@@ -40,12 +40,20 @@ function resolveMock(url: string, method: string, body?: string) {
   if (url.endsWith('/courses/taxonomies')) return ok(MOCK_TAXONOMIES);
   if (url.match(/\/courses\/[^/]+\/lessons\/[^/]+$/) && method === 'get') {
     const lessonId = url.split('/').pop()!;
-    const lesson = MOCK_LESSONS.find(l => l.id === lessonId);
+    const lesson = getMockLesson(lessonId);
     return lesson ? ok(lesson) : Promise.reject({ response: { status: 404 } });
+  }
+  if (url.match(/\/courses\/[^/]+\/lessons\/[^/]+$/) && method === 'put') {
+    const lessonId = url.split('/').pop()!;
+    const lesson = putMockLesson(lessonId, parsed);
+    return lesson ? ok(lesson) : Promise.reject({ response: { status: 404 } });
+  }
+  if (url.match(/\/courses\/[^/]+\/lessons\/[^/]+$/) && method === 'delete') {
+    return ok({ deleted: true });
   }
   if (url.match(/\/courses\/[^/]+\/lessons/) && method === 'get') {
     const courseId = url.split('/courses/')[1].split('/')[0];
-    return ok(MOCK_LESSONS.filter(l => l.courseId === courseId));
+    return ok(MOCK_LESSONS.filter(l => l.courseId === courseId).map(l => getMockLesson(l.id)!));
   }
   if (url.match(/\/courses\/[^/]+\/lessons/) && method === 'post') {
     return ok({ ...parsed, id: `lesson-new-${Date.now()}`, courseId: url.split('/courses/')[1].split('/')[0] });
@@ -92,7 +100,9 @@ function resolveMock(url: string, method: string, body?: string) {
 
   // Leaderboard
   if (url.includes('/leaderboard') && method === 'get') {
-    return ok(getMockLeaderboard());
+    const qs = url.includes('?') ? url.split('?')[1] : '';
+    const period = (new URLSearchParams(qs).get('period') ?? 'alltime') as 'alltime' | 'week' | 'month';
+    return ok(getMockLeaderboard(period));
   }
 
   // Progress
@@ -114,6 +124,7 @@ function resolveMock(url: string, method: string, body?: string) {
     const progress = getMockProgress(courseId);
     return ok({ progress, ...result });
   }
+  if (url.endsWith('/progress') && method === 'get') return ok(getAllMockProgress());
   if (url.match(/\/progress\/.+/) && method === 'get') {
     const courseId = url.split('/progress/')[1];
     return ok(getMockProgress(courseId));

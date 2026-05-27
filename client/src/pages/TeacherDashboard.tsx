@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
-import { Plus, Eye, Edit, BookOpen, GraduationCap, FileText, BarChart2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus, Eye, Edit, BookOpen, GraduationCap, FileText, BarChart2, Star, ExternalLink } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import type { Course } from '@study-guild/shared';
 
 export default function TeacherDashboard() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: me } = useQuery<{ id: string; role: string }>({
     queryKey: ['me'],
@@ -22,11 +23,14 @@ export default function TeacherDashboard() {
       apiClient.post<{ data: Course }>('/courses', {
         title: 'New Course',
         description: 'Course description',
-        taxonomy: { l1: 'General', l2: 'Miscellaneous' },
+        taxonomy: { l1: 'Security', l2: 'Authentication' },
         difficulty: 'beginner',
         tags: [],
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-courses'] }),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['my-courses'] });
+      navigate(`/teach/courses/${res.data.data.id}/edit`);
+    },
   });
 
   const publishMutation = useMutation({
@@ -139,33 +143,64 @@ function MyCoursesDashboard({
           {courses.map(course => (
             <div
               key={course.id}
-              className="flex items-center gap-4 rounded-xl border border-slate-800 bg-slate-900 p-4 transition hover:border-slate-700"
+              className="rounded-xl border border-slate-800 bg-slate-900 p-4 transition hover:border-slate-700"
             >
-              <div className="min-w-0 flex-1">
-                <h2 className="truncate font-semibold text-white">{course.title}</h2>
-                <p className="text-xs text-slate-400">
-                  {course.totalLessons} lesson{course.totalLessons !== 1 ? 's' : ''} · {course.taxonomy.l1} / {course.taxonomy.l2} · {course.difficulty}
-                </p>
-              </div>
-              <div className="flex flex-shrink-0 items-center gap-2">
-                <span className={`rounded px-2 py-0.5 text-xs font-medium ${course.published ? 'bg-emerald-900/40 text-emerald-300' : 'bg-slate-700 text-slate-400'}`}>
-                  {course.published ? 'Published' : 'Draft'}
-                </span>
-                <Link
-                  to={`/teach/courses/${course.id}/edit`}
-                  className="rounded p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition"
-                >
-                  <Edit className="h-4 w-4" />
-                </Link>
-                {!course.published && (
-                  <button
-                    onClick={() => onPublish(course.id)}
-                    className="rounded p-1.5 text-slate-400 hover:bg-slate-800 hover:text-emerald-400 transition"
-                    title="Publish"
+              <div className="flex items-start gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="truncate font-semibold text-white">{course.title}</h2>
+                    <span className={`rounded px-2 py-0.5 text-xs font-medium ${course.published ? 'bg-emerald-900/40 text-emerald-300' : 'bg-slate-700 text-slate-400'}`}>
+                      {course.published ? 'Published' : 'Draft'}
+                    </span>
+                  </div>
+                  {course.description && (
+                    <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">{course.description}</p>
+                  )}
+                  <div className="mt-1.5 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                    <span>{course.totalLessons} lesson{course.totalLessons !== 1 ? 's' : ''}</span>
+                    <span>{course.taxonomy.l1} / {course.taxonomy.l2}</span>
+                    <span className="capitalize">{course.difficulty}</span>
+                    {course.published && course.ratingCount > 0 && (
+                      <span className="flex items-center gap-1 text-amber-400/80">
+                        <Star className="h-3 w-3 fill-amber-400/80" />
+                        {course.ratingAverage.toFixed(1)}
+                        <span className="text-slate-600">({course.ratingCount})</span>
+                      </span>
+                    )}
+                    {course.published && course.publishedAt && (
+                      <span className="text-slate-600">
+                        Published {new Date(course.publishedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  {course.published && (
+                    <Link
+                      to={`/courses/${course.id}`}
+                      className="rounded p-1.5 text-slate-500 hover:bg-slate-800 hover:text-violet-400 transition"
+                      title="Preview as learner"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Link>
+                  )}
+                  <Link
+                    to={`/teach/courses/${course.id}/edit`}
+                    className="rounded p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition"
+                    title="Edit"
                   >
-                    <Eye className="h-4 w-4" />
-                  </button>
-                )}
+                    <Edit className="h-4 w-4" />
+                  </Link>
+                  {!course.published && (
+                    <button
+                      onClick={() => onPublish(course.id)}
+                      className="rounded p-1.5 text-slate-400 hover:bg-slate-800 hover:text-emerald-400 transition"
+                      title="Publish"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}

@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Trophy, Zap, Flame, Medal } from 'lucide-react';
+import { Trophy, Zap, Flame, Medal, BookOpen, Calendar } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { cn } from '../lib/utils';
 import type { LeaderboardEntry } from '@study-guild/shared';
@@ -21,10 +22,20 @@ const POSITION_STYLES: Record<number, { badge: string; row: string }> = {
   3: { badge: 'bg-orange-400/20 text-orange-300 border-orange-400/40', row: 'border-orange-500/20 bg-orange-500/5' },
 };
 
+type Period = 'alltime' | 'week' | 'month';
+
+const PERIOD_LABELS: Record<Period, string> = {
+  alltime: 'All Time',
+  week: 'This Week',
+  month: 'This Month',
+};
+
 export default function LeaderboardPage() {
+  const [period, setPeriod] = useState<Period>('alltime');
+
   const { data: entries, isLoading } = useQuery<LeaderboardEntry[]>({
-    queryKey: ['leaderboard'],
-    queryFn: async () => (await apiClient.get<{ data: LeaderboardEntry[] }>('/leaderboard')).data.data,
+    queryKey: ['leaderboard', period],
+    queryFn: async () => (await apiClient.get<{ data: LeaderboardEntry[] }>(`/leaderboard?period=${period}`)).data.data,
   });
 
   const currentUser = entries?.find(e => e.isCurrentUser);
@@ -33,8 +44,8 @@ export default function LeaderboardPage() {
   return (
     <div className="min-h-full px-4 py-8 lg:px-10 lg:py-10 max-w-3xl">
       {/* Header */}
-      <div className="mb-8">
-        <div className="mb-2 flex items-center gap-3">
+      <div className="mb-6">
+        <div className="mb-4 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/15">
             <Trophy className="h-5 w-5 text-amber-400" />
           </div>
@@ -42,6 +53,24 @@ export default function LeaderboardPage() {
             <h1 className="text-2xl font-bold text-white">Guild Leaderboard</h1>
             <p className="text-sm text-slate-400">Top learners ranked by XP earned</p>
           </div>
+        </div>
+        {/* Period tabs */}
+        <div className="flex items-center gap-1 rounded-xl border border-slate-800/60 bg-slate-900/40 p-1 w-fit">
+          <Calendar className="ml-2 mr-1 h-3.5 w-3.5 text-slate-600 shrink-0" />
+          {(['alltime', 'week', 'month'] as Period[]).map(p => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              className={cn(
+                'rounded-lg px-3 py-1.5 text-xs font-medium transition-all',
+                period === p
+                  ? 'bg-amber-500/15 text-amber-300 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-300'
+              )}
+            >
+              {PERIOD_LABELS[p]}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -96,6 +125,9 @@ export default function LeaderboardPage() {
                   #{actualPos}
                 </p>
                 <p className="mt-1 text-xs text-slate-500">{entry.xp.toLocaleString()} XP</p>
+                {entry.completedCourses > 0 && (
+                  <p className="text-[10px] text-slate-600">{entry.completedCourses} course{entry.completedCourses !== 1 ? 's' : ''}</p>
+                )}
                 <div className={cn(
                   'mt-2 w-full rounded-t-xl border-x border-t py-2 text-center',
                   POSITION_STYLES[actualPos]?.row ?? 'border-slate-800/60 bg-slate-900/40'
@@ -157,11 +189,17 @@ export default function LeaderboardPage() {
 
               {/* Stats */}
               <div className="hidden sm:flex items-center gap-4 text-xs text-slate-500">
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1" title="Day streak">
                   <Flame className="h-3 w-3 text-orange-400/70" />
                   {entry.streak}d
                 </span>
-                <span className="flex items-center gap-1">
+                {entry.completedCourses > 0 && (
+                  <span className="flex items-center gap-1" title="Completed courses">
+                    <BookOpen className="h-3 w-3 text-emerald-400/70" />
+                    {entry.completedCourses}
+                  </span>
+                )}
+                <span className="flex items-center gap-1 font-semibold text-violet-300" title="Total XP">
                   <Zap className="h-3 w-3 text-violet-400/70" />
                   {entry.xp.toLocaleString()}
                 </span>
@@ -180,7 +218,11 @@ export default function LeaderboardPage() {
       {/* Encouragement footer */}
       <div className="mt-8 rounded-2xl border border-slate-800/60 bg-slate-900/40 p-6 text-center">
         <p className="text-sm text-slate-400">
-          Complete lessons, ace quizzes, and log in daily to earn XP and climb the ranks.
+          {period === 'week'
+            ? 'Weekly XP resets every Monday. Complete lessons now to climb this week\'s board.'
+            : period === 'month'
+            ? 'Monthly XP resets at the start of each month. Stay consistent to hold your position.'
+            : 'Complete lessons, ace quizzes, and log in daily to earn XP and climb the ranks.'}
         </p>
         <Link
           to="/courses"

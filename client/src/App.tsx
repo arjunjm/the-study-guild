@@ -11,8 +11,9 @@ const CourseDetailPage = lazy(() => import('./pages/CourseDetailPage'));
 const LessonPage       = lazy(() => import('./pages/LessonPage'));
 const ProfilePage      = lazy(() => import('./pages/ProfilePage'));
 const TeacherDashboard = lazy(() => import('./pages/TeacherDashboard'));
-const CourseEditorPage = lazy(() => import('./pages/CourseEditorPage'));
-const LeaderboardPage  = lazy(() => import('./pages/LeaderboardPage'));
+const CourseEditorPage  = lazy(() => import('./pages/CourseEditorPage'));
+const LessonEditorPage  = lazy(() => import('./pages/LessonEditorPage'));
+const LeaderboardPage   = lazy(() => import('./pages/LeaderboardPage'));
 const NotFoundPage     = lazy(() => import('./pages/NotFoundPage'));
 
 function PageLoader() {
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="profile/:userId" element={<ProfilePage />} />
             <Route path="teach" element={<TeacherDashboard />} />
             <Route path="teach/courses/:courseId/edit" element={<CourseEditorPage />} />
+            <Route path="teach/courses/:courseId/lessons/:lessonId/edit" element={<LessonEditorPage />} />
             <Route path="leaderboard" element={<LeaderboardPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>

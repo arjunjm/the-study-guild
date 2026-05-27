@@ -24,7 +24,9 @@ export default function LessonRenderer({ content, onComplete, completing = false
   return (
     <div className="space-y-8">
       {content.sections.map((section, i) => (
-        <SectionRenderer key={i} section={section} onQuizDone={setQuizScore} />
+        <div key={i} id={`lesson-section-${i}`}>
+          <SectionRenderer section={section} onQuizDone={setQuizScore} />
+        </div>
       ))}
 
       <div className="pt-4 border-t border-slate-800/60 space-y-3">

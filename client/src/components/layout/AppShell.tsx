@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation, Link } from 'react-router-do
 import { useQuery } from '@tanstack/react-query';
 import {
   Home, BookOpen, GraduationCap, Sword, Flame, Zap, Trophy,
-  ChevronDown, ChevronRight, LogOut, User, Shield, Search, X, Clock,
+  ChevronDown, ChevronRight, LogOut, User, Shield, Search, X, Clock, Keyboard,
 } from 'lucide-react';
 import { apiClient } from '../../lib/apiClient';
 import { useAuth } from '../../contexts/AuthContext';
@@ -23,16 +23,28 @@ const RANK_ORDER = Object.keys(RANK_XP_THRESHOLDS) as (keyof typeof RANK_XP_THRE
 
 export default function AppShell() {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Global keyboard shortcut: Ctrl+K or Cmd+K → open search modal
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement).tagName.toLowerCase();
+      const isTyping = tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target as HTMLElement).isContentEditable;
+
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
         setSearchOpen(v => !v);
+        return;
       }
-      if (e.key === 'Escape') setSearchOpen(false);
+      if (e.key === 'Escape') {
+        setSearchOpen(false);
+        setShortcutsOpen(false);
+        return;
+      }
+      if (e.key === '?' && !isTyping) {
+        e.preventDefault();
+        setShortcutsOpen(v => !v);
+      }
     }
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
@@ -42,7 +54,7 @@ export default function AppShell() {
     <div className="flex min-h-screen bg-[#020817]">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar onSearchOpen={() => setSearchOpen(true)} />
+        <TopBar onSearchOpen={() => setSearchOpen(true)} onShortcutsOpen={() => setShortcutsOpen(true)} />
         <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
           <Outlet />
         </main>
@@ -54,6 +66,7 @@ export default function AppShell() {
           onNavigate={(path) => { setSearchOpen(false); navigate(path); }}
         />
       )}
+      {shortcutsOpen && <ShortcutsModal onClose={() => setShortcutsOpen(false)} />}
     </div>
   );
 }
@@ -205,7 +218,7 @@ function Sidebar() {
   );
 }
 
-function TopBar({ onSearchOpen }: { onSearchOpen: () => void }) {
+function TopBar({ onSearchOpen, onShortcutsOpen }: { onSearchOpen: () => void; onShortcutsOpen: () => void }) {
   const { data: user } = useQuery<UserProfile>({
     queryKey: ['me'],
     queryFn: async () => (await apiClient.get<{ data: UserProfile }>('/users/me')).data.data,
@@ -239,6 +252,14 @@ function TopBar({ onSearchOpen }: { onSearchOpen: () => void }) {
           <Search className="h-3.5 w-3.5" />
           <span className="hidden sm:block">Search courses…</span>
           <kbd className="hidden sm:inline-flex h-4 items-center rounded bg-slate-700/60 px-1 font-mono text-[10px] text-slate-500">⌘K</kbd>
+        </button>
+        {/* Keyboard shortcuts hint */}
+        <button
+          onClick={onShortcutsOpen}
+          title="Keyboard shortcuts (?)"
+          className="hidden sm:flex items-center justify-center h-8 w-8 rounded-xl border border-slate-700/50 bg-slate-800/40 text-slate-500 transition hover:border-slate-600 hover:text-slate-300"
+        >
+          <Keyboard className="h-3.5 w-3.5" />
         </button>
         {/* Streak chip */}
         {user && user.streak > 0 && (
@@ -366,6 +387,14 @@ function ProfileDropdown({ user }: { user: UserProfile }) {
   );
 }
 
+const QUICK_ACTIONS = [
+  { label: 'Home', path: '/', icon: Home },
+  { label: 'Browse courses', path: '/courses', icon: BookOpen },
+  { label: 'Leaderboard', path: '/leaderboard', icon: Trophy },
+  { label: 'My profile', path: '/profile', icon: User },
+  { label: 'Teach', path: '/teach', icon: GraduationCap },
+] as const;
+
 function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate: (path: string) => void }) {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -376,18 +405,29 @@ function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate:
     queryFn: async () => (await apiClient.get<{ data: Course[] }>('/courses')).data.data,
   });
 
+  const recentCourseIds = useState<string[]>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('sg-recent-courses') ?? '[]') as Array<{ id: string }>;
+      return saved.map(c => c.id).slice(0, 4);
+    } catch { return []; }
+  })[0];
+
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
-  const filtered = query.trim().length < 1
-    ? (courses?.slice(0, 8) ?? [])
-    : (courses ?? []).filter(c =>
+  const hasQuery = query.trim().length >= 1;
+  const recentCourses = !hasQuery && courses
+    ? courses.filter(c => recentCourseIds.includes(c.id)).sort((a, b) => recentCourseIds.indexOf(a.id) - recentCourseIds.indexOf(b.id))
+    : [];
+  const filtered = hasQuery
+    ? (courses ?? []).filter(c =>
         c.title.toLowerCase().includes(query.toLowerCase()) ||
         c.taxonomy.l1.toLowerCase().includes(query.toLowerCase()) ||
         c.taxonomy.l2.toLowerCase().includes(query.toLowerCase()) ||
         c.tags.some(t => t.toLowerCase().includes(query.toLowerCase()))
-      ).slice(0, 8);
+      ).slice(0, 8)
+    : recentCourses.length > 0 ? recentCourses : (courses?.slice(0, 5) ?? []);
 
   useEffect(() => {
     setSelectedIndex(-1);
@@ -443,9 +483,41 @@ function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate:
 
         {/* Results */}
         <div className="max-h-[60vh] overflow-y-auto p-2">
-          {filtered.length === 0 && query.trim() && (
+          {filtered.length === 0 && hasQuery && (
             <div className="py-8 text-center text-sm text-slate-500">No courses found for "{query}"</div>
           )}
+
+          {!hasQuery && (
+            <>
+              {/* Quick nav actions */}
+              <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest text-slate-600">Quick navigation</p>
+              <div className="mb-2 grid grid-cols-3 gap-1">
+                {QUICK_ACTIONS.map(action => {
+                  const Icon = action.icon;
+                  return (
+                    <button
+                      key={action.path}
+                      onClick={() => onNavigate(action.path)}
+                      className="flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 text-center transition hover:bg-slate-800/60"
+                    >
+                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800">
+                        <Icon className="h-4 w-4 text-slate-400" />
+                      </span>
+                      <span className="text-xs text-slate-500">{action.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mx-1 mb-2 border-t border-slate-800/60" />
+              {recentCourses.length > 0 && (
+                <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-600">Recently viewed</p>
+              )}
+              {recentCourses.length === 0 && (
+                <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-600">Suggested courses</p>
+              )}
+            </>
+          )}
+
           {filtered.map((course, idx) => {
             const cat = TAXONOMY.find(c => c.l1 === course.taxonomy.l1);
             const isSelected = idx === selectedIndex;
@@ -479,7 +551,7 @@ function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate:
               </button>
             );
           })}
-          {!query.trim() && (
+          {!hasQuery && (
             <button
               onClick={() => onNavigate('/courses')}
               className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs text-slate-500 transition hover:bg-slate-800/40 hover:text-slate-300 mt-1"
@@ -488,6 +560,83 @@ function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate:
               Browse all courses
             </button>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ShortcutsModal({ onClose }: { onClose: () => void }) {
+  const groups = [
+    {
+      label: 'Navigation',
+      shortcuts: [
+        { keys: ['⌘K', 'Ctrl+K'], desc: 'Open course search' },
+        { keys: ['/'], desc: 'Focus search bar (on Browse page)' },
+        { keys: ['?'], desc: 'Show this shortcuts guide' },
+        { keys: ['Esc'], desc: 'Close any modal or overlay' },
+      ],
+    },
+    {
+      label: 'Lessons',
+      shortcuts: [
+        { keys: ['←', '→'], desc: 'Navigate previous / next lesson' },
+        { keys: ['Ctrl+S'], desc: 'Save lesson (in editor)' },
+      ],
+    },
+    {
+      label: 'Browse',
+      shortcuts: [
+        { keys: ['↑', '↓', 'Enter'], desc: 'Navigate search autocomplete' },
+      ],
+    },
+  ];
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="w-full max-w-md rounded-2xl border border-slate-700/60 bg-slate-900 shadow-2xl shadow-black/50 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
+          <div className="flex items-center gap-2.5">
+            <Keyboard className="h-4 w-4 text-violet-400" />
+            <h2 className="text-sm font-semibold text-white">Keyboard shortcuts</h2>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1 text-slate-600 hover:text-slate-400 transition">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Shortcuts list */}
+        <div className="p-4 space-y-5">
+          {groups.map(group => (
+            <div key={group.label}>
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-600">{group.label}</p>
+              <div className="space-y-1.5">
+                {group.shortcuts.map(s => (
+                  <div key={s.desc} className="flex items-center justify-between gap-4 rounded-xl px-3 py-2 bg-slate-800/30">
+                    <span className="text-xs text-slate-400">{s.desc}</span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {s.keys.map((k, i) => (
+                        <span key={k} className="flex items-center gap-1">
+                          {i > 0 && <span className="text-[10px] text-slate-600">or</span>}
+                          <kbd className="inline-flex h-5 min-w-[20px] items-center justify-center rounded bg-slate-700/80 px-1.5 font-mono text-[10px] text-slate-300 border border-slate-600/50">
+                            {k}
+                          </kbd>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t border-slate-800 px-5 py-3">
+          <p className="text-[11px] text-slate-600 text-center">Press <kbd className="rounded bg-slate-800 px-1 font-mono text-[10px]">?</kbd> to toggle this guide</p>
         </div>
       </div>
     </div>
