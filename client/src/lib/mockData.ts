@@ -2698,13 +2698,36 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
           type: 'text',
           content: `## Why hooks?
 
-Before hooks (React 16.8), stateful logic lived in class components. Sharing it between components meant render props or HOCs — patterns that created deeply nested "wrapper hell." Hooks let you **extract stateful logic into reusable functions** without restructuring your component tree.`,
+Before hooks (React 16.8), stateful logic lived in **class components**. Sharing it between components required render props or Higher-Order Components — patterns that created deeply nested "wrapper hell." Hooks let you **extract stateful logic into reusable functions** without restructuring your component tree.
+
+The key mental model: a React component is just a **function that runs on every render**. Hooks let that function remember things between calls.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'The React Render Cycle — how useState and useEffect fit in',
+          nodes: [
+            { id: 'rc1', label: 'setState() called\nor props change', type: 'input', position: { x: 30, y: 40 } },
+            { id: 'rc2', label: 'React schedules\na re-render', position: { x: 30, y: 130 } },
+            { id: 'rc3', label: 'Component function\nruns again', position: { x: 30, y: 220 } },
+            { id: 'rc4', label: 'React diffs new VDOM\nvs previous VDOM', position: { x: 280, y: 220 } },
+            { id: 'rc5', label: 'Minimal DOM\nupdates applied', position: { x: 280, y: 130 } },
+            { id: 'rc6', label: 'useEffect cleanup\nruns (if deps changed)', position: { x: 280, y: 40 } },
+            { id: 'rc7', label: 'useEffect\ncallback runs', type: 'output', position: { x: 155, y: 310 } },
+          ],
+          edges: [
+            { id: 'erc1', source: 'rc1', target: 'rc2', label: 'batched' },
+            { id: 'erc2', source: 'rc2', target: 'rc3' },
+            { id: 'erc3', source: 'rc3', target: 'rc4', label: 'new JSX' },
+            { id: 'erc4', source: 'rc4', target: 'rc5', animated: true },
+            { id: 'erc5', source: 'rc5', target: 'rc6' },
+            { id: 'erc6', source: 'rc6', target: 'rc7', animated: true },
+          ],
         },
         {
           type: 'callout',
           variant: 'info',
           title: 'useState in a nutshell',
-          content: 'useState returns [currentValue, setter]. React re-renders the component whenever the setter is called with a new value. Unlike regular variables, state survives re-renders.',
+          content: 'useState returns [currentValue, setter]. React re-renders the component whenever the setter is called with a new value. Unlike regular variables, state survives re-renders — React stores it outside your function, keyed to the component instance.',
         },
         {
           type: 'codeBlock',
@@ -2727,13 +2750,15 @@ const [data, setData] = useState(() =>
           type: 'text',
           content: `## useEffect and the dependency array
 
-useEffect runs **after** the component renders. The second argument controls when it re-runs:
+useEffect runs **after** the component renders and the DOM has been updated. The second argument controls when it re-runs:
 
-| Deps argument | When it runs |
-|---|---|
-| Omitted | After every render |
-| \`[]\` | Once on mount |
-| \`[a, b]\` | When a or b changes |`,
+| Deps argument | When it runs | Use case |
+|---|---|---|
+| Omitted | After every render | Rarely useful — usually a bug |
+| \`[]\` | Once on mount | Initial data fetch, event listener |
+| \`[a, b]\` | When a or b changes | React to a specific value changing |
+
+The key rule: **everything your effect uses should be in the deps array.** If you omit a dependency, you have a stale closure. ESLint's \`react-hooks/exhaustive-deps\` rule enforces this — treat it as an error.`,
         },
         {
           type: 'codeBlock',
@@ -5676,6 +5701,25 @@ test('shows error on bad credentials', async ({ page }) => {
 TypeScript is a **superset of JavaScript** — all valid JavaScript is valid TypeScript. TypeScript adds a type system that's checked at compile time, then compiled away to plain JavaScript for the browser or Node.js.
 
 The key insight: TypeScript types exist **only at compile time**. At runtime, your code is JavaScript. TypeScript gives you a safety net during development, not a runtime validator.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'The TypeScript Type Hierarchy — from widest to narrowest',
+          nodes: [
+            { id: 'ts1', label: 'unknown\n(widest — must narrow\nbefore use)', type: 'input', position: { x: 200, y: 20 } },
+            { id: 'ts2', label: 'any\n(opt-out of\ntype checking)', position: { x: 30, y: 100 } },
+            { id: 'ts3', label: 'object types\nstring, number,\nboolean, ...', position: { x: 230, y: 100 } },
+            { id: 'ts4', label: 'Union types\nstring | number\n"a" | "b" | "c"', position: { x: 230, y: 190 } },
+            { id: 'ts5', label: 'Literal types\n"beginner"\n42', position: { x: 230, y: 280 } },
+            { id: 'ts6', label: 'never\n(narrowest — empty set,\nimpossible type)', type: 'output', position: { x: 200, y: 370 } },
+          ],
+          edges: [
+            { id: 'ets1', source: 'ts1', target: 'ts2', label: 'unsafe' },
+            { id: 'ets2', source: 'ts1', target: 'ts3', label: 'narrows to' },
+            { id: 'ets3', source: 'ts3', target: 'ts4' },
+            { id: 'ets4', source: 'ts4', target: 'ts5', animated: true },
+            { id: 'ets5', source: 'ts5', target: 'ts6' },
+          ],
         },
         {
           type: 'callout',
