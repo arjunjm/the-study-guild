@@ -8123,6 +8123,32 @@ A well-structured monolith is often the right choice, especially early. All code
 | Data consistency | ACID transactions across everything | Eventual consistency, sagas needed |`,
         },
         {
+          type: 'flowDiagram',
+          title: 'Monolith vs microservices deployment topology',
+          nodes: [
+            { id: 'client_m', position: { x: 0, y: 60 }, label: 'Client', type: 'input' },
+            { id: 'mono', position: { x: 200, y: 60 }, label: 'Monolith\n(one process)', type: 'default' },
+            { id: 'db_m', position: { x: 400, y: 60 }, label: 'Single DB\n(ACID txns)', type: 'output' },
+            { id: 'client_ms', position: { x: 0, y: 220 }, label: 'Client', type: 'input' },
+            { id: 'gw', position: { x: 200, y: 220 }, label: 'API Gateway', type: 'default' },
+            { id: 'svc1', position: { x: 400, y: 160 }, label: 'Courses svc', type: 'default' },
+            { id: 'svc2', position: { x: 400, y: 220 }, label: 'Auth svc', type: 'default' },
+            { id: 'svc3', position: { x: 400, y: 280 }, label: 'Progress svc', type: 'default' },
+            { id: 'dbs', position: { x: 600, y: 220 }, label: 'Separate DBs\n(eventual consistency)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'client_m', target: 'mono', label: 'Monolith' },
+            { id: 'e2', source: 'mono', target: 'db_m' },
+            { id: 'e3', source: 'client_ms', target: 'gw', label: 'Microservices' },
+            { id: 'e4', source: 'gw', target: 'svc1' },
+            { id: 'e5', source: 'gw', target: 'svc2' },
+            { id: 'e6', source: 'gw', target: 'svc3' },
+            { id: 'e7', source: 'svc1', target: 'dbs' },
+            { id: 'e8', source: 'svc2', target: 'dbs' },
+            { id: 'e9', source: 'svc3', target: 'dbs' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'tip',
           title: 'Start with a monolith',
@@ -8597,6 +8623,29 @@ Each step publishes an event; failures trigger compensation. Either orchestratio
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'K8s object hierarchy: Deployment owns ReplicaSet owns Pods',
+          nodes: [
+            { id: 'deploy', position: { x: 0, y: 100 }, label: 'Deployment\n(desired state: 3 replicas)', type: 'input' },
+            { id: 'rs', position: { x: 220, y: 100 }, label: 'ReplicaSet\n(maintains pod count)', type: 'default' },
+            { id: 'pod1', position: { x: 440, y: 40 }, label: 'Pod 1\n(container + IP)', type: 'default' },
+            { id: 'pod2', position: { x: 440, y: 100 }, label: 'Pod 2\n(container + IP)', type: 'default' },
+            { id: 'pod3', position: { x: 440, y: 160 }, label: 'Pod 3\n(container + IP)', type: 'default' },
+            { id: 'svc', position: { x: 660, y: 100 }, label: 'Service\n(stable DNS + load balance)', type: 'default' },
+            { id: 'client', position: { x: 880, y: 100 }, label: 'Client\n(Ingress / other pod)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'deploy', target: 'rs', label: 'owns' },
+            { id: 'e2', source: 'rs', target: 'pod1' },
+            { id: 'e3', source: 'rs', target: 'pod2' },
+            { id: 'e4', source: 'rs', target: 'pod3' },
+            { id: 'e5', source: 'svc', target: 'pod1', label: 'label selector' },
+            { id: 'e6', source: 'svc', target: 'pod2' },
+            { id: 'e7', source: 'svc', target: 'pod3' },
+            { id: 'e8', source: 'client', target: 'svc', label: 'routes to' },
+          ],
+        },
+        {
           type: 'text',
           content: `## Kubernetes core objects
 
@@ -8724,6 +8773,25 @@ envFrom:
 \`\`\``,
         },
         {
+          type: 'flowDiagram',
+          title: 'Liveness vs readiness probe: different failure actions',
+          nodes: [
+            { id: 'kubelet', position: { x: 0, y: 100 }, label: 'Kubelet\n(on each node)', type: 'input' },
+            { id: 'live', position: { x: 220, y: 40 }, label: 'Liveness probe\nGET /health', type: 'default' },
+            { id: 'ready', position: { x: 220, y: 160 }, label: 'Readiness probe\nGET /ready', type: 'default' },
+            { id: 'restart', position: { x: 460, y: 40 }, label: 'Restart container\n(3 failures)', type: 'output' },
+            { id: 'remove', position: { x: 460, y: 160 }, label: 'Remove from\nService endpoints', type: 'output' },
+            { id: 'rejoin', position: { x: 680, y: 160 }, label: 'Re-add when\nprobe passes again', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'kubelet', target: 'live', label: 'checks' },
+            { id: 'e2', source: 'kubelet', target: 'ready', label: 'checks' },
+            { id: 'e3', source: 'live', target: 'restart', label: 'fails' },
+            { id: 'e4', source: 'ready', target: 'remove', label: 'fails\n(no restart)' },
+            { id: 'e5', source: 'remove', target: 'rejoin', label: 'probe recovers' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'warning',
           title: 'Secrets are base64, not encrypted',
@@ -8788,6 +8856,27 @@ Your \`/health\` endpoint should return 200 if the app is running. Your \`/ready
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Rolling update: new pods up before old pods down',
+          nodes: [
+            { id: 'v1a', position: { x: 0, y: 40 }, label: 'Pod v1.2 (running)', type: 'input' },
+            { id: 'v1b', position: { x: 0, y: 120 }, label: 'Pod v1.2 (running)', type: 'input' },
+            { id: 'v1c', position: { x: 0, y: 200 }, label: 'Pod v1.2 (running)', type: 'input' },
+            { id: 'surge', position: { x: 240, y: 40 }, label: 'Pod v1.3 starting\n(maxSurge=1)', type: 'default' },
+            { id: 'term', position: { x: 240, y: 200 }, label: 'Pod v1.2 terminating\n(graceful shutdown)', type: 'default' },
+            { id: 'v13a', position: { x: 480, y: 40 }, label: 'Pod v1.3 ready', type: 'default' },
+            { id: 'v13b', position: { x: 480, y: 120 }, label: 'Pod v1.3 ready', type: 'default' },
+            { id: 'v13c', position: { x: 480, y: 200 }, label: 'Pod v1.3 ready', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'v1a', target: 'surge', label: 'new pod\nstarts first' },
+            { id: 'e2', source: 'surge', target: 'v13a', label: 'passes\nliveness + readiness' },
+            { id: 'e3', source: 'v1c', target: 'term', label: 'old pod\nterminated' },
+            { id: 'e4', source: 'v1b', target: 'v13b' },
+            { id: 'e5', source: 'term', target: 'v13c', label: 'replaced' },
+          ],
+        },
         {
           type: 'text',
           content: `## Rolling updates — zero-downtime deploys
