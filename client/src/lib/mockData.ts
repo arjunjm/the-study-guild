@@ -143,9 +143,9 @@ export const MOCK_COURSES: Course[] = [
     published: true,
     publishedAt: '2025-01-10T00:00:00.000Z',
     tags: ['oauth2', 'security', 'authentication', 'pkce'],
-    lessonIds: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004', 'lesson-005', 'lesson-006', 'lesson-007'],
-    totalLessons: 7,
-    estimatedMinutes: 93,
+    lessonIds: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004', 'lesson-005', 'lesson-006', 'lesson-007', 'lesson-008', 'lesson-009'],
+    totalLessons: 9,
+    estimatedMinutes: 118,
     ratingAverage: 4.8,
     ratingCount: 42,
     createdAt: '2025-01-01T00:00:00.000Z',
@@ -1840,6 +1840,332 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
               ],
               correctIndex: 2,
               explanation: 'The authorization code is returned in the browser redirect and can appear in URL bars, browser history, and server logs. Exchanging it for a token server-to-server (back-channel) ensures the actual token never touches the browser address bar.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── OAuth2 Lesson 8: Grant Types Compared ────────────────────────────────────
+  {
+    id: 'lesson-008',
+    courseId: 'course-oauth2',
+    order: 7,
+    title: 'Grant Types: When to Use Which',
+    estimatedMinutes: 12,
+    createdAt: '2025-01-01T00:00:00.000Z',
+    updatedAt: '2025-01-01T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Not one flow fits all
+
+OAuth2 defines multiple **grant types** — different ways for a client to obtain tokens depending on who is involved and what kind of client it is. Choosing the wrong one introduces unnecessary risk.
+
+There are four main grant types in common use today. One is deprecated (Implicit). Three are actively recommended.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Grant Type Selection Guide',
+          nodes: [
+            { id: 'gt1', label: 'Is a human\nuser involved?', type: 'decision', position: { x: 200, y: 30 } },
+            { id: 'gt2', label: 'Does the device\nhave a browser?', type: 'decision', position: { x: 60, y: 130 } },
+            { id: 'gt3', label: 'Machine-to-machine\n(no user)', position: { x: 370, y: 130 } },
+            { id: 'gt4', label: 'Authorization Code\n+ PKCE ✅', type: 'output', position: { x: 30, y: 230 } },
+            { id: 'gt5', label: 'Device Code Flow\n(TV / CLI) ✅', type: 'output', position: { x: 150, y: 230 } },
+            { id: 'gt6', label: 'Client Credentials\nFlow ✅', type: 'output', position: { x: 370, y: 230 } },
+          ],
+          edges: [
+            { id: 'egt1', source: 'gt1', target: 'gt2', label: 'yes' },
+            { id: 'egt2', source: 'gt1', target: 'gt3', label: 'no' },
+            { id: 'egt3', source: 'gt2', target: 'gt4', label: 'yes' },
+            { id: 'egt4', source: 'gt2', target: 'gt5', label: 'no' },
+            { id: 'egt5', source: 'gt3', target: 'gt6', animated: true },
+          ],
+        },
+        {
+          type: 'text',
+          content: `## Authorization Code + PKCE (the default for user-facing apps)
+
+The flow you've been studying. User clicks a button, gets redirected, authenticates, grants consent, and the app receives tokens.
+
+**Use when**: Web apps, SPAs, mobile apps — any time a human user is authenticating.
+
+**Why PKCE**: Required by OAuth 2.1 for all authorization code flows. Provides CSRF protection and prevents code interception attacks.
+
+---
+
+## Client Credentials (machine-to-machine)
+
+A service authenticates as itself using its own credentials — no user involved. The client posts its \`client_id\` and \`client_secret\` directly to get an access token.
+
+**Use when**: Background jobs, microservices calling other microservices, cron jobs, CI/CD pipelines.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'Client Credentials grant — service-to-service authentication',
+          code: `// A background job authenticating as itself (no user)
+async function getServiceToken(): Promise<string> {
+  const response = await fetch(
+    \`https://login.microsoftonline.com/\${TENANT_ID}/oauth2/v2.0/token\`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: SERVICE_CLIENT_ID,
+        client_secret: SERVICE_CLIENT_SECRET,  // stored in Key Vault, never in code
+        scope: 'https://graph.microsoft.com/.default',
+      }),
+    }
+  );
+
+  const { access_token } = await response.json();
+  return access_token;
+}
+
+// Cache this token until exp - 60s, then refresh
+// Fetching a new one on every request wastes network round trips`,
+        },
+        {
+          type: 'text',
+          content: `## Device Code Flow (browserless devices)
+
+For devices that can't open a browser — smart TVs, CLI tools, IoT devices. The device displays a URL and a short code. The user visits the URL on *another* device, enters the code, authenticates, and the original device polls until approval.
+
+**Use when**: CLI tools (\`gh auth login\`, \`az login\`), TV apps, any device without a usable browser.
+
+---
+
+## Implicit Flow — ⚠️ Deprecated
+
+The Implicit flow returned tokens directly in the redirect URL fragment (\`#access_token=...\`). This was simpler but fundamentally insecure: tokens appeared in browser history, Referrer headers, and server logs.
+
+**Don't use it.** RFC 9700 (OAuth 2.1) removes it entirely. All modern providers support authorization code + PKCE instead.`,
+        },
+        {
+          type: 'callout',
+          variant: 'danger',
+          title: 'Resource Owner Password Credentials (ROPC) — also avoid',
+          content: "ROPC lets the client collect the user's username and password directly and POST them to the token endpoint. This completely defeats the purpose of OAuth2 — the client handles credentials. The only exception is for migrating legacy apps where you literally cannot do a redirect. Even then, treat it as a temporary measure.",
+        },
+        {
+          type: 'quiz',
+          title: 'Grant Types Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'grant-q1',
+              question: 'A background microservice needs to call another internal API. No user is involved. Which grant type should it use?',
+              options: ['Authorization Code + PKCE', 'Device Code Flow', 'Client Credentials', 'Implicit Flow'],
+              correctIndex: 2,
+              explanation: 'Client Credentials is designed for machine-to-machine authentication where no human user is involved. The service authenticates using its own client_id and client_secret to get an access token for the target API.',
+            },
+            {
+              id: 'grant-q2',
+              question: 'Why was the Implicit flow deprecated?',
+              options: [
+                'It requires too many HTTP round trips',
+                'Tokens appeared in the browser URL, browser history, and Referrer headers',
+                'It does not support refresh tokens',
+                'It requires a client secret which SPAs cannot store',
+              ],
+              correctIndex: 1,
+              explanation: 'The Implicit flow returned tokens in the URL fragment. This made them visible in browser history, server logs, and Referrer headers — all places attackers could collect them. Authorization Code + PKCE achieves the same goal without exposing tokens in URLs.',
+            },
+            {
+              id: 'grant-q3',
+              question: 'A developer builds a CLI tool that needs to authenticate the user. The terminal has no browser. Which flow is most appropriate?',
+              options: [
+                'Client Credentials — the CLI is a service',
+                'Authorization Code — redirect via curl',
+                'Device Code Flow — show a URL + code, poll for approval',
+                'ROPC — prompt for username/password in the terminal',
+              ],
+              correctIndex: 2,
+              explanation: "Device Code Flow is purpose-built for browserless environments. The user visits a URL on any device (their phone), enters the short code shown by the CLI, authenticates, and the CLI polls until approved. This is how `gh auth login` and `az login` work.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── OAuth2 Lesson 9: Attacks & Defenses ───────────────────────────────────────
+  {
+    id: 'lesson-009',
+    courseId: 'course-oauth2',
+    order: 8,
+    title: 'Common Attacks & How to Defend Against Them',
+    estimatedMinutes: 13,
+    createdAt: '2025-01-01T00:00:00.000Z',
+    updatedAt: '2025-01-01T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## OAuth2 is secure by design — but implementation matters
+
+The OAuth2 framework is well-designed, but it gives implementors a lot of latitude. Many real-world breaches happen not because OAuth2 is broken, but because a specific defense was skipped.
+
+This lesson covers the most common OAuth2 attacks and exactly how to prevent each one.`,
+        },
+        {
+          type: 'callout',
+          variant: 'danger',
+          title: 'Attack 1: Authorization Code Interception',
+          content: 'The authorization code is returned in the browser redirect URL. A malicious app on the same device (or a tab-hijacking browser extension) could intercept it and exchange it for tokens before your app does.',
+        },
+        {
+          type: 'text',
+          content: `### Defense: PKCE (Proof Key for Code Exchange)
+
+Already covered in Lesson 5 — PKCE makes an intercepted code useless without the matching \`code_verifier\`. Always use PKCE.
+
+---`,
+        },
+        {
+          type: 'callout',
+          variant: 'danger',
+          title: 'Attack 2: Open Redirect Attacks',
+          content: 'If your redirect_uri validation is loose — e.g., you accept any URI that starts with your domain — an attacker can craft a redirect to a subdomain or path they control. The authorization code lands on their server.',
+        },
+        {
+          type: 'codeBlock',
+          language: 'text',
+          caption: 'Malicious authorization request exploiting loose redirect_uri validation',
+          code: `# Attacker's crafted URL — notice the redirect_uri
+GET /authorize?
+  response_type=code
+  &client_id=legit-app
+  &redirect_uri=https://myapp.com.evil.com/callback  ← typosquat
+  &redirect_uri=https://myapp.com/evil-path?next=https://evil.com  ← path traversal
+
+# Defense: register EXACT redirect URIs — no wildcards, no partial matches
+# Correct: https://myapp.com/callback  (and ONLY this URL)`,
+        },
+        {
+          type: 'text',
+          content: `### Defense: Exact redirect URI matching
+
+Register exact redirect URIs — no wildcards, no partial matching. Many authorization servers enforce this by default, but your own validation should also be strict. Reject any request whose \`redirect_uri\` doesn't exactly match a pre-registered URI.
+
+---`,
+        },
+        {
+          type: 'callout',
+          variant: 'danger',
+          title: 'Attack 3: CSRF on the Redirect',
+          content: 'Without state validation, an attacker can initiate an OAuth2 flow, pause it, and trick the victim into completing it. The victim\'s account then gets linked to the attacker\'s identity. This is the OAuth2 CSRF attack.',
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'Protecting against OAuth2 CSRF with the state parameter',
+          code: `// 1. Before redirecting to the auth server — generate a random state
+const state = crypto.randomUUID();
+sessionStorage.setItem('oauth_state', state);
+
+const authUrl = new URL('https://login.microsoftonline.com/.../authorize');
+authUrl.searchParams.set('state', state);
+// ... other params
+window.location.href = authUrl.toString();
+
+// 2. In the callback handler — verify the state
+const returnedState = new URLSearchParams(location.search).get('state');
+const savedState = sessionStorage.getItem('oauth_state');
+
+if (!savedState || returnedState !== savedState) {
+  throw new Error('State mismatch — possible CSRF attack. Abort.');
+}
+sessionStorage.removeItem('oauth_state'); // use once, then discard`,
+        },
+        {
+          type: 'callout',
+          variant: 'danger',
+          title: 'Attack 4: Token Leakage via Referrer Headers',
+          content: 'If an access token ends up in a URL (e.g. `?token=...`), and the page has links to external sites, the token appears in the `Referrer` header of those outbound requests. The external site sees your token in their server logs.',
+        },
+        {
+          type: 'text',
+          content: `### Defense: Bearer header, not query parameters
+
+Always send tokens in the \`Authorization: Bearer <token>\` header — never as URL query parameters. Set \`Referrer-Policy: no-referrer\` or \`strict-origin\` on your app too.
+
+---`,
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'Attack 5: Confused Deputy — missing audience validation',
+          content: 'If your API validates a JWT\'s signature and expiry but not its `aud` (audience) claim, a token issued for service A could be replayed against service B — if both services trust the same authorization server. Always validate `aud` matches your specific API client ID.',
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Security Checklist — Your OAuth2 Defence Layers',
+          nodes: [
+            { id: 'sec1', label: 'PKCE\n(code interception)', type: 'input', position: { x: 30, y: 30 } },
+            { id: 'sec2', label: 'State parameter\n(CSRF)', position: { x: 30, y: 110 } },
+            { id: 'sec3', label: 'Exact redirect URI\n(open redirect)', position: { x: 30, y: 190 } },
+            { id: 'sec4', label: 'Bearer header only\n(token leakage)', position: { x: 260, y: 30 } },
+            { id: 'sec5', label: 'Validate aud claim\n(confused deputy)', position: { x: 260, y: 110 } },
+            { id: 'sec6', label: 'httpOnly cookies\nfor refresh tokens\n(XSS)', position: { x: 260, y: 190 } },
+            { id: 'sec7', label: '✅ Secured OAuth2\nImplementation', type: 'output', position: { x: 145, y: 280 } },
+          ],
+          edges: [
+            { id: 'esec1', source: 'sec1', target: 'sec7', animated: true },
+            { id: 'esec2', source: 'sec2', target: 'sec7', animated: true },
+            { id: 'esec3', source: 'sec3', target: 'sec7', animated: true },
+            { id: 'esec4', source: 'sec4', target: 'sec7', animated: true },
+            { id: 'esec5', source: 'sec5', target: 'sec7', animated: true },
+            { id: 'esec6', source: 'sec6', target: 'sec7', animated: true },
+          ],
+        },
+        {
+          type: 'quiz',
+          title: 'Security Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'sec-q1',
+              question: 'An attacker intercepts the authorization code from a redirect URL. Why can\'t they exchange it for tokens (assuming PKCE is implemented)?',
+              options: [
+                'The code expires before they can use it',
+                'They don\'t have the code_verifier that was only known to the legitimate client',
+                'The redirect URI won\'t match their server',
+                'The authorization server blocks IPs not in an allowlist',
+              ],
+              correctIndex: 1,
+              explanation: 'With PKCE, the authorization server stored the code_challenge (a hash) at the start. To exchange the code, you must provide the original code_verifier. An attacker with only the code cannot produce the correct verifier — they never saw it.',
+            },
+            {
+              id: 'sec-q2',
+              question: 'What is the purpose of the "state" parameter in an OAuth2 authorization request?',
+              options: [
+                'To store the user\'s preferred language',
+                'To identify which scope set to request',
+                'To prevent CSRF attacks by binding the request to a specific browser session',
+                'To encode the redirect URI safely',
+              ],
+              correctIndex: 2,
+              explanation: 'The state parameter is a random nonce you generate before the redirect and verify when the callback arrives. If the state in the callback doesn\'t match what you stored, someone else initiated that auth flow — reject it.',
+            },
+            {
+              id: 'sec-q3',
+              question: 'Your API validates that a JWT\'s signature is valid and not expired. Is this sufficient?',
+              options: [
+                'Yes — signature validation proves the token is legitimate',
+                'No — you must also validate the iss and aud claims to prevent token misuse',
+                'No — you must also check the scp claim only',
+                'Yes — expiry and signature cover all attack vectors',
+              ],
+              correctIndex: 1,
+              explanation: "Signature validity only proves the token was issued by a trusted auth server. Without validating aud (audience), a token for another service in the same tenant could be replayed against yours. Without validating iss (issuer), a token from a different tenant's auth server (with a stolen key) could pass. Always validate both.",
             },
           ],
         },
