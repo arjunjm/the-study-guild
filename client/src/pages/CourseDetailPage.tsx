@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
 import { Share2, Star, Clock, CheckCircle, Circle, ChevronLeft, BookOpen, ArrowRight, Code2, HelpCircle, GitFork, Award, Download, X, ExternalLink, Bookmark } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { TAXONOMY } from '../data/taxonomy';
@@ -67,6 +68,16 @@ export default function CourseDetailPage() {
       toast.success('Rating saved!', `You rated this course ${rating} star${rating !== 1 ? 's' : ''}`);
     },
   });
+
+  useEffect(() => {
+    if (!showCert) return;
+    const t = setTimeout(() => {
+      confetti({ particleCount: 120, spread: 90, origin: { y: 0.5 }, colors: ['#f59e0b', '#fbbf24', '#fcd34d', '#7c3aed', '#a78bfa', '#34d399'] });
+      setTimeout(() => confetti({ particleCount: 60, spread: 70, origin: { y: 0.4 }, angle: 60, colors: ['#f59e0b', '#fbbf24'] }), 350);
+      setTimeout(() => confetti({ particleCount: 60, spread: 70, origin: { y: 0.4 }, angle: 120, colors: ['#7c3aed', '#a78bfa'] }), 350);
+    }, 200);
+    return () => clearTimeout(t);
+  }, [showCert]);
 
   useEffect(() => {
     if (!course) return;

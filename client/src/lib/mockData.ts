@@ -1784,6 +1784,29 @@ When an access token expires, your SPA should silently fetch a new one without r
 5. Retry the original request with the new token`,
         },
         {
+          type: 'flowDiagram',
+          title: 'Silent token refresh: the full sequence',
+          nodes: [
+            { id: 'rf1', label: 'SPA makes\nAPI call', type: 'input', position: { x: 30, y: 30 } },
+            { id: 'rf2', label: 'API returns\n401 Unauthorized', position: { x: 280, y: 30 } },
+            { id: 'rf3', label: 'Axios response\ninterceptor fires', type: 'decision', position: { x: 280, y: 140 } },
+            { id: 'rf4', label: 'POST /auth/refresh\n(httpOnly cookie sent\nautomatically)', position: { x: 30, y: 250 } },
+            { id: 'rf5', label: 'Auth Server validates\nrefresh token', position: { x: 280, y: 250 } },
+            { id: 'rf6', label: 'New access token\nstored in memory', position: { x: 30, y: 360 } },
+            { id: 'rf7', label: 'Original request\nretried ✓', type: 'output', position: { x: 280, y: 360 } },
+            { id: 'rf8', label: 'Refresh expired?\nRedirect to login', type: 'output', position: { x: 530, y: 250 } },
+          ],
+          edges: [
+            { id: 'erf1', source: 'rf1', target: 'rf2', animated: true },
+            { id: 'erf2', source: 'rf2', target: 'rf3', label: 'caught by\ninterceptor' },
+            { id: 'erf3', source: 'rf3', target: 'rf4', label: 'first 401\n(not retry)', animated: true },
+            { id: 'erf4', source: 'rf4', target: 'rf5', animated: true },
+            { id: 'erf5', source: 'rf5', target: 'rf6', label: 'new token\nreturned' },
+            { id: 'erf6', source: 'rf6', target: 'rf7', animated: true },
+            { id: 'erf7', source: 'rf5', target: 'rf8', label: 'refresh\nexpired/revoked' },
+          ],
+        },
+        {
           type: 'codeBlock',
           language: 'typescript',
           caption: 'Axios interceptor for silent token refresh',
@@ -2010,6 +2033,73 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
           variant: 'warning',
           title: 'Never skip signature verification',
           content: 'Decoding a JWT without verifying the signature is dangerous. A JWT is just base64 — anyone can create one with arbitrary claims. Always verify the signature against the JWKS endpoint before trusting any claims in the payload.',
+        },
+        {
+          type: 'text',
+          content: `## OpenID Connect: the identity layer on top of OAuth2
+
+OAuth2 handles **authorization** — granting access to resources. But it says nothing about who the user *is*. That's where **OpenID Connect (OIDC)** comes in.
+
+OIDC is a thin identity layer built on top of OAuth2. It adds one new element: the **ID token**. When you include the \`openid\` scope in your authorization request, the Authorization Server returns an ID token alongside the access token.
+
+| Token | Purpose | Who reads it |
+|-------|---------|-------------|
+| Access Token | Authorize API calls | Your API (Resource Server) |
+| ID Token | Identity of the authenticated user | Your SPA / client |
+| Refresh Token | Get new access tokens | Your SPA (to token endpoint) |
+
+**Critical rule:** Send the **access token** to your API. **Never** send the ID token to your API as a bearer credential — it isn't designed for that purpose, doesn't carry the right audience, and its claims differ by provider.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'OIDC: Two tokens, two audiences',
+          nodes: [
+            { id: 'oidc1', label: 'SPA\n(React)', type: 'input', position: { x: 30, y: 150 } },
+            { id: 'oidc2', label: 'Authorization\nServer\n(Azure AD)', position: { x: 280, y: 30 } },
+            { id: 'oidc3', label: 'Your API\n(Resource Server)', position: { x: 530, y: 150 } },
+            { id: 'oidc4', label: 'ID Token\n✓ name, email, picture\n✓ Display in UI', type: 'output', position: { x: 30, y: 310 } },
+            { id: 'oidc5', label: 'Access Token\n✓ audience = your API\n✓ scopes + roles', type: 'output', position: { x: 530, y: 310 } },
+          ],
+          edges: [
+            { id: 'eo1', source: 'oidc1', target: 'oidc2', label: 'Auth request\n+ openid scope', animated: true },
+            { id: 'eo2', source: 'oidc2', target: 'oidc1', label: 'ID token\n+ Access token\n+ Refresh token' },
+            { id: 'eo3', source: 'oidc1', target: 'oidc4', label: 'decode locally\n(no API call needed)' },
+            { id: 'eo4', source: 'oidc1', target: 'oidc3', label: 'Bearer {access token}', animated: true },
+            { id: 'eo5', source: 'oidc3', target: 'oidc5', label: 'validate sig\n+ aud + exp' },
+          ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'Reading user identity from the ID token (MSAL)',
+          code: `import { useMsal } from '@azure/msal-react';
+
+function UserDisplay() {
+  const { accounts } = useMsal();
+  const account = accounts[0];
+
+  // The ID token claims are available directly — no API call needed
+  const name = account?.name;
+  const email = account?.username;
+  const tenantId = account?.tenantId;
+
+  return <span>{name} ({email})</span>;
+}
+
+// Or if you need the raw ID token claims:
+const idTokenClaims = account?.idTokenClaims as {
+  oid: string;   // Object ID — stable unique user identifier
+  name: string;
+  email: string;
+  preferred_username: string;
+  tid: string;   // Tenant ID
+};`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Use oid, not sub, as a stable user identifier',
+          content: 'The `sub` (subject) claim in an ID token can change if the user authenticates through a different application. The `oid` (Object ID) claim in Azure AD tokens is stable across all applications in a tenant and is the right value to store in your database as the user\'s primary identifier.',
         },
         {
           type: 'quiz',
