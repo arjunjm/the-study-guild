@@ -5941,6 +5941,21 @@ git rebase -i HEAD~4
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'git bisect: binary search for the commit that broke tests',
+          nodes: [
+            { id: 'bad',   position: { x: 600, y: 140 }, label: 'HEAD\n(broken — git bisect bad)', type: 'input' },
+            { id: 'good',  position: { x: 0,   y: 140 }, label: 'v1.0\n(good — git bisect good)', type: 'input' },
+            { id: 'mid1',  position: { x: 300, y: 60  }, label: 'Test midpoint\n(auto-checkout)', type: 'decision' },
+            { id: 'found', position: { x: 300, y: 220 }, label: 'First bad commit\nidentified ✓', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'good', target: 'mid1',  label: 'bisect narrows range' },
+            { id: 'e2', source: 'bad',  target: 'mid1',  label: 'bisect narrows range' },
+            { id: 'e3', source: 'mid1', target: 'found', label: 'O(log n) steps', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: `## Git hooks: automated quality gates
 
@@ -8443,6 +8458,27 @@ When a module grows large enough to justify its own service (team size, independ
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'CQRS: command side writes, query side reads independently',
+          nodes: [
+            { id: 'cmd',     position: { x: 0,   y: 80  }, label: 'Command\n(CreateOrder)', type: 'input' },
+            { id: 'handler', position: { x: 220, y: 80  }, label: 'Command Handler\n(validate + execute)', type: 'default' },
+            { id: 'events',  position: { x: 440, y: 80  }, label: 'Event Store\n(OrderCreated event)', type: 'default' },
+            { id: 'bus',     position: { x: 440, y: 220 }, label: 'Event Bus\n(Kafka / RabbitMQ)', type: 'default' },
+            { id: 'proj',    position: { x: 660, y: 220 }, label: 'Read Projection\n(denormalized read model)', type: 'default' },
+            { id: 'query',   position: { x: 660, y: 80  }, label: 'Query\n(GetOrderStatus)', type: 'input' },
+            { id: 'read',    position: { x: 880, y: 150 }, label: 'Read Model DB\n(optimized for reads)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'cmd',     target: 'handler', label: 'dispatch' },
+            { id: 'e2', source: 'handler', target: 'events',  label: 'append', animated: true },
+            { id: 'e3', source: 'events',  target: 'bus',     label: 'publish' },
+            { id: 'e4', source: 'bus',     target: 'proj',    label: 'consume', animated: true },
+            { id: 'e5', source: 'proj',    target: 'read',    label: 'upsert' },
+            { id: 'e6', source: 'query',   target: 'read',    label: 'query directly' },
+          ],
+        },
+        {
           type: 'text',
           content: `## Event-driven architecture — loose coupling through events
 
@@ -8563,6 +8599,26 @@ interface UserDashboardView {
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Circuit breaker: CLOSED → OPEN → HALF-OPEN recovery',
+          nodes: [
+            { id: 'closed',  position: { x: 0,   y: 140 }, label: 'CLOSED\n(normal — requests pass)', type: 'input' },
+            { id: 'fail',    position: { x: 0,   y: 280 }, label: 'N failures\nin time window', type: 'default' },
+            { id: 'open',    position: { x: 280, y: 140 }, label: 'OPEN\n(fail fast — no calls)', type: 'default' },
+            { id: 'timeout', position: { x: 280, y: 280 }, label: 'Timeout expires\n(e.g. 30s)', type: 'default' },
+            { id: 'half',    position: { x: 560, y: 140 }, label: 'HALF-OPEN\n(probe request)', type: 'default' },
+            { id: 'back',    position: { x: 560, y: 280 }, label: 'probe succeeds?\nback to CLOSED', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'closed',  target: 'fail',    label: 'error threshold' },
+            { id: 'e2', source: 'fail',    target: 'open',    label: 'trip', animated: true },
+            { id: 'e3', source: 'open',    target: 'timeout', label: 'wait' },
+            { id: 'e4', source: 'timeout', target: 'half',    label: 'probe' },
+            { id: 'e5', source: 'half',    target: 'back',    label: 'success', animated: true },
+            { id: 'e6', source: 'half',    target: 'open',    label: 'fail → re-open' },
+          ],
+        },
         {
           type: 'text',
           content: `## API Gateway — single entry point for clients
@@ -9463,6 +9519,23 @@ CREATE TABLE enrollments (
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Normal form progression — each step removes a class of anomaly',
+          nodes: [
+            { id: 'raw', position: { x: 0, y: 100 }, label: 'Unnormalized\n(arrays in columns)', type: 'input' },
+            { id: '1nf', position: { x: 220, y: 100 }, label: '1NF\nAtomic values only\nno repeating groups', type: 'default' },
+            { id: '2nf', position: { x: 440, y: 100 }, label: '2NF\nNo partial dependency\non composite key', type: 'default' },
+            { id: '3nf', position: { x: 660, y: 100 }, label: '3NF\nNo transitive dependency\n(author_email → users table)', type: 'output' },
+            { id: 'denom', position: { x: 440, y: 240 }, label: 'Denormalize\nwhen read perf required\n(pre-aggregated counts)', type: 'default' },
+          ],
+          edges: [
+            { id: 'e1', source: 'raw', target: '1nf', label: 'split arrays\nto rows' },
+            { id: 'e2', source: '1nf', target: '2nf', label: 'remove partial\ndependencies' },
+            { id: 'e3', source: '2nf', target: '3nf', label: 'remove transitive\ndependencies' },
+            { id: 'e4', source: '3nf', target: 'denom', label: 'measure first\nthen denormalize', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: `## Normal forms — organizing data to eliminate redundancy
 
@@ -9544,6 +9617,25 @@ WHERE id = $2;
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Query planner: index scan vs sequential scan',
+          nodes: [
+            { id: 'query', position: { x: 0, y: 100 }, label: 'SQL Query\nWHERE / ORDER BY', type: 'input' },
+            { id: 'planner', position: { x: 220, y: 100 }, label: 'Query Planner\nanalyzes statistics', type: 'decision' },
+            { id: 'idxscan', position: { x: 440, y: 40 }, label: 'Index Scan\nO(log N) — fast', type: 'output' },
+            { id: 'seqscan', position: { x: 440, y: 160 }, label: 'Sequential Scan\nO(N) — reads every row', type: 'default' },
+            { id: 'btree', position: { x: 660, y: 40 }, label: 'B-tree index\n(=, <, >, BETWEEN\nORDER BY)', type: 'output' },
+            { id: 'gin', position: { x: 660, y: 160 }, label: 'GIN / GiST index\n(full-text, JSONB\narrays)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'query', target: 'planner' },
+            { id: 'e2', source: 'planner', target: 'idxscan', label: 'index exists' },
+            { id: 'e3', source: 'planner', target: 'seqscan', label: 'no index\nor low selectivity' },
+            { id: 'e4', source: 'idxscan', target: 'btree', label: 'typical FK\nor filter' },
+            { id: 'e5', source: 'idxscan', target: 'gin', label: 'text search\nor JSONB' },
+          ],
+        },
         {
           type: 'text',
           content: `## Constraints — enforce data integrity at the database level
@@ -11254,6 +11346,24 @@ async function register(input: RegistrationInput): Promise<User> {
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Dependency Inversion: high-level modules depend on abstractions',
+          nodes: [
+            { id: 'svc', position: { x: 0, y: 100 }, label: 'UserService\n(high-level)', type: 'input' },
+            { id: 'iface', position: { x: 220, y: 100 }, label: 'UserRepository\n(interface)', type: 'default' },
+            { id: 'pg', position: { x: 440, y: 40 }, label: 'PostgresRepository\n(production)', type: 'output' },
+            { id: 'mem', position: { x: 440, y: 160 }, label: 'InMemoryRepository\n(tests)', type: 'output' },
+            { id: 'ocp', position: { x: 220, y: 260 }, label: 'Open/Closed: add PdfFormatter\nwithout changing ReportService', type: 'default' },
+            { id: 'srp', position: { x: 0, y: 260 }, label: 'SRP: one reason\nto change per class', type: 'default' },
+          ],
+          edges: [
+            { id: 'e1', source: 'svc', target: 'iface', label: 'depends on abstraction' },
+            { id: 'e2', source: 'iface', target: 'pg', label: 'implements' },
+            { id: 'e3', source: 'iface', target: 'mem', label: 'implements' },
+            { id: 'e4', source: 'srp', target: 'ocp', label: 'complements', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: `## S — Single Responsibility Principle
 
@@ -11395,6 +11505,26 @@ const testService = new UserService(new InMemoryUserRepository());
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Safe refactoring cycle — always start with tests',
+          nodes: [
+            { id: 'legacy', position: { x: 0, y: 100 }, label: 'Legacy code\n(no tests)', type: 'input' },
+            { id: 'tests', position: { x: 200, y: 100 }, label: 'Write characterization\ntests (pass now)', type: 'default' },
+            { id: 'refactor', position: { x: 400, y: 100 }, label: 'Refactor structure\n(no behavior change)', type: 'default' },
+            { id: 'verify', position: { x: 600, y: 100 }, label: 'Tests still pass?\n✓', type: 'decision' },
+            { id: 'commit', position: { x: 800, y: 100 }, label: 'Commit\n(structure-only)', type: 'output' },
+            { id: 'fix', position: { x: 600, y: 220 }, label: 'Behavior changed —\nfix the refactor', type: 'default' },
+          ],
+          edges: [
+            { id: 'e1', source: 'legacy', target: 'tests', label: 'step 1' },
+            { id: 'e2', source: 'tests', target: 'refactor', label: 'step 2' },
+            { id: 'e3', source: 'refactor', target: 'verify', label: 'step 3' },
+            { id: 'e4', source: 'verify', target: 'commit', label: 'yes' },
+            { id: 'e5', source: 'verify', target: 'fix', label: 'no — revert' },
+            { id: 'e6', source: 'fix', target: 'refactor', label: 'retry', animated: true },
+          ],
+        },
         {
           type: 'text',
           content: `## Refactoring — changing structure without changing behavior
@@ -13795,6 +13925,25 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Data science pipeline: raw data to analysis-ready DataFrame',
+          nodes: [
+            { id: 'raw', position: { x: 0, y: 100 }, label: 'Raw Data\n(CSV / DB / API)', type: 'input' },
+            { id: 'load', position: { x: 180, y: 100 }, label: 'Load\npd.read_csv()', type: 'default' },
+            { id: 'inspect', position: { x: 360, y: 100 }, label: 'Inspect\ninfo() / describe()\nisnull().sum()', type: 'default' },
+            { id: 'clean', position: { x: 540, y: 100 }, label: 'Clean\ndropna / fillna\nrename / cast', type: 'default' },
+            { id: 'transform', position: { x: 720, y: 100 }, label: 'Transform\nfilter / groupby\nmerge / pivot', type: 'default' },
+            { id: 'ready', position: { x: 900, y: 100 }, label: 'Analysis-ready\nDataFrame', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'raw', target: 'load' },
+            { id: 'e2', source: 'load', target: 'inspect' },
+            { id: 'e3', source: 'inspect', target: 'clean', label: 'fix issues found' },
+            { id: 'e4', source: 'clean', target: 'transform' },
+            { id: 'e5', source: 'transform', target: 'ready', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: '## The Data Science Workflow\n\n1. **Collect** data (CSV, API, database)\n2. **Clean & wrangle** (pandas)\n3. **Explore** (descriptive stats, visualisation)\n4. **Model** (scikit-learn, PyTorch)\n5. **Evaluate & iterate**\n6. **Communicate** results\n\n## pandas in 5 minutes\n\nA `DataFrame` is a 2D table with labelled rows and columns. A `Series` is a single column.\n\n```python\nimport pandas as pd\n\ndf = pd.read_csv(\'sales.csv\')\nprint(df.head())          # first 5 rows\nprint(df.dtypes)          # column types\nprint(df.describe())      # count, mean, std, quartiles\nprint(df.isnull().sum())  # missing values per column\n```',
         },
@@ -13844,6 +13993,31 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Choosing the right chart for your question',
+          nodes: [
+            { id: 'q', position: { x: 0, y: 160 }, label: 'What are\nyou showing?', type: 'input' },
+            { id: 'dist', position: { x: 220, y: 40 }, label: 'Distribution\nof one variable', type: 'decision' },
+            { id: 'rel', position: { x: 220, y: 120 }, label: 'Relationship\nbetween two numerics', type: 'decision' },
+            { id: 'cat', position: { x: 220, y: 200 }, label: 'Category vs\nnumeric', type: 'decision' },
+            { id: 'time', position: { x: 220, y: 280 }, label: 'Change\nover time', type: 'decision' },
+            { id: 'hist', position: { x: 500, y: 40 }, label: 'Histogram\nor KDE plot', type: 'output' },
+            { id: 'scatter', position: { x: 500, y: 120 }, label: 'Scatter plot\nwith regression line', type: 'output' },
+            { id: 'bar', position: { x: 500, y: 200 }, label: 'Bar chart\nor box plot', type: 'output' },
+            { id: 'line', position: { x: 500, y: 280 }, label: 'Line chart\n(time series)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'q', target: 'dist' },
+            { id: 'e2', source: 'q', target: 'rel' },
+            { id: 'e3', source: 'q', target: 'cat' },
+            { id: 'e4', source: 'q', target: 'time' },
+            { id: 'e5', source: 'dist', target: 'hist' },
+            { id: 'e6', source: 'rel', target: 'scatter' },
+            { id: 'e7', source: 'cat', target: 'bar' },
+            { id: 'e8', source: 'time', target: 'line' },
+          ],
+        },
         {
           type: 'text',
           content: '## Why Visualise?\n\nSummary statistics lie. The Anscombe Quartet — four datasets with identical means, variances, and correlations — look completely different when plotted. Always plot your data before drawing conclusions.\n\n## matplotlib & seaborn\n\n```python\nimport matplotlib.pyplot as plt\nimport seaborn as sns\n\n# Distribution of a single variable\nsns.histplot(df[\'age\'], bins=20, kde=True)\nplt.title(\'Age distribution\')\nplt.show()\n\n# Scatter plot with regression line\nsns.regplot(x=\'income\', y=\'spend\', data=df)\n\n# Correlation heatmap\nsns.heatmap(df.corr(), annot=True, cmap=\'coolwarm\')\n\n# Box plot — spot outliers\nsns.boxplot(x=\'region\', y=\'order_total\', data=df)\n```',
@@ -15492,6 +15666,29 @@ INCR page:views:/courses/oauth2          # returns new value`,
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Cache-aside read + event-driven write invalidation',
+          nodes: [
+            { id: 'req', position: { x: 0, y: 120 }, label: 'Incoming Request', type: 'input' },
+            { id: 'check', position: { x: 200, y: 120 }, label: 'Check Redis\ncache', type: 'decision' },
+            { id: 'hit', position: { x: 400, y: 40 }, label: 'Cache HIT\nreturn cached value', type: 'output' },
+            { id: 'db', position: { x: 400, y: 200 }, label: 'Query\nDatabase', type: 'default' },
+            { id: 'store', position: { x: 600, y: 200 }, label: 'Store in Redis\n(SET key EX 300)', type: 'default' },
+            { id: 'resp', position: { x: 800, y: 120 }, label: 'Return to client', type: 'output' },
+            { id: 'write', position: { x: 0, y: 320 }, label: 'DB Write\n(update user)', type: 'input' },
+            { id: 'inval', position: { x: 400, y: 320 }, label: 'DEL cache key\n(invalidate)', type: 'default' },
+          ],
+          edges: [
+            { id: 'e1', source: 'req', target: 'check' },
+            { id: 'e2', source: 'check', target: 'hit', label: 'HIT' },
+            { id: 'e3', source: 'check', target: 'db', label: 'MISS' },
+            { id: 'e4', source: 'db', target: 'store' },
+            { id: 'e5', source: 'store', target: 'resp' },
+            { id: 'e6', source: 'hit', target: 'resp' },
+            { id: 'e7', source: 'write', target: 'inval', label: 'same transaction', animated: true },
+          ],
+        },
         {
           type: 'text',
           content: `## "There are only two hard things in Computer Science: cache invalidation and naming things."
