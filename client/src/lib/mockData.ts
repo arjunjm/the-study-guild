@@ -935,9 +935,9 @@ export const MOCK_COURSES: Course[] = [
     published: true,
     publishedAt: '2026-05-24T00:00:00.000Z',
     tags: ['observability', 'prometheus', 'grafana', 'opentelemetry', 'logging', 'tracing', 'monitoring'],
-    lessonIds: ['lesson-obs-1', 'lesson-obs-2', 'lesson-obs-3'],
-    totalLessons: 3,
-    estimatedMinutes: 45,
+    lessonIds: ['lesson-obs-1', 'lesson-obs-2', 'lesson-obs-3', 'lesson-obs-4'],
+    totalLessons: 4,
+    estimatedMinutes: 60,
     ratingAverage: 4.6,
     ratingCount: 19,
     createdAt: '2026-05-24T00:00:00.000Z',
@@ -19361,6 +19361,171 @@ OTel's HTTP instrumentation injects and extracts this header automatically.`,
               ],
               correctIndex: 1,
               explanation: 'Context propagation is how a distributed trace stays connected. When service A calls service B, it injects the current trace ID and span ID into the traceparent header. Service B extracts this, creates a child span with the same trace ID, and the backend can now reconstruct the full trace tree. Without propagation, every service would create independent, disconnected traces.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── Observability Lesson 4: Alerting & SLOs ──────────────────────────────
+  {
+    id: 'lesson-obs-4',
+    courseId: 'course-observability',
+    order: 3,
+    title: 'Alerting, SLOs & Error Budgets',
+    estimatedMinutes: 15,
+    createdAt: '2026-05-24T00:00:00.000Z',
+    updatedAt: '2026-05-24T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Why most alerting is broken
+
+The goal of alerting is to wake someone up when their help is actually needed. In practice, most teams end up with one of two failure modes:
+
+- **Too noisy**: Alerts fire on every transient spike. On-call engineers become desensitized and start ignoring pages.
+- **Too quiet**: Alerts only fire when something has already been on fire for hours. Customers noticed before you did.
+
+The solution is to alert on **user-facing symptoms** (your SLOs) rather than on internal signals (CPU > 80%).
+
+## SLI → SLO → SLA: the three levels
+
+| Term | Meaning | Example |
+|---|---|---|
+| **SLI** (Service Level Indicator) | The metric you measure | p99 latency, availability percentage |
+| **SLO** (Service Level Objective) | The target you commit to internally | 99.9% of requests < 200ms |
+| **SLA** (Service Level Agreement) | The contract with customers (with penalties) | 99.5% uptime or credit issued |
+
+Set SLOs tighter than SLAs. The gap is your buffer — you can breach your SLO without yet violating your customer contract, giving time to fix the issue.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'SLO-based alerting: burn rate tells you if you are at risk',
+          nodes: [
+            { id: 'b1', label: 'Error Budget\n(1 - SLO target)\n= 0.1% = 43.8 min/month', type: 'input', position: { x: 200, y: 0 } },
+            { id: 'b2', label: 'Monitor burn rate:\nerrors/sec ÷ budget/sec', position: { x: 200, y: 80 } },
+            { id: 'b3', label: 'Burn rate > 14×\n(budget gone in 2h)', type: 'decision', position: { x: 200, y: 170 } },
+            { id: 'b4', label: '🔴 Page on-call NOW\n(critical)', type: 'output', position: { x: 60, y: 270 }, style: { background: '#450a0a', color: '#fca5a5', border: '1px solid #991b1b' } },
+            { id: 'b5', label: 'Burn rate 1–14×\n(budget gone in 1–72h)', type: 'decision', position: { x: 380, y: 170 } },
+            { id: 'b6', label: '🟡 Ticket + notify\n(important, not urgent)', type: 'output', position: { x: 380, y: 270 } },
+            { id: 'b7', label: 'Burn rate < 1×\n(budget safe)', type: 'output', position: { x: 580, y: 80 }, style: { background: '#052e16', color: '#86efac', border: '1px solid #166534' } },
+          ],
+          edges: [
+            { id: 'eb1', source: 'b1', target: 'b2' },
+            { id: 'eb2', source: 'b2', target: 'b3' },
+            { id: 'eb3', source: 'b3', target: 'b4', label: 'yes — urgent' },
+            { id: 'eb4', source: 'b3', target: 'b5', label: 'no' },
+            { id: 'eb5', source: 'b5', target: 'b6', label: 'yes — slow burn' },
+            { id: 'eb6', source: 'b5', target: 'b7', label: 'no — nominal' },
+          ],
+        },
+        {
+          type: 'callout',
+          variant: 'info',
+          title: 'What is an error budget?',
+          content: '**Error budget** = 1 - SLO target. If your SLO is 99.9% availability, your error budget is 0.1% = about 43.8 minutes of downtime per month. The budget is *consumed* by incidents and depleted by risky deployments. When the budget runs low, you shift from shipping new features to stabilizing. Google SRE teams use the error budget as an objective, data-driven way to balance reliability work against feature velocity.',
+        },
+        {
+          type: 'codeBlock',
+          language: 'yaml',
+          caption: 'Prometheus AlertManager — SLO-based burn rate alerts',
+          code: `# Prometheus alert rules for a 99.9% availability SLO
+# Error budget = 0.001, burn rate = current error rate ÷ budget rate
+
+groups:
+  - name: slo_api_availability
+    rules:
+      # 1. Fast burn: consuming budget 14x faster than normal
+      # Budget exhausted in ~2 hours → PAGE immediately
+      - alert: APIAvailabilitySLO_CriticalBurnRate
+        expr: |
+          (
+            rate(http_requests_total{job="api", status=~"5.."}[1h])
+            /
+            rate(http_requests_total{job="api"}[1h])
+          ) > (14 * 0.001)
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API error rate burning through SLO budget 14× faster than expected"
+          description: "Current error rate will exhaust the monthly error budget in ~2 hours."
+
+      # 2. Slow burn: consuming budget 2x faster
+      # Budget exhausted in ~days → Create ticket, no page
+      - alert: APIAvailabilitySLO_SlowBurnRate
+        expr: |
+          (
+            rate(http_requests_total{job="api", status=~"5.."}[6h])
+            /
+            rate(http_requests_total{job="api"}[6h])
+          ) > (2 * 0.001)
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API error rate slowly eroding SLO budget"
+          description: "Not urgent, but needs investigation before it becomes critical."`,
+        },
+        {
+          type: 'text',
+          content: `## Good alert design: the four golden signals
+
+The **four golden signals** (Google SRE Book) are the minimum you need to detect any user-facing problem:
+
+| Signal | What it measures | When to alert |
+|---|---|---|
+| **Latency** | How long requests take | p99 > SLO threshold for 5+ min |
+| **Traffic** | Request rate | Sudden 50%+ drop (silent failure!) |
+| **Errors** | Error rate (5xx, timeouts) | Above SLO error budget burn rate |
+| **Saturation** | Resource fullness (CPU, disk, queue depth) | > 70–80% — before it impacts latency |
+
+**The trap to avoid:** alerting on CPU > 80% or memory > 90%. These are causes, not symptoms. 80% CPU might be fine (efficient system) or catastrophic (queue saturated). Alert on latency/errors — those are what users feel.`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Runbooks make alerting useful',
+          content: 'Every alert should link to a **runbook** — a step-by-step document: what this alert means, what to check first, how to diagnose it, and how to resolve it. A page at 3am is stressful. A page at 3am with a clear runbook is manageable. Even a single-sentence description ("This fires when the error rate is consuming the SLO budget rapidly — check the API pod logs first") beats no context. Store runbooks in your wiki and link them in the alert `annotations.runbook_url`.',
+        },
+        {
+          type: 'quiz',
+          title: 'Alerting & SLOs Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'slo-q1',
+              question: 'Your 99.9% availability SLO has an error budget of 43.8 min/month. Your service had 20 minutes of downtime this month. What is left in the budget?',
+              options: ['23.8 min remaining', '43.8 min remaining — downtime is separate from the budget', '0 min — the budget resets weekly', '20 min remaining'],
+              correctIndex: 0,
+              explanation: '43.8 - 20 = 23.8 minutes of error budget remaining for the month. The error budget is the allowed downtime before you breach the SLO. Once it is exhausted, the next incident breaches your objective — which typically means a freeze on risky deployments until the budget resets.',
+            },
+            {
+              id: 'slo-q2',
+              question: 'Your CPU alert fires at 80% but there are no user-facing errors or latency increase. Should you wake up on-call?',
+              options: [
+                'Yes — CPU at 80% is always serious and needs immediate attention',
+                'No — CPU is a cause metric, not a symptom. If latency and errors are nominal, users aren\'t affected yet',
+                'Yes — alert at 80%, page at 95% CPU',
+                'No — CPU alerts should always be disabled in production',
+              ],
+              correctIndex: 1,
+              explanation: 'CPU saturation is a leading indicator, not a symptom. If p99 latency is fine and error rate is within budget, the system is still serving users well despite high CPU. A better approach: use saturation alerts as low-priority tickets to investigate capacity, while reserving pages for latency/error SLO breaches that directly affect users.',
+            },
+            {
+              id: 'slo-q3',
+              question: 'You notice your API request rate suddenly drops 60% with no corresponding increase in errors. What is the most likely cause?',
+              options: [
+                'The service is running efficiently and handling fewer requests faster',
+                'A silent failure — traffic has stopped reaching the service (load balancer misconfiguration, routing issue, or upstream service down)',
+                'Your SLO metrics are misconfigured',
+                'The deployment was successful and reduced resource usage',
+              ],
+              correctIndex: 1,
+              explanation: 'A sudden traffic drop with no errors often means traffic isn\'t reaching your service at all — requests are failing before they hit your error handlers. Common causes: load balancer routing change, DNS issue, upstream service outage, or a deployment that accidentally stopped traffic. Traffic as a golden signal is essential specifically for catching these "silent failures" that never produce 5xx responses.',
             },
           ],
         },
