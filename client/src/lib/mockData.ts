@@ -12690,7 +12690,26 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
         },
         {
           type: 'text',
-          content: '## TCP vs UDP\n\n**TCP** (Transmission Control Protocol) guarantees delivery and ordering. It establishes a connection with a 3-way handshake, numbers every byte, retransmits lost packets, and acknowledges received data. Use it for anything where correctness matters: HTTP, databases, email.\n\n**UDP** (User Datagram Protocol) is fire-and-forget. No handshake, no retransmission, no ordering. Lower latency and lower overhead. Use it where speed matters more than reliability: video streaming, DNS, online gaming, real-time voice.\n\n```\nTCP 3-way handshake:\nClient: SYN →\n              ← SYN-ACK :Server\nClient: ACK →\n           [connection established]\n```',
+          content: '## TCP vs UDP\n\n**TCP** (Transmission Control Protocol) guarantees delivery and ordering. It establishes a connection with a 3-way handshake, numbers every byte, retransmits lost packets, and acknowledges received data. Use it for anything where correctness matters: HTTP, databases, email.\n\n**UDP** (User Datagram Protocol) is fire-and-forget. No handshake, no retransmission, no ordering. Lower latency and lower overhead. Use it where speed matters more than reliability: video streaming, DNS, online gaming, real-time voice.',
+        },
+        {
+          type: 'flowDiagram',
+          title: 'TCP 3-way handshake: connection establishment',
+          nodes: [
+            { id: 'c1', position: { x: 0, y: 0 }, label: 'Client\nSYN →', type: 'input' },
+            { id: 's1', position: { x: 300, y: 0 }, label: 'Server\nreceives SYN', type: 'default' },
+            { id: 's2', position: { x: 300, y: 100 }, label: 'Server\n← SYN-ACK', type: 'default' },
+            { id: 'c2', position: { x: 0, y: 100 }, label: 'Client\nreceives SYN-ACK', type: 'default' },
+            { id: 'c3', position: { x: 0, y: 200 }, label: 'Client\nACK →', type: 'default' },
+            { id: 'conn', position: { x: 300, y: 200 }, label: 'Connection\nestablished!', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'c1', target: 's1', label: 'SYN (seq=x)', animated: true },
+            { id: 'e2', source: 's1', target: 's2' },
+            { id: 'e3', source: 's2', target: 'c2', label: 'SYN-ACK (seq=y, ack=x+1)', animated: true },
+            { id: 'e4', source: 'c2', target: 'c3' },
+            { id: 'e5', source: 'c3', target: 'conn', label: 'ACK (ack=y+1)', animated: true },
+          ],
         },
         {
           type: 'callout',
@@ -12734,7 +12753,28 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
       sections: [
         {
           type: 'text',
-          content: '## DNS — The Internet\'s Phone Book\n\nEvery time you type `api.example.com`, your OS performs a DNS lookup to translate the name to an IP address. The process:\n\n1. Check local cache\n2. Ask the OS resolver (usually your router)\n3. Router asks the ISP\'s recursive resolver\n4. Recursive resolver works through root → TLD (`.com`) → authoritative name server\n5. IP returned and cached (TTL controls how long)\n\n**Common record types:**\n- `A` — hostname → IPv4 address\n- `AAAA` — hostname → IPv6 address\n- `CNAME` — alias to another hostname\n- `MX` — mail server for a domain\n- `TXT` — arbitrary text (used for SPF, DKIM, domain verification)\n\n```bash\n# Diagnose DNS from the command line\ndig api.example.com A\nnslookup api.example.com\n```',
+          content: '## DNS — The Internet\'s Phone Book\n\nEvery time you type `api.example.com`, your OS performs a DNS lookup to translate the name to an IP address. The process:\n\n1. Check local cache\n2. Ask the OS resolver (usually your router)\n3. Router asks the ISP\'s recursive resolver\n4. Recursive resolver works through root → TLD (`.com`) → authoritative name server\n5. IP returned and cached (TTL controls how long)\n\n**Common record types:**\n- `A` — hostname → IPv4 address\n- `AAAA` — hostname → IPv6 address\n- `CNAME` — alias to another hostname\n- `MX` — mail server for a domain\n- `TXT` — arbitrary text (used for SPF, DKIM, domain verification)',
+        },
+        {
+          type: 'flowDiagram',
+          title: 'DNS resolution: browser → cache → resolver → authoritative NS',
+          nodes: [
+            { id: 'browser', position: { x: 0, y: 80 }, label: 'Browser\napi.example.com?', type: 'input' },
+            { id: 'cache', position: { x: 180, y: 80 }, label: 'OS DNS Cache\n(check TTL)', type: 'default' },
+            { id: 'resolver', position: { x: 360, y: 80 }, label: 'ISP Recursive\nResolver', type: 'default' },
+            { id: 'root', position: { x: 540, y: 20 }, label: 'Root NS\n(13 servers)', type: 'default' },
+            { id: 'tld', position: { x: 540, y: 80 }, label: '.com TLD NS', type: 'default' },
+            { id: 'auth', position: { x: 540, y: 140 }, label: 'example.com\nAuthoritative NS', type: 'default' },
+            { id: 'ip', position: { x: 0, y: 200 }, label: '93.184.216.34\n(A record, TTL 300s)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'browser', target: 'cache', label: 'lookup' },
+            { id: 'e2', source: 'cache', target: 'resolver', label: 'cache miss' },
+            { id: 'e3', source: 'resolver', target: 'root', label: 'ask' },
+            { id: 'e4', source: 'root', target: 'tld', label: 'refer to' },
+            { id: 'e5', source: 'tld', target: 'auth', label: 'refer to' },
+            { id: 'e6', source: 'auth', target: 'ip', label: '93.184.216.34', animated: true },
+          ],
         },
         {
           type: 'text',
@@ -12833,6 +12873,27 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
         {
           type: 'text',
           content: '## Authentication vs Authorization\n\n- **Authentication**: proves who you are ("you are Alice")\n- **Authorization**: determines what you can do ("Alice can read courses but not delete them")\n\nAuthentication always happens first. Authorization uses the verified identity to make access decisions.\n\n## Role-Based Access Control (RBAC)\n\nRBAC assigns users to **roles**, and roles to **permissions**. This is the most common model for enterprise applications:\n\n```\nUser: alice@example.com\n  └── Role: editor\n        ├── Permission: course:read\n        ├── Permission: course:write\n        └── Permission: course:publish\n\nUser: bob@example.com\n  └── Role: viewer\n        └── Permission: course:read\n```\n\nThe key advantage: when a user\'s responsibilities change, you reassign their role — not individual permissions.',
+        },
+        {
+          type: 'flowDiagram',
+          title: 'RBAC: user → role → permissions hierarchy',
+          nodes: [
+            { id: 'alice', position: { x: 0, y: 40 }, label: 'Alice\n(user)', type: 'input' },
+            { id: 'bob', position: { x: 0, y: 160 }, label: 'Bob\n(user)', type: 'input' },
+            { id: 'editor', position: { x: 220, y: 0 }, label: 'editor\n(role)', type: 'default' },
+            { id: 'viewer', position: { x: 220, y: 160 }, label: 'viewer\n(role)', type: 'default' },
+            { id: 'read', position: { x: 440, y: 0 }, label: 'course:read', type: 'output' },
+            { id: 'write', position: { x: 440, y: 80 }, label: 'course:write', type: 'output' },
+            { id: 'pub', position: { x: 440, y: 160 }, label: 'course:publish', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'alice', target: 'editor', label: 'has role' },
+            { id: 'e2', source: 'bob', target: 'viewer', label: 'has role' },
+            { id: 'e3', source: 'editor', target: 'read' },
+            { id: 'e4', source: 'editor', target: 'write' },
+            { id: 'e5', source: 'editor', target: 'pub' },
+            { id: 'e6', source: 'viewer', target: 'read' },
+          ],
         },
         {
           type: 'codeBlock',
