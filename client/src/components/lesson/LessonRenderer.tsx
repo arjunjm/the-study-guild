@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { CheckCircle, Copy, Check } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { LessonContent, LessonSection } from '@study-guild/shared';
@@ -58,13 +59,61 @@ function SectionRenderer({ section, onQuizDone }: { section: LessonSection; onQu
           prose-headings:text-slate-900 prose-headings:font-semibold
           prose-p:text-slate-600 prose-p:leading-relaxed
           prose-strong:text-slate-800
-          prose-code:text-violet-700 prose-code:bg-violet-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs prose-code:before:content-none prose-code:after:content-none prose-code:border prose-code:border-violet-100
           prose-a:text-violet-600 prose-a:no-underline hover:prose-a:underline
-          prose-table:text-sm prose-th:text-slate-700 prose-td:text-slate-600
-          prose-tr:border-slate-200
           prose-ul:text-slate-600 prose-ol:text-slate-600
           prose-blockquote:border-l-violet-300 prose-blockquote:text-slate-500">
-          <ReactMarkdown>{section.content}</ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              code({ className, children }) {
+                const isBlock = Boolean(className);
+                if (isBlock) {
+                  return (
+                    <code className="font-mono text-[13px] text-slate-300 leading-relaxed before:content-none after:content-none">
+                      {children}
+                    </code>
+                  );
+                }
+                return (
+                  <code className="text-violet-700 bg-violet-50 px-1.5 py-0.5 rounded-md text-xs border border-violet-100 before:content-none after:content-none">
+                    {children}
+                  </code>
+                );
+              },
+              pre({ children }) {
+                return (
+                  <pre className="overflow-x-auto rounded-xl bg-[#1e2433] border border-slate-700/40 p-4 my-4 text-[13px] leading-relaxed shadow-sm not-prose">
+                    {children}
+                  </pre>
+                );
+              },
+              table({ children }) {
+                return (
+                  <div className="overflow-x-auto my-4 rounded-xl border border-slate-200 not-prose">
+                    <table className="w-full border-collapse text-sm">{children}</table>
+                  </div>
+                );
+              },
+              thead({ children }) {
+                return <thead className="bg-slate-50 border-b border-slate-200">{children}</thead>;
+              },
+              th({ children }) {
+                return (
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    {children}
+                  </th>
+                );
+              },
+              tr({ children }) {
+                return <tr className="border-b border-slate-100 last:border-0">{children}</tr>;
+              },
+              td({ children }) {
+                return <td className="px-4 py-2.5 text-sm text-slate-600">{children}</td>;
+              },
+            }}
+          >
+            {section.content}
+          </ReactMarkdown>
         </div>
       );
 
@@ -121,11 +170,11 @@ function CodeBlock({ section }: { section: Extract<LessonSection, { type: 'codeB
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-900">
-      <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-2.5">
+    <div className="overflow-hidden rounded-xl border border-slate-700/40 bg-[#1e2433] shadow-sm">
+      <div className="flex items-center justify-between border-b border-slate-700/40 px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <span className="rounded bg-slate-700/80 px-2 py-0.5 text-xs font-mono text-slate-300">{section.language}</span>
-          {section.caption && <span className="text-xs text-slate-400">{section.caption}</span>}
+          <span className="rounded bg-slate-700/60 px-2 py-0.5 text-[11px] font-mono text-slate-400">{section.language}</span>
+          {section.caption && <span className="text-xs text-slate-500">{section.caption}</span>}
         </div>
         <button
           onClick={copy}
@@ -133,14 +182,14 @@ function CodeBlock({ section }: { section: Extract<LessonSection, { type: 'codeB
             'flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition-all duration-150',
             copied
               ? 'text-emerald-400 bg-emerald-500/10'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-slate-700/50'
           )}
         >
           {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
-      <pre className="overflow-x-auto p-4 text-xs leading-relaxed text-slate-200">
+      <pre className="overflow-x-auto p-4 text-[13px] leading-relaxed text-slate-300">
         <code className="font-mono">{section.code}</code>
       </pre>
     </div>
