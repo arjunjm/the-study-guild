@@ -6244,6 +6244,28 @@ const resolvers = {
 \`\`\``,
         },
         {
+          type: 'flowDiagram',
+          title: 'GraphQL Request: From Query to Response',
+          nodes: [
+            { id: 'client', label: 'Client\ngraphql query', type: 'input', position: { x: 30, y: 160 } },
+            { id: 'apollo', label: 'Apollo Server\nparse + validate', position: { x: 190, y: 160 } },
+            { id: 'ctx', label: 'context()\nverify JWT → userId', position: { x: 350, y: 80 } },
+            { id: 'qres', label: 'Query.courses\nresolver', position: { x: 350, y: 200 } },
+            { id: 'fres', label: 'Course.lessons\nfield resolver ×N', position: { x: 510, y: 200 } },
+            { id: 'db', label: 'Database\n(batched via DataLoader)', type: 'output', position: { x: 510, y: 320 } },
+            { id: 'resp', label: 'JSON response', type: 'output', position: { x: 30, y: 320 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'client', target: 'apollo', animated: true },
+            { id: 'e2', source: 'apollo', target: 'ctx', label: 'per request' },
+            { id: 'e3', source: 'apollo', target: 'qres' },
+            { id: 'e4', source: 'ctx', target: 'qres', label: 'context' },
+            { id: 'e5', source: 'qres', target: 'fres', label: 'parent' },
+            { id: 'e6', source: 'fres', target: 'db', animated: true },
+            { id: 'e7', source: 'qres', target: 'resp', animated: true },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'Resolver arguments',
@@ -6348,6 +6370,23 @@ Course: {
 // ... × 20
 // Total: 21 queries!
 \`\`\``,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'N+1 Problem vs DataLoader Batching',
+          nodes: [
+            { id: 'q', label: '{ courses { lessons } }\n(20 courses)', type: 'input', position: { x: 30, y: 160 } },
+            { id: 'naive', label: 'Naive resolver\n(N+1)', type: 'decision', position: { x: 220, y: 80 } },
+            { id: 'dl', label: 'DataLoader\n(batch)', type: 'decision', position: { x: 220, y: 260 } },
+            { id: 'n21', label: '21 DB queries\n(1 + 20)', type: 'output', position: { x: 420, y: 80 } },
+            { id: 'n2', label: '2 DB queries\n(courses + IN clause)', type: 'output', position: { x: 420, y: 260 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'q', target: 'naive' },
+            { id: 'e2', source: 'q', target: 'dl' },
+            { id: 'e3', source: 'naive', target: 'n21' },
+            { id: 'e4', source: 'dl', target: 'n2', animated: true },
+          ],
         },
         {
           type: 'callout',
@@ -6753,6 +6792,23 @@ class LessonService {
 \`\`\``,
         },
         {
+          type: 'flowDiagram',
+          title: 'Event-Driven: Loose Coupling via Event Bus',
+          nodes: [
+            { id: 'ls', label: 'LessonService\ncompleteLesson()', type: 'input', position: { x: 30, y: 160 } },
+            { id: 'bus', label: 'Event Bus\n(Kafka / Service Bus)', type: 'decision', position: { x: 220, y: 160 } },
+            { id: 'xp', label: 'XP Service\n→ award 10 XP', type: 'output', position: { x: 420, y: 60 } },
+            { id: 'notif', label: 'Notification Service\n→ send email', type: 'output', position: { x: 420, y: 160 } },
+            { id: 'ach', label: 'Achievement Service\n→ evaluate badges', type: 'output', position: { x: 420, y: 260 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'ls', target: 'bus', label: 'lesson.completed', animated: true },
+            { id: 'e2', source: 'bus', target: 'xp', label: 'subscribe' },
+            { id: 'e3', source: 'bus', target: 'notif', label: 'subscribe' },
+            { id: 'e4', source: 'bus', target: 'ach', label: 'subscribe' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'warning',
           title: 'Events are a contract',
@@ -6882,6 +6938,27 @@ class CircuitBreaker {
 - **Retry with exponential backoff** — retry transient failures, back off to avoid thundering herd
 - **Bulkhead** — isolate failure domains (separate thread pools per service)
 - **Timeout** — never wait forever; set aggressive timeouts and handle them`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Circuit Breaker State Machine',
+          nodes: [
+            { id: 'closed', label: 'CLOSED\n(normal, requests pass)', type: 'input', position: { x: 200, y: 20 } },
+            { id: 'fail', label: 'N failures\nwithin window', type: 'decision', position: { x: 200, y: 120 } },
+            { id: 'open', label: 'OPEN\n(fail fast, no calls)', position: { x: 200, y: 230 } },
+            { id: 'timeout', label: 'Cooldown\ntimer expires', position: { x: 400, y: 230 } },
+            { id: 'halfopen', label: 'HALF-OPEN\n(probe with 1 request)', type: 'decision', position: { x: 400, y: 120 } },
+            { id: 'success', label: 'Success\n→ circuit recovers', type: 'output', position: { x: 400, y: 20 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'closed', target: 'fail' },
+            { id: 'e2', source: 'fail', target: 'open', label: 'threshold' },
+            { id: 'e3', source: 'open', target: 'timeout' },
+            { id: 'e4', source: 'timeout', target: 'halfopen' },
+            { id: 'e5', source: 'halfopen', target: 'success', label: 'pass', animated: true },
+            { id: 'e6', source: 'halfopen', target: 'open', label: 'fail' },
+            { id: 'e7', source: 'success', target: 'closed', animated: true },
+          ],
         },
         {
           type: 'callout',
