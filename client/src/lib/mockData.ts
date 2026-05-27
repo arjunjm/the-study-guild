@@ -2548,6 +2548,21 @@ You trust a leaf certificate because it's signed by an **intermediate CA**, whic
 The browser walks the chain until it hits a trusted root. If any link is broken or expired, you get a certificate error.`,
         },
         {
+          type: 'flowDiagram',
+          title: 'X.509 Certificate Chain of Trust',
+          nodes: [
+            { id: 'root', label: 'Root CA\n(ISRG Root X1)\npre-installed in OS', type: 'input', position: { x: 200, y: 20 } },
+            { id: 'inter', label: "Intermediate CA\n(Let's Encrypt R11)\nsigned by Root CA", position: { x: 200, y: 130 } },
+            { id: 'leaf', label: 'Leaf Certificate\n(studyguild.com)\nsigned by Intermediate', type: 'decision', position: { x: 200, y: 240 } },
+            { id: 'browser', label: 'Browser\nwalks chain up\nto trusted Root', type: 'output', position: { x: 200, y: 350 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'root', target: 'inter', label: 'signs' },
+            { id: 'e2', source: 'inter', target: 'leaf', label: 'signs' },
+            { id: 'e3', source: 'leaf', target: 'browser', label: 'presented by server', animated: true },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'tip',
           title: "Let's Encrypt changed everything",
@@ -10602,6 +10617,24 @@ Relational databases store data in **normalized tables** with foreign keys. Mong
 | Column | Column | Field |
 | Primary key | id (int/uuid) | _id (ObjectId) |
 | Joins | JOIN clause | Embedded docs / $lookup |`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Relational vs Document Model',
+          nodes: [
+            { id: 'sql', label: 'SQL\n(Normalized Tables)', type: 'input', position: { x: 30, y: 40 } },
+            { id: 'users', label: 'users\n(id, name, email)', position: { x: 30, y: 130 } },
+            { id: 'orders', label: 'orders\n(id, user_id, total)', position: { x: 30, y: 220 } },
+            { id: 'items', label: 'order_items\n(id, order_id, qty)', position: { x: 30, y: 310 } },
+            { id: 'nosql', label: 'MongoDB\n(Documents)', type: 'input', position: { x: 310, y: 40 } },
+            { id: 'doc', label: 'user document {\n  orders: [ {\n    items: [ ... ]\n  } ]\n}', type: 'output', position: { x: 290, y: 150 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'sql', target: 'users' },
+            { id: 'e2', source: 'users', target: 'orders', label: 'JOIN' },
+            { id: 'e3', source: 'orders', target: 'items', label: 'JOIN' },
+            { id: 'e4', source: 'nosql', target: 'doc', label: 'embed', animated: true },
+          ],
         },
         {
           type: 'callout',
