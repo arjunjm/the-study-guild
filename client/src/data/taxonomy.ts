@@ -59,6 +59,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
       { label: 'Azure',      l2: 'Azure' },
       { label: 'AWS',        l2: 'AWS' },
       { label: 'Kubernetes', l2: 'Kubernetes' },
+      { label: 'Docker',     l2: 'Docker' },
       { label: 'CI/CD',      l2: 'CI/CD' },
     ],
   },

@@ -801,16 +801,16 @@ export const MOCK_COURSES: Course[] = [
     id: 'course-docker',
     title: 'Docker Fundamentals',
     description: 'Understand containers from the ground up — how images are built in layers, how containers are isolated from the host, how networking works, and how Docker Compose orchestrates multi-container apps.',
-    taxonomy: { l1: 'Cloud', l2: 'Kubernetes' },
+    taxonomy: { l1: 'Cloud', l2: 'Docker' },
     difficulty: 'beginner',
     authorId: 'teacher-001',
     authorName: 'The Guild',
     published: true,
     publishedAt: '2025-05-26T00:00:00.000Z',
     tags: ['docker', 'containers', 'devops', 'kubernetes', 'cloud'],
-    lessonIds: ['lesson-docker-1', 'lesson-docker-2', 'lesson-docker-3'],
-    totalLessons: 3,
-    estimatedMinutes: 42,
+    lessonIds: ['lesson-docker-1', 'lesson-docker-2', 'lesson-docker-3', 'lesson-docker-4', 'lesson-docker-5'],
+    totalLessons: 5,
+    estimatedMinutes: 70,
     ratingAverage: 4.8,
     ratingCount: 52,
     createdAt: '2025-05-26T00:00:00.000Z',
@@ -14135,6 +14135,251 @@ Services on the same Compose network resolve each other by **service name** as h
     },
   },
 
+  {
+    id: 'lesson-docker-4',
+    courseId: 'course-docker',
+    order: 3,
+    title: 'Docker Networking Deep Dive',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Docker Network Drivers
+
+Docker networking is built around **drivers** that control how containers talk to each other and the outside world.
+
+| Driver | Description | Use case |
+|---|---|---|
+| \`bridge\` | Default. Private virtual network on the host. Containers reach each other by IP or name (within a user-defined bridge). | Local development, single-host |
+| \`host\` | Container shares host network stack — no isolation, no port mapping needed. | High-throughput scenarios, monitoring tools |
+| \`none\` | No networking at all — container is fully isolated. | Batch jobs that don't need networking |
+| \`overlay\` | Spans multiple Docker hosts (requires Swarm). | Multi-host production (or use Kubernetes) |
+
+The default bridge (\`docker0\`) does **not** do DNS-based container discovery. Always create a **user-defined bridge** for real apps — containers on it resolve each other by name automatically.`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Bridge network: host port mapping to container',
+          nodes: [
+            { id: 'internet', position: { x: 0, y: 80 }, label: 'Internet / Client', type: 'input' },
+            { id: 'host', position: { x: 220, y: 80 }, label: 'Docker Host\niptables NAT', type: 'default' },
+            { id: 'bridge', position: { x: 440, y: 80 }, label: 'docker0 bridge\n(virtual switch)', type: 'default' },
+            { id: 'c1', position: { x: 640, y: 20 }, label: 'Container A\n172.17.0.2:8080', type: 'output' },
+            { id: 'c2', position: { x: 640, y: 140 }, label: 'Container B\n172.17.0.3:5432', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'internet', target: 'host', label: ':80 → :8080' },
+            { id: 'e2', source: 'host', target: 'bridge', label: 'DNAT' },
+            { id: 'e3', source: 'bridge', target: 'c1' },
+            { id: 'e4', source: 'bridge', target: 'c2' },
+            { id: 'e5', source: 'c1', target: 'c2', label: 'container-to-container\n(by name or IP)' },
+          ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'bash',
+          caption: 'Working with Docker networks',
+          code: `# Create a user-defined bridge network
+docker network create my-network
+
+# Connect containers to it (they resolve each other by name)
+docker run -d --name api --network my-network my-api:latest
+docker run -d --name db --network my-network postgres:16
+
+# The api container can now reach db at postgres://db:5432
+# DNS is handled automatically — no --link needed
+
+# Inspect network (see connected containers + IPs)
+docker network inspect my-network
+
+# Connect a running container to an additional network
+docker network connect my-network some-other-container
+
+# Expose host port 80 → container port 8080
+docker run -d -p 80:8080 --network my-network my-api:latest
+
+# Host network (container uses host's IP stack directly)
+docker run --network host nginx`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'User-defined bridges vs the default bridge',
+          content: 'The default `docker0` bridge does not support DNS-based container discovery — you need `--link` (deprecated) or IP addresses. User-defined bridges (`docker network create`) automatically provide DNS so containers find each other by service name. Prefer user-defined networks for anything beyond quick experiments.',
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'docker4-q1',
+              question: 'Container A and Container B are on a user-defined bridge network. How does Container A reach Container B?',
+              options: [
+                'It must use Container B\'s IP address found from `docker inspect`',
+                'It uses Container B\'s name as a hostname — Docker\'s embedded DNS resolves it automatically',
+                'It must use `--link` flags to establish a connection',
+                'Containers on the same network share localhost',
+              ],
+              correctIndex: 1,
+              explanation: 'User-defined bridge networks include an embedded DNS server. Containers register themselves by their `--name` value. Other containers on the same network resolve that name to an IP automatically. This is why Docker Compose works — service names become hostnames.',
+            },
+            {
+              id: 'docker4-q2',
+              question: 'What does `-p 8080:3000` mean when running a container?',
+              options: [
+                'Expose container port 8080 on host port 3000',
+                'Map host port 8080 to container port 3000 — requests on the host\'s :8080 reach the app on :3000 inside the container',
+                'Open two ports: 8080 and 3000, both on the container',
+                'The container uses port 8080 internally and 3000 externally',
+              ],
+              correctIndex: 1,
+              explanation: 'The format is `-p HOST_PORT:CONTAINER_PORT`. So `-p 8080:3000` means: when traffic arrives on host port 8080, Docker\'s iptables NAT rules forward it to container port 3000. The app inside the container only knows about port 3000.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-docker-5',
+    courseId: 'course-docker',
+    order: 4,
+    title: 'Registries, Security & Production Readiness',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Image Registries
+
+A **registry** is a server that stores and distributes Docker images. You push images to share them; your CI/CD system or Kubernetes cluster pulls them to deploy.
+
+| Registry | Provider | Notes |
+|---|---|---|
+| Docker Hub | Docker | Default. Public images free; private images limited |
+| Amazon ECR | AWS | Native integration with ECS/EKS; lifecycle policies |
+| Azure Container Registry | Microsoft | Integrates with AKS, Azure Pipelines |
+| Google Artifact Registry | Google | Successor to GCR, also stores npm/Maven |
+| GitHub Container Registry | GitHub | Free for public repos; tight Actions integration |
+
+**Image naming:** \`registry/organisation/image:tag\`
+- \`nginx:latest\` — Docker Hub shorthand for \`docker.io/library/nginx:latest\`
+- \`ghcr.io/myorg/my-app:v1.2.0\` — GitHub Container Registry`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'CI/CD image pipeline: build → push → deploy',
+          nodes: [
+            { id: 'dev', position: { x: 0, y: 80 }, label: 'Developer\ngit push', type: 'input' },
+            { id: 'ci', position: { x: 180, y: 80 }, label: 'CI Pipeline\ndocker build', type: 'default' },
+            { id: 'scan', position: { x: 360, y: 80 }, label: 'Image Scan\n(Trivy/Snyk)', type: 'default' },
+            { id: 'registry', position: { x: 540, y: 80 }, label: 'Container Registry\ndocker push', type: 'default' },
+            { id: 'staging', position: { x: 720, y: 20 }, label: 'Staging\ndocker pull', type: 'output' },
+            { id: 'prod', position: { x: 720, y: 140 }, label: 'Production\n(K8s pull)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'dev', target: 'ci' },
+            { id: 'e2', source: 'ci', target: 'scan', label: 'on tag' },
+            { id: 'e3', source: 'scan', target: 'registry', label: 'if no CVEs' },
+            { id: 'e4', source: 'registry', target: 'staging' },
+            { id: 'e5', source: 'registry', target: 'prod', label: 'after staging OK' },
+          ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'bash',
+          caption: 'Push an image to a registry',
+          code: `# Tag your local image for a registry
+docker tag my-app:latest ghcr.io/myorg/my-app:v1.2.0
+
+# Authenticate (GitHub example — use a Personal Access Token)
+echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
+
+# Push
+docker push ghcr.io/myorg/my-app:v1.2.0
+
+# Pull (from CI/CD or production server)
+docker pull ghcr.io/myorg/my-app:v1.2.0`,
+        },
+        {
+          type: 'text',
+          content: `## Production Security Checklist
+
+**Don't run as root.** If an attacker breaks out of the app, they gain root on the host.
+
+\`\`\`dockerfile
+# Create a non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+\`\`\`
+
+**Pin versions.** \`FROM node:20-alpine\` is safer than \`FROM node:latest\` which can break silently.
+
+**Use minimal base images:**
+- \`alpine\` variants are 5–10 MB (vs ~200 MB for full Debian)
+- \`distroless\` images (Google) contain only the runtime — no shell, no package manager
+
+**Scan images for CVEs:**
+\`\`\`bash
+# Trivy — fast, open-source scanner
+trivy image my-app:v1.2.0
+
+# Docker Scout (built-in)
+docker scout cves my-app:v1.2.0
+\`\`\`
+
+**Never store secrets in images.** No ENV with passwords, no COPY of .env files. Use:
+- Docker secrets (Swarm / Compose)
+- Kubernetes secrets (mounted as files or env)
+- Cloud provider secrets managers (AWS SSM, Azure Key Vault)`,
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'Never use :latest in production',
+          content: '`FROM node:latest` or pulling `my-app:latest` in production is a footgun. The "latest" tag is mutable — it changes when a new image is pushed. You lose reproducibility and can break deployments silently. Always tag with a specific version (`v1.2.0` or a git SHA) and pin your base images too.',
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'docker5-q1',
+              question: 'Why should you never store secrets (passwords, API keys) in a Docker image?',
+              options: [
+                'Docker images can only store text, not binary secrets',
+                'Anyone who pulls the image can extract the secrets by running `docker history` or inspecting layers — even if the secret was deleted in a later layer',
+                'Secrets slow down the build process',
+                'Docker does not support ENV variables with secrets',
+              ],
+              correctIndex: 1,
+              explanation: 'Docker image layers are immutable and stackable. Even if you `RUN rm /app/.env` in a later layer, the .env file still exists in the earlier layer and can be extracted with `docker history --no-trunc` or by running the image at that layer. Always pass secrets at runtime via orchestrator secrets management.',
+            },
+            {
+              id: 'docker5-q2',
+              question: 'What is the main benefit of a multi-stage Dockerfile build?',
+              options: [
+                'It allows containers to run multiple processes at once',
+                'It produces a small final image: build tools and source code stay in the builder stage and are not included in the runtime image',
+                'It speeds up the container startup time at runtime',
+                'It lets you run tests inside the Dockerfile',
+              ],
+              correctIndex: 1,
+              explanation: 'The builder stage has compilers, test frameworks, dev dependencies — all of which you do not want in production. The final stage uses a minimal base image and only copies the compiled artifacts from the builder via `COPY --from=builder`. The result can be 10× smaller, with fewer attack surface packages.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // ── React Performance Optimization ────────────────────────────────────────
   {
     id: 'lesson-rperf-1',
@@ -16033,7 +16278,7 @@ export function getMockCourseProgress(): Array<{ course: Course; completedCount:
 export const MOCK_TAXONOMIES = [
   { l1: 'Security', l2: ['Authentication', 'Authorization', 'Network', 'Cryptography'] },
   { l1: 'Web Development', l2: ['Frontend', 'Backend', 'APIs', 'GraphQL'] },
-  { l1: 'Cloud', l2: ['Azure', 'AWS', 'Kubernetes', 'CI/CD'] },
+  { l1: 'Cloud', l2: ['Azure', 'AWS', 'Kubernetes', 'CI/CD', 'Docker'] },
   { l1: 'Databases', l2: ['SQL', 'NoSQL', 'Data Modeling', 'Performance'] },
   { l1: 'Mobile', l2: ['iOS', 'Android', 'React Native', 'Flutter'] },
   { l1: 'AI & ML', l2: ['Machine Learning', 'LLMs', 'Computer Vision', 'Data Science'] },

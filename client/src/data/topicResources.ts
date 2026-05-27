@@ -86,6 +86,15 @@ const RESOURCES: Record<string, TopicResource[]> = {
     { title: 'Azure Weekly Newsletter', type: 'blog', description: 'Curated weekly digest of Azure announcements, tutorials, and community posts.', url: 'https://azureweekly.info' },
   ],
 
+  // ── Cloud / Docker ───────────────────────────────────────────────────────
+  'Cloud::Docker': [
+    { title: 'Docker Deep Dive', author: 'Nigel Poulton', type: 'book', description: 'The most concise, accurate Docker book available. Updated regularly. Covers images, containers, Compose, and Swarm.', url: 'https://www.amazon.com/Docker-Deep-Dive-Nigel-Poulton/dp/1521822808' },
+    { title: 'Play with Docker', type: 'tool', description: 'Free in-browser Docker environment from Docker. Run containers, practice commands, and try labs without installing anything.', url: 'https://labs.play-with-docker.com' },
+    { title: 'Docker Official Docs', type: 'docs', description: 'The official Docker documentation — the reference chapters on Dockerfiles, networking, and volumes are excellent.', url: 'https://docs.docker.com' },
+    { title: 'Dive — Image Layer Explorer', type: 'tool', description: 'CLI tool for exploring a Docker image layer by layer. Shows exactly what each layer adds and identifies wasted space.', url: 'https://github.com/wagoodman/dive' },
+    { title: 'Trivy — Container Security Scanner', type: 'tool', description: 'Open-source vulnerability scanner for container images. Finds CVEs in OS packages and language dependencies.', url: 'https://github.com/aquasecurity/trivy' },
+  ],
+
   // ── Cloud / Kubernetes ───────────────────────────────────────────────────
   'Cloud::Kubernetes': [
     { title: 'Kubernetes in Action', author: 'Marko Lukša', type: 'book', description: 'The most thorough and accessible Kubernetes book. Covers pods, controllers, networking, and storage with great examples.', url: 'https://www.manning.com/books/kubernetes-in-action' },
