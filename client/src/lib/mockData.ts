@@ -1463,6 +1463,42 @@ app.delete('/courses/:id',
           content: "A scope like `Files.ReadWrite` means the *app* is authorized to read and write files — but your Resource Server still needs to check whether the *user* has permission on the specific resource. If Alice requests `Files.ReadWrite` and Bob's file, your server should check Alice has access to Bob's file regardless of the scope. Scopes control app capabilities; your business logic controls resource permissions.",
         },
         {
+          type: 'codeBlock',
+          language: 'typescript',
+          caption: 'Validating scopes in an Express middleware',
+          code: `// The JWT payload from Azure AD / Auth0 typically has a "scp" claim
+// containing space-separated scope names: "courses.read lessons.write"
+
+function requireScope(...required: string[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    // req.user is populated by JWT middleware
+    const scopes: string[] = (req.user?.scp ?? '').split(' ').filter(Boolean);
+
+    const hasAll = required.every(s => scopes.includes(s));
+    if (!hasAll) {
+      return res.status(403).json({
+        error: 'insufficient_scope',
+        message: \`Required scopes: \${required.join(', ')}\`,
+      });
+    }
+    next();
+  };
+}
+
+// Usage
+router.get('/courses',
+  requireAuth,
+  requireScope('courses.read'),
+  async (req, res) => { /* ... */ }
+);
+
+router.post('/courses/:id/publish',
+  requireAuth,
+  requireScope('courses.write'),   // more permissive scope required
+  async (req, res) => { /* ... */ }
+);`,
+        },
+        {
           type: 'quiz',
           title: 'Scopes & Consent Quiz',
           passingScore: 67,
@@ -2371,6 +2407,30 @@ Always send tokens in the \`Authorization: Bearer <token>\` header — never as 
               ],
               correctIndex: 1,
               explanation: "Signature validity only proves the token was issued by a trusted auth server. Without validating aud (audience), a token for another service in the same tenant could be replayed against yours. Without validating iss (issuer), a token from a different tenant's auth server (with a stolen key) could pass. Always validate both.",
+            },
+            {
+              id: 'sec-q4',
+              question: 'An attacker sends your OAuth2 login page a crafted link that, after login, redirects to their server instead of yours. What attack is this?',
+              options: [
+                'CSRF — the attacker forces the user\'s browser to make a cross-site request',
+                'Open redirect / Redirect URI hijacking — the callback goes to an attacker-controlled URI',
+                'Token theft via XSS — JavaScript steals the token from localStorage',
+                'Confused deputy — the attacker uses your token to call another API',
+              ],
+              correctIndex: 1,
+              explanation: 'Open redirect / redirect URI hijacking. The authorization server must strictly validate redirect_uri against a registered allowlist (exact match, no wildcards). If the attacker can control the redirect, they receive the authorization code and can exchange it for tokens. This is why OAuth2 requires pre-registering exact redirect URIs.',
+            },
+            {
+              id: 'sec-q5',
+              question: 'Why is storing access tokens in localStorage considered risky in browser SPAs?',
+              options: [
+                'localStorage is cleared on tab close, losing the session',
+                'localStorage is accessible to any JavaScript on the page, including XSS payloads and third-party scripts',
+                'localStorage has a 5MB size limit that tokens can exceed',
+                'localStorage is synchronous and blocks the main thread',
+              ],
+              correctIndex: 1,
+              explanation: 'Any JavaScript running on your page — including XSS payloads from injected content or compromised third-party scripts — can read localStorage. A single XSS vulnerability means token theft. The safer alternative: keep tokens in memory (for access tokens) and use httpOnly cookies (which JS cannot read) for refresh tokens.',
             },
           ],
         },
