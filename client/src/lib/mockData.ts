@@ -7143,6 +7143,24 @@ const resolvers = {
 \`\`\``,
         },
         {
+          type: 'flowDiagram',
+          title: 'GraphQL subscription: client ↔ server WebSocket lifecycle',
+          nodes: [
+            { id: 'client', position: { x: 0, y: 120 }, label: 'Client\nApollo / urql', type: 'input' },
+            { id: 'ws', position: { x: 200, y: 120 }, label: 'WebSocket\nConnection', type: 'default' },
+            { id: 'server', position: { x: 400, y: 120 }, label: 'Apollo Server\nsubscription resolver', type: 'default' },
+            { id: 'pubsub', position: { x: 600, y: 120 }, label: 'PubSub / Redis\nevent bus', type: 'output' },
+            { id: 'mutator', position: { x: 600, y: 20 }, label: 'Another client\nruns mutation', type: 'input' },
+          ],
+          edges: [
+            { id: 'e1', source: 'client', target: 'ws', label: 'subscribe()', animated: true },
+            { id: 'e2', source: 'ws', target: 'server', label: 'connection_init' },
+            { id: 'e3', source: 'server', target: 'pubsub', label: 'asyncIterator' },
+            { id: 'e4', source: 'mutator', target: 'pubsub', label: 'publish(event)' },
+            { id: 'e5', source: 'pubsub', target: 'client', label: 'push data', animated: true },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'warning',
           title: 'Subscriptions vs polling — choose carefully',
@@ -8533,6 +8551,33 @@ Linux's core philosophy: files, directories, devices, and even processes are rep
 | \`/tmp\` | Temporary files, cleared on reboot |
 | \`/usr/bin\` | User-installed executables |
 | \`/proc\` | Virtual filesystem — running process info |`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Linux Filesystem Hierarchy (FHS key directories)',
+          nodes: [
+            { id: 'root', position: { x: 260, y: 280 }, label: '/ (root)', type: 'input' },
+            { id: 'etc', position: { x: 0, y: 180 }, label: '/etc\nconfig files', type: 'default' },
+            { id: 'home', position: { x: 120, y: 180 }, label: '/home\nuser dirs', type: 'default' },
+            { id: 'var', position: { x: 240, y: 180 }, label: '/var\nlogs & spool', type: 'default' },
+            { id: 'usr', position: { x: 360, y: 180 }, label: '/usr\nuser programs', type: 'default' },
+            { id: 'tmp', position: { x: 480, y: 180 }, label: '/tmp\ntemp files', type: 'default' },
+            { id: 'alice', position: { x: 60, y: 80 }, label: '/home/alice', type: 'output' },
+            { id: 'log', position: { x: 200, y: 80 }, label: '/var/log', type: 'output' },
+            { id: 'bin', position: { x: 320, y: 80 }, label: '/usr/bin\nexecutables', type: 'output' },
+            { id: 'lib', position: { x: 440, y: 80 }, label: '/usr/lib\nlibraries', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'root', target: 'etc' },
+            { id: 'e2', source: 'root', target: 'home' },
+            { id: 'e3', source: 'root', target: 'var' },
+            { id: 'e4', source: 'root', target: 'usr' },
+            { id: 'e5', source: 'root', target: 'tmp' },
+            { id: 'e6', source: 'home', target: 'alice' },
+            { id: 'e7', source: 'var', target: 'log' },
+            { id: 'e8', source: 'usr', target: 'bin' },
+            { id: 'e9', source: 'usr', target: 'lib' },
+          ],
         },
         {
           type: 'text',
@@ -11524,6 +11569,27 @@ GoF (Gang of Four) patterns fall into three categories:
 | **Behavioral** | Communication between objects | Observer, Strategy, Command |`,
         },
         {
+          type: 'flowDiagram',
+          title: 'GoF pattern categories and relationships',
+          nodes: [
+            { id: 'gof', position: { x: 220, y: 240 }, label: 'GoF Design Patterns\n(23 classic patterns)', type: 'input' },
+            { id: 'create', position: { x: 60, y: 120 }, label: 'Creational\nControl construction', type: 'default' },
+            { id: 'struct', position: { x: 220, y: 120 }, label: 'Structural\nCompose objects', type: 'default' },
+            { id: 'behave', position: { x: 380, y: 120 }, label: 'Behavioral\nCoordinate behavior', type: 'default' },
+            { id: 'cex', position: { x: 60, y: 20 }, label: 'Factory · Builder\nSingleton · Prototype', type: 'output' },
+            { id: 'sex', position: { x: 220, y: 20 }, label: 'Adapter · Decorator\nFacade · Proxy', type: 'output' },
+            { id: 'bex', position: { x: 380, y: 20 }, label: 'Observer · Strategy\nCommand · Iterator', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'gof', target: 'create' },
+            { id: 'e2', source: 'gof', target: 'struct' },
+            { id: 'e3', source: 'gof', target: 'behave' },
+            { id: 'e4', source: 'create', target: 'cex' },
+            { id: 'e5', source: 'struct', target: 'sex' },
+            { id: 'e6', source: 'behave', target: 'bex' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'tip',
           title: 'Patterns are a vocabulary, not a rulebook',
@@ -11677,6 +11743,21 @@ class LoggingCache implements Cache {
 // Stack decorators — logging wraps the Redis adapter
 const cache: Cache = new LoggingCache(new RedisCacheAdapter(redisClient));
 \`\`\``,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Decorator chain: caller → LoggingCache → RedisCacheAdapter → Redis',
+          nodes: [
+            { id: 'caller', position: { x: 0, y: 80 }, label: 'Caller\ncache.get(key)', type: 'input' },
+            { id: 'log', position: { x: 200, y: 80 }, label: 'LoggingCache\n(Decorator)\nlogs hit/miss', type: 'default' },
+            { id: 'adapter', position: { x: 400, y: 80 }, label: 'RedisCacheAdapter\n(Adapter)\nbridges interface', type: 'default' },
+            { id: 'redis', position: { x: 600, y: 80 }, label: 'RedisClient\n(Third-party)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'caller', target: 'log', label: 'Cache interface' },
+            { id: 'e2', source: 'log', target: 'adapter', label: 'delegates' },
+            { id: 'e3', source: 'adapter', target: 'redis', label: 'getex()' },
+          ],
         },
         {
           type: 'callout',
@@ -12043,6 +12124,29 @@ const repo = new LoggingUserRepository(
           content: '## The AWS Cloud\n\nAmazon Web Services (AWS) is a collection of on-demand cloud services — compute, storage, networking, databases, AI — available over the internet. You pay only for what you use, with no upfront hardware investment.\n\n### Regions & Availability Zones\n\nAWS infrastructure is organized into **Regions** (geographic areas like `us-east-1`, `eu-west-1`) and **Availability Zones** (isolated data centers within a region). Deploying across multiple AZs provides high availability — if one AZ fails, your app keeps running.\n\n### Shared Responsibility Model\n\nAWS manages security **of** the cloud (hardware, facilities, hypervisor). You are responsible for security **in** the cloud — your OS patches, firewall rules, IAM policies, and data encryption.',
         },
         {
+          type: 'flowDiagram',
+          title: 'AWS Region → Availability Zones → resources',
+          nodes: [
+            { id: 'region', position: { x: 200, y: 240 }, label: 'AWS Region\nus-east-1', type: 'input' },
+            { id: 'az1', position: { x: 60, y: 140 }, label: 'AZ — us-east-1a\nData centre 1', type: 'default' },
+            { id: 'az2', position: { x: 200, y: 140 }, label: 'AZ — us-east-1b\nData centre 2', type: 'default' },
+            { id: 'az3', position: { x: 340, y: 140 }, label: 'AZ — us-east-1c\nData centre 3', type: 'default' },
+            { id: 'ec2a', position: { x: 0, y: 40 }, label: 'EC2 instance\n(App server)', type: 'output' },
+            { id: 'rdsa', position: { x: 120, y: 40 }, label: 'RDS\n(primary)', type: 'output' },
+            { id: 'ec2b', position: { x: 200, y: 40 }, label: 'EC2 instance\n(standby)', type: 'output' },
+            { id: 'rdsb', position: { x: 320, y: 40 }, label: 'RDS\n(read replica)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'region', target: 'az1' },
+            { id: 'e2', source: 'region', target: 'az2' },
+            { id: 'e3', source: 'region', target: 'az3' },
+            { id: 'e4', source: 'az1', target: 'ec2a' },
+            { id: 'e5', source: 'az1', target: 'rdsa' },
+            { id: 'e6', source: 'az2', target: 'ec2b' },
+            { id: 'e7', source: 'az3', target: 'rdsb' },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'Core services every AWS developer needs',
@@ -12093,6 +12197,23 @@ const repo = new LoggingUserRepository(
         {
           type: 'text',
           content: '## IAM — Identity & Access Management\n\nIAM controls **who** can do **what** in your AWS account. The three building blocks:\n\n- **Users** — individual people or service accounts (avoid long-lived credentials)\n- **Groups** — collections of users that share the same policies\n- **Roles** — temporary identities assumed by services, Lambda functions, or EC2 instances\n\nPolicies are JSON documents that define allowed/denied actions on specific resources:\n\n```json\n{\n  "Version": "2012-10-17",\n  "Statement": [\n    {\n      "Effect": "Allow",\n      "Action": ["s3:GetObject", "s3:PutObject"],\n      "Resource": "arn:aws:s3:::my-bucket/*"\n    }\n  ]\n}\n```\n\n**Principle of least privilege**: grant only the permissions actually needed. Use IAM roles (not access keys) for EC2 and Lambda — roles provide temporary, auto-rotating credentials.',
+        },
+        {
+          type: 'flowDiagram',
+          title: 'IAM access control: user → role → policy → resource',
+          nodes: [
+            { id: 'user', position: { x: 0, y: 80 }, label: 'IAM User / Service', type: 'input' },
+            { id: 'role', position: { x: 200, y: 80 }, label: 'IAM Role\n(assumes)', type: 'default' },
+            { id: 'policy', position: { x: 380, y: 80 }, label: 'IAM Policy\n(Allow s3:GetObject)', type: 'default' },
+            { id: 'resource', position: { x: 560, y: 80 }, label: 'S3 Bucket\n(resource)', type: 'output' },
+            { id: 'deny', position: { x: 560, y: 200 }, label: 'DynamoDB Table\n(Denied — no policy)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'user', target: 'role', label: 'AssumeRole' },
+            { id: 'e2', source: 'role', target: 'policy', label: 'attached' },
+            { id: 'e3', source: 'policy', target: 'resource', label: 'Allow' },
+            { id: 'e4', source: 'policy', target: 'deny', label: 'Implicit Deny' },
+          ],
         },
         {
           type: 'callout',
