@@ -1173,6 +1173,22 @@ Each part is base64url-encoded. The **header** declares the algorithm. The **pay
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'OAuth2 quick recap: roles at a glance',
+          nodes: [
+            { id: 'ro', position: { x: 0, y: 100 }, label: 'Resource Owner\n(User)', type: 'input' },
+            { id: 'client', position: { x: 220, y: 40 }, label: 'Client\n(your app)', type: 'default' },
+            { id: 'as', position: { x: 440, y: 40 }, label: 'Authorization\nServer', type: 'default' },
+            { id: 'rs', position: { x: 440, y: 160 }, label: 'Resource Server\n(API)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'ro', target: 'client', label: 'grants consent' },
+            { id: 'e2', source: 'client', target: 'as', label: 'requests token', animated: true },
+            { id: 'e3', source: 'as', target: 'client', label: 'issues access token' },
+            { id: 'e4', source: 'client', target: 'rs', label: 'calls API\nBearer token', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: `## Mid-course check
 
@@ -2456,6 +2472,29 @@ Public key pairs are rotated periodically (Azure AD rotates every 6 weeks). Your
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'JWT server-side validation checklist',
+          nodes: [
+            { id: 'token', position: { x: 0, y: 120 }, label: 'Incoming JWT\n(Authorization header)', type: 'input' },
+            { id: 'alg', position: { x: 200, y: 120 }, label: 'Check alg header\nexpect RS256 or ES256\nnever "none"', type: 'decision' },
+            { id: 'sig', position: { x: 400, y: 120 }, label: 'Verify signature\nwith public key / JWKS', type: 'decision' },
+            { id: 'exp', position: { x: 600, y: 120 }, label: 'Check exp claim\nnot expired', type: 'decision' },
+            { id: 'iss', position: { x: 800, y: 120 }, label: 'Check iss + aud\nmatch expected values', type: 'decision' },
+            { id: 'ok', position: { x: 1000, y: 60 }, label: 'Token valid ✓\ncontinue request', type: 'output' },
+            { id: 'reject', position: { x: 1000, y: 180 }, label: '401 Unauthorized', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'token', target: 'alg' },
+            { id: 'e2', source: 'alg', target: 'sig', label: 'pass' },
+            { id: 'e3', source: 'sig', target: 'exp', label: 'valid' },
+            { id: 'e4', source: 'exp', target: 'iss', label: 'not expired' },
+            { id: 'e5', source: 'iss', target: 'ok', label: 'match', animated: true },
+            { id: 'e6', source: 'alg', target: 'reject', label: 'fail' },
+            { id: 'e7', source: 'sig', target: 'reject', label: 'invalid' },
+            { id: 'e8', source: 'exp', target: 'reject', label: 'expired' },
+          ],
+        },
+        {
           type: 'text',
           content: `## The pitfalls that burn teams in production
 
@@ -2735,6 +2774,25 @@ The browser walks the chain until it hits a trusted root. If any link is broken 
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'TLS certificate chain of trust',
+          nodes: [
+            { id: 'root', position: { x: 300, y: 0 }, label: 'Root CA\n(offline, in OS trust store)', type: 'input' },
+            { id: 'inter', position: { x: 300, y: 120 }, label: 'Intermediate CA\n(online signing CA)', type: 'default' },
+            { id: 'leaf', position: { x: 300, y: 240 }, label: 'Your site certificate\nexample.com', type: 'default' },
+            { id: 'browser', position: { x: 600, y: 120 }, label: 'Browser\nwalks chain\nuntil trusted root', type: 'decision' },
+            { id: 'valid', position: { x: 820, y: 60 }, label: '🔒 Valid\ngreen padlock', type: 'output' },
+            { id: 'invalid', position: { x: 820, y: 180 }, label: '⚠️ Warning\ncert not trusted', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'root', target: 'inter', label: 'signs' },
+            { id: 'e2', source: 'inter', target: 'leaf', label: 'signs' },
+            { id: 'e3', source: 'leaf', target: 'browser', label: 'served in TLS' },
+            { id: 'e4', source: 'browser', target: 'valid', label: 'root in trust store' },
+            { id: 'e5', source: 'browser', target: 'invalid', label: 'root not trusted\nor self-signed' },
+          ],
+        },
         {
           type: 'text',
           content: `## Certificate Authorities (CAs) — the trust anchors of the web
@@ -4075,6 +4133,29 @@ Your API verifies tokens against Azure's JWKS endpoint:
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Azure event-driven architecture: triggers → function → outputs',
+          nodes: [
+            { id: 'http', position: { x: 0, y: 40 }, label: 'HTTP Request\n(API trigger)', type: 'input' },
+            { id: 'timer', position: { x: 0, y: 120 }, label: 'Timer / Cron\n(schedule trigger)', type: 'input' },
+            { id: 'blob', position: { x: 0, y: 200 }, label: 'Blob Storage\n(file upload trigger)', type: 'input' },
+            { id: 'queue', position: { x: 0, y: 280 }, label: 'Service Bus\n(message trigger)', type: 'input' },
+            { id: 'fn', position: { x: 260, y: 160 }, label: 'Azure Function\n(stateless, auto-scale)', type: 'decision' },
+            { id: 'cosmos', position: { x: 520, y: 80 }, label: 'CosmosDB\noutput binding', type: 'output' },
+            { id: 'sb', position: { x: 520, y: 180 }, label: 'Service Bus\noutput binding', type: 'output' },
+            { id: 'resp', position: { x: 520, y: 280 }, label: 'HTTP Response\n/ SignalR push', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'http', target: 'fn' },
+            { id: 'e2', source: 'timer', target: 'fn' },
+            { id: 'e3', source: 'blob', target: 'fn' },
+            { id: 'e4', source: 'queue', target: 'fn' },
+            { id: 'e5', source: 'fn', target: 'cosmos', animated: true },
+            { id: 'e6', source: 'fn', target: 'sb', animated: true },
+            { id: 'e7', source: 'fn', target: 'resp', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: `## Azure Functions: serverless compute
 
@@ -5185,6 +5266,27 @@ squares = [x**2 for x in range(10) if x % 2 == 0]
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Python module system: import resolution order',
+          nodes: [
+            { id: 'stmt', position: { x: 0, y: 100 }, label: 'import utils', type: 'input' },
+            { id: 'cache', position: { x: 200, y: 60 }, label: 'sys.modules\n(already imported?)', type: 'decision' },
+            { id: 'hit', position: { x: 420, y: 40 }, label: 'Return cached\nmodule object', type: 'output' },
+            { id: 'stdlib', position: { x: 420, y: 120 }, label: 'Check stdlib\n(os, json, pathlib…)', type: 'decision' },
+            { id: 'site', position: { x: 620, y: 100 }, label: 'Check site-packages\n(pip installed)', type: 'decision' },
+            { id: 'local', position: { x: 820, y: 80 }, label: 'Check local path\n(./utils.py)', type: 'output' },
+            { id: 'err', position: { x: 820, y: 180 }, label: 'ModuleNotFoundError', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'stmt', target: 'cache' },
+            { id: 'e2', source: 'cache', target: 'hit', label: 'cached' },
+            { id: 'e3', source: 'cache', target: 'stdlib', label: 'not cached' },
+            { id: 'e4', source: 'stdlib', target: 'site', label: 'not in stdlib' },
+            { id: 'e5', source: 'site', target: 'local', label: 'not in site-packages' },
+            { id: 'e6', source: 'local', target: 'err', label: 'not found' },
+          ],
+        },
+        {
           type: 'text',
           content: `## Defining functions
 
@@ -5485,6 +5587,25 @@ for a in animals:
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Python exception hierarchy (most common built-ins)',
+          nodes: [
+            { id: 'base', position: { x: 300, y: 0 }, label: 'BaseException', type: 'input' },
+            { id: 'exc', position: { x: 300, y: 100 }, label: 'Exception\n(catch this, not BaseException)', type: 'default' },
+            { id: 'val', position: { x: 80, y: 220 }, label: 'ValueError\nTypeError\nAttributeError', type: 'output' },
+            { id: 'io', position: { x: 300, y: 220 }, label: 'OSError\nFileNotFoundError\nConnectionError', type: 'output' },
+            { id: 'runtime', position: { x: 520, y: 220 }, label: 'RuntimeError\nIndexError\nKeyError', type: 'output' },
+            { id: 'sys', position: { x: 600, y: 100 }, label: 'SystemExit\nKeyboardInterrupt\n(don\'t catch!)', type: 'default' },
+          ],
+          edges: [
+            { id: 'e1', source: 'base', target: 'exc' },
+            { id: 'e2', source: 'base', target: 'sys' },
+            { id: 'e3', source: 'exc', target: 'val' },
+            { id: 'e4', source: 'exc', target: 'io' },
+            { id: 'e5', source: 'exc', target: 'runtime' },
+          ],
+        },
         {
           type: 'text',
           content: `## Exception handling
@@ -7566,6 +7687,25 @@ function patchCourse(id: string, input: UpdateCourseInput): Promise<Course> { ..
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'TypeScript utility types: transforming an existing type',
+          nodes: [
+            { id: 'base', position: { x: 0, y: 120 }, label: 'User {\n  id, name,\n  email, role\n}', type: 'input' },
+            { id: 'partial', position: { x: 240, y: 40 }, label: 'Partial<User>\nall fields optional\n(PATCH payloads)', type: 'output' },
+            { id: 'required', position: { x: 240, y: 120 }, label: 'Required<User>\nall fields required', type: 'output' },
+            { id: 'pick', position: { x: 240, y: 200 }, label: 'Pick<User, "id"|"name">\nsubset of fields', type: 'output' },
+            { id: 'omit', position: { x: 480, y: 40 }, label: 'Omit<User, "role">\nexclude fields', type: 'output' },
+            { id: 'readonly', position: { x: 480, y: 140 }, label: 'Readonly<User>\nimmutable object', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'base', target: 'partial', animated: true },
+            { id: 'e2', source: 'base', target: 'required' },
+            { id: 'e3', source: 'base', target: 'pick' },
+            { id: 'e4', source: 'base', target: 'omit', animated: true },
+            { id: 'e5', source: 'base', target: 'readonly' },
+          ],
+        },
         {
           type: 'text',
           content: `## Built-in utility types
@@ -10592,6 +10732,23 @@ print(pca.explained_variance_ratio_)
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Bias-variance trade-off: underfitting → sweet spot → overfitting',
+          nodes: [
+            { id: 'simple', position: { x: 0, y: 100 }, label: 'Too simple\nHigh bias\nUnderfitting\n(fails on train set)', type: 'input' },
+            { id: 'sweet', position: { x: 320, y: 100 }, label: 'Just right\nLow bias + variance\nGeneralises well', type: 'output' },
+            { id: 'complex', position: { x: 640, y: 100 }, label: 'Too complex\nHigh variance\nOverfitting\n(fails on test set)', type: 'input' },
+            { id: 'fix1', position: { x: 0, y: 240 }, label: 'Fix: more features\nbigger model\nlonger training', type: 'default' },
+            { id: 'fix2', position: { x: 640, y: 240 }, label: 'Fix: regularization\ndropout\nmore data', type: 'default' },
+          ],
+          edges: [
+            { id: 'e1', source: 'simple', target: 'sweet', label: 'increase\ncomplexity' },
+            { id: 'e2', source: 'complex', target: 'sweet', label: 'reduce\ncomplexity' },
+            { id: 'e3', source: 'simple', target: 'fix1' },
+            { id: 'e4', source: 'complex', target: 'fix2' },
+          ],
+        },
+        {
           type: 'text',
           content: `## Overfitting vs underfitting
 
@@ -11095,6 +11252,27 @@ app.use(errorHandler);
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Backend request lifecycle: auth → handler → DB → response',
+          nodes: [
+            { id: 'req', position: { x: 0, y: 100 }, label: 'HTTP Request', type: 'input' },
+            { id: 'auth', position: { x: 180, y: 100 }, label: 'Auth Middleware\n(JWT verify)', type: 'decision' },
+            { id: 'reject', position: { x: 180, y: 220 }, label: '401 Unauthorized', type: 'output' },
+            { id: 'handler', position: { x: 380, y: 100 }, label: 'Route Handler\n(business logic)', type: 'default' },
+            { id: 'pool', position: { x: 580, y: 60 }, label: 'Connection Pool\n(pg / prisma)', type: 'default' },
+            { id: 'db', position: { x: 780, y: 60 }, label: 'PostgreSQL\n/ CosmosDB', type: 'default' },
+            { id: 'resp', position: { x: 580, y: 160 }, label: 'JSON Response\n+ status code', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'req', target: 'auth' },
+            { id: 'e2', source: 'auth', target: 'reject', label: 'invalid token' },
+            { id: 'e3', source: 'auth', target: 'handler', label: 'valid' },
+            { id: 'e4', source: 'handler', target: 'pool', animated: true },
+            { id: 'e5', source: 'pool', target: 'db' },
+            { id: 'e6', source: 'handler', target: 'resp', animated: true },
+          ],
+        },
         {
           type: 'text',
           content: `## Database access patterns
@@ -12149,6 +12327,23 @@ Scan the QR code with Expo Go on your phone — your app runs instantly. No Xcod
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Expo Router: file in app/ directory becomes a screen',
+          nodes: [
+            { id: 'layout', position: { x: 0, y: 140 }, label: 'app/_layout.tsx\n(root layout / tabs)', type: 'input' },
+            { id: 'index', position: { x: 260, y: 60 }, label: 'app/index.tsx\n→ route: "/"', type: 'output' },
+            { id: 'courses', position: { x: 260, y: 140 }, label: 'app/courses/\nindex.tsx\n→ "/courses"', type: 'output' },
+            { id: 'dynamic', position: { x: 260, y: 220 }, label: 'app/courses/[id].tsx\n→ "/courses/:id"', type: 'output' },
+            { id: 'profile', position: { x: 260, y: 300 }, label: 'app/profile.tsx\n→ "/profile"', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'layout', target: 'index', animated: true },
+            { id: 'e2', source: 'layout', target: 'courses', animated: true },
+            { id: 'e3', source: 'layout', target: 'dynamic', animated: true },
+            { id: 'e4', source: 'layout', target: 'profile', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: `## File-based routing with Expo Router
 
@@ -12251,6 +12446,23 @@ export default function TabLayout() {
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'React Native thread model: JS → Bridge → Native',
+          nodes: [
+            { id: 'js', position: { x: 0, y: 100 }, label: 'JS Thread\n(React logic\nbusiness code)', type: 'input' },
+            { id: 'bridge', position: { x: 240, y: 100 }, label: 'JS Bridge\n(async JSON\nmessages)', type: 'default' },
+            { id: 'ui', position: { x: 480, y: 60 }, label: 'Main / UI Thread\n(native rendering)', type: 'output' },
+            { id: 'native', position: { x: 480, y: 160 }, label: 'Native Modules\n(camera, GPS,\nBluetooth)', type: 'output' },
+            { id: 'newarch', position: { x: 240, y: 240 }, label: 'New Architecture\nJSI — synchronous\ndirect C++ calls', type: 'default' },
+          ],
+          edges: [
+            { id: 'e1', source: 'js', target: 'bridge', animated: true },
+            { id: 'e2', source: 'bridge', target: 'ui' },
+            { id: 'e3', source: 'bridge', target: 'native' },
+            { id: 'e4', source: 'newarch', target: 'ui', label: 'JSI replaces bridge' },
+          ],
+        },
         {
           type: 'text',
           content: `## FlatList — performant scrollable lists
@@ -14069,6 +14281,31 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'ML workflow: data split → train → evaluate → iterate',
+          nodes: [
+            { id: 'data', position: { x: 0, y: 100 }, label: 'Labelled Dataset', type: 'input' },
+            { id: 'split', position: { x: 200, y: 100 }, label: 'Train / Test Split\n(80% / 20%)', type: 'decision' },
+            { id: 'train', position: { x: 400, y: 40 }, label: 'Training Set\nfit(X_train, y_train)', type: 'default' },
+            { id: 'test', position: { x: 400, y: 160 }, label: 'Test Set\nheld out — never seen', type: 'default' },
+            { id: 'model', position: { x: 620, y: 40 }, label: 'Trained Model\n(weights learned)', type: 'default' },
+            { id: 'eval', position: { x: 820, y: 100 }, label: 'Evaluate\naccuracy / F1\nconfusion matrix', type: 'decision' },
+            { id: 'deploy', position: { x: 1020, y: 40 }, label: 'Deploy\n(good enough)', type: 'output' },
+            { id: 'tune', position: { x: 820, y: 220 }, label: 'Tune hyperparams\nor get more data', type: 'default' },
+          ],
+          edges: [
+            { id: 'e1', source: 'data', target: 'split' },
+            { id: 'e2', source: 'split', target: 'train' },
+            { id: 'e3', source: 'split', target: 'test' },
+            { id: 'e4', source: 'train', target: 'model', animated: true },
+            { id: 'e5', source: 'model', target: 'eval' },
+            { id: 'e6', source: 'test', target: 'eval' },
+            { id: 'e7', source: 'eval', target: 'deploy', label: 'metrics good' },
+            { id: 'e8', source: 'eval', target: 'tune', label: 'needs work' },
+            { id: 'e9', source: 'tune', target: 'train', label: 'retrain', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: '## The Machine Learning Mindset\n\nWe want to learn a function `f(X) = y` from historical examples — then use it to predict `y` for new `X`. The key discipline is that we never evaluate our model on the same data we trained it on.\n\n## Train/Test Split\n\n```python\nfrom sklearn.model_selection import train_test_split\n\nX = df[[\'age\', \'income\', \'tenure\']]\ny = df[\'churned\']\n\nX_train, X_test, y_train, y_test = train_test_split(\n    X, y, test_size=0.2, random_state=42\n)\n# 80% for training, 20% held out for evaluation\n```',
         },
@@ -14121,6 +14358,25 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Flutter: one codebase → multiple platforms',
+          nodes: [
+            { id: 'dart', position: { x: 260, y: 0 }, label: 'Dart codebase\n(one source of truth)', type: 'input' },
+            { id: 'engine', position: { x: 260, y: 120 }, label: 'Flutter Engine\n(Skia / Impeller rendering)', type: 'default' },
+            { id: 'ios', position: { x: 0, y: 260 }, label: 'iOS\n(native perf)', type: 'output' },
+            { id: 'android', position: { x: 160, y: 260 }, label: 'Android\n(native perf)', type: 'output' },
+            { id: 'web', position: { x: 320, y: 260 }, label: 'Web\n(HTML canvas)', type: 'output' },
+            { id: 'desktop', position: { x: 480, y: 260 }, label: 'Desktop\n(Win/Mac/Linux)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'dart', target: 'engine', animated: true },
+            { id: 'e2', source: 'engine', target: 'ios' },
+            { id: 'e3', source: 'engine', target: 'android' },
+            { id: 'e4', source: 'engine', target: 'web' },
+            { id: 'e5', source: 'engine', target: 'desktop' },
+          ],
+        },
+        {
           type: 'text',
           content: '## What is Flutter?\n\nFlutter is Google\'s UI toolkit for building natively compiled apps from a single Dart codebase. One codebase targets iOS, Android, web, and desktop — with pixel-perfect rendering on each platform.\n\n## Dart in a nutshell\n\nDart is a strongly typed, compiled language with syntax similar to Kotlin or Swift:\n\n```dart\n// Variables and null safety\nString name = \'Alice\';       // non-nullable\nString? nickname;            // nullable (can be null)\nint age = 30;\n\n// Arrow functions\nint add(int a, int b) => a + b;\n\n// Async/await\nFuture<String> fetchUser(int id) async {\n  final resp = await http.get(Uri.parse(\'/users/$id\'));\n  return jsonDecode(resp.body)[\'name\'];\n}\n```\n\nDart has **sound null safety** — if a type is non-nullable, the compiler guarantees it will never be null at runtime.',
         },
@@ -14169,6 +14425,23 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Flutter navigation: Navigator manages a route stack',
+          nodes: [
+            { id: 'home', position: { x: 0, y: 100 }, label: 'HomeScreen\n(stack bottom)', type: 'input' },
+            { id: 'list', position: { x: 220, y: 100 }, label: 'CourseListScreen\npush()', type: 'default' },
+            { id: 'detail', position: { x: 440, y: 100 }, label: 'CourseDetailScreen\npush()', type: 'default' },
+            { id: 'lesson', position: { x: 660, y: 100 }, label: 'LessonScreen\npush()', type: 'default' },
+            { id: 'pop', position: { x: 440, y: 240 }, label: 'pop() returns\nto previous screen', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'home', target: 'list', label: 'push' },
+            { id: 'e2', source: 'list', target: 'detail', label: 'push' },
+            { id: 'e3', source: 'detail', target: 'lesson', label: 'push' },
+            { id: 'e4', source: 'lesson', target: 'pop', label: 'pop()', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: '## Layout Widgets\n\nFlutter\'s layout system is Flexbox-inspired. The most-used widgets:\n\n```dart\n// Row — horizontal\nRow(\n  mainAxisAlignment: MainAxisAlignment.spaceBetween,\n  children: [Text(\'Left\'), Text(\'Right\')],\n)\n\n// Column — vertical\nColumn(\n  crossAxisAlignment: CrossAxisAlignment.start,\n  children: [\n    Text(\'Title\', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),\n    const SizedBox(height: 8),  // spacer\n    Text(\'Subtitle\', style: TextStyle(color: Colors.grey)),\n  ],\n)\n\n// Stack — overlapping\nStack(\n  children: [\n    Image.network(url),\n    Positioned(bottom: 8, left: 8, child: Text(\'Caption\')),\n  ],\n)\n```',
         },
@@ -14216,6 +14489,23 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Flutter platform channels: Dart ↔ native iOS/Android',
+          nodes: [
+            { id: 'dart', position: { x: 0, y: 100 }, label: 'Dart / Flutter\nchannel.invokeMethod()', type: 'input' },
+            { id: 'channel', position: { x: 260, y: 100 }, label: 'Method Channel\n(com.app/feature)', type: 'default' },
+            { id: 'ios', position: { x: 520, y: 40 }, label: 'Swift / ObjC\nsetMethodCallHandler', type: 'output' },
+            { id: 'android', position: { x: 520, y: 160 }, label: 'Kotlin / Java\nsetMethodCallHandler', type: 'output' },
+            { id: 'pubdev', position: { x: 260, y: 240 }, label: 'pub.dev package\n(wraps channel for you)', type: 'default' },
+          ],
+          edges: [
+            { id: 'e1', source: 'dart', target: 'channel', animated: true },
+            { id: 'e2', source: 'channel', target: 'ios', label: 'iOS build' },
+            { id: 'e3', source: 'channel', target: 'android', label: 'Android build' },
+            { id: 'e4', source: 'pubdev', target: 'channel', label: 'usually prefer\nexisting package' },
+          ],
+        },
         {
           type: 'text',
           content: '## Calling APIs with http & Dio\n\n```dart\nimport \'package:dio/dio.dart\';\n\nfinal dio = Dio(BaseOptions(baseUrl: \'https://api.example.com\'));\n\n// Add auth token to every request\ndio.interceptors.add(InterceptorsWrapper(\n  onRequest: (opts, handler) {\n    opts.headers[\'Authorization\'] = \'Bearer $token\';\n    handler.next(opts);\n  },\n));\n\n// Fetch and deserialise\nFuture<List<Course>> getCourses() async {\n  final resp = await dio.get(\'/courses\');\n  return (resp.data[\'data\'] as List)\n    .map((j) => Course.fromJson(j))\n    .toList();\n}\n```\n\nFor model serialisation, use **json_serializable** or **freezed** to auto-generate `fromJson` / `toJson` code.',
@@ -14402,6 +14692,25 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Network packet path: application → NIC → internet',
+          nodes: [
+            { id: 'app', position: { x: 0, y: 100 }, label: 'Application\n(HTTPS request)', type: 'input' },
+            { id: 'os', position: { x: 200, y: 100 }, label: 'OS Network Stack\nTCP/IP', type: 'default' },
+            { id: 'fw', position: { x: 400, y: 100 }, label: 'Firewall / NACL\nstateful inspection', type: 'decision' },
+            { id: 'router', position: { x: 600, y: 60 }, label: 'Router\nrouting table\nNAT', type: 'default' },
+            { id: 'drop', position: { x: 600, y: 180 }, label: 'Packet dropped\n(port blocked)', type: 'output' },
+            { id: 'internet', position: { x: 820, y: 60 }, label: 'Internet\nDest IP', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'app', target: 'os' },
+            { id: 'e2', source: 'os', target: 'fw', animated: true },
+            { id: 'e3', source: 'fw', target: 'router', label: 'allowed' },
+            { id: 'e4', source: 'fw', target: 'drop', label: 'blocked rule' },
+            { id: 'e5', source: 'router', target: 'internet', animated: true },
+          ],
+        },
         {
           type: 'text',
           content: '## IP Addresses & Subnetting\n\nAn IPv4 address is 32 bits written as four octets: `192.168.1.1`. A **subnet mask** (or CIDR prefix) determines which part is the network address and which part identifies hosts:\n\n```\n10.0.0.0/24   → network: 10.0.0.0, hosts: 10.0.0.1–10.0.0.254 (254 hosts)\n10.0.0.0/16   → network: 10.0.0.0, hosts: 10.0.0.1–10.0.255.254 (65,534 hosts)\n10.0.0.0/8    → network: 10.0.0.0, hosts: 10.0.0.1–10.255.255.254 (~16M hosts)\n```\n\n**Private IP ranges** (RFC 1918 — not routable on the public internet):\n- `10.0.0.0/8`\n- `172.16.0.0/12`\n- `192.168.0.0/16`',
@@ -14662,6 +14971,25 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'B-tree index: O(log N) lookup vs O(N) sequential scan',
+          nodes: [
+            { id: 'query', position: { x: 0, y: 100 }, label: 'WHERE email =\n\'alice@example.com\'', type: 'input' },
+            { id: 'noidx', position: { x: 240, y: 160 }, label: 'No index\nSeq Scan — reads\nevery row O(N)', type: 'default' },
+            { id: 'btree', position: { x: 240, y: 40 }, label: 'B-tree index exists\nIndex Scan O(log N)', type: 'default' },
+            { id: 'root', position: { x: 480, y: 40 }, label: 'Tree root\n(sorted values)', type: 'default' },
+            { id: 'leaf', position: { x: 680, y: 40 }, label: 'Leaf node\n→ row pointer', type: 'output' },
+            { id: 'slow', position: { x: 480, y: 160 }, label: '10M rows =\n10M disk reads', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'query', target: 'btree', label: 'index exists' },
+            { id: 'e2', source: 'query', target: 'noidx', label: 'no index' },
+            { id: 'e3', source: 'btree', target: 'root', animated: true },
+            { id: 'e4', source: 'root', target: 'leaf', label: 'binary search\n~24 comparisons' },
+            { id: 'e5', source: 'noidx', target: 'slow' },
+          ],
+        },
+        {
           type: 'text',
           content: '## The Full Table Scan Problem\n\nWithout an index, finding a row with `WHERE email = \'alice@example.com\'` requires reading every row in the table — O(n). On a 10 million-row table, that\'s millions of disk reads for a single lookup.\n\nAn **index** is a separate data structure that maps column values to row locations. A lookup becomes O(log n) instead of O(n).\n\n## B-Tree Indexes\n\nPostgreSQL, MySQL, and SQL Server use **B-tree** (balanced tree) indexes by default. A B-tree stores values in sorted order, enabling:\n- Equality lookups: `WHERE email = ?`\n- Range queries: `WHERE created_at > ?`\n- Ordering: `ORDER BY last_name`\n- Prefix matching: `WHERE name LIKE \'Alice%\'` (but not `LIKE \'%Alice\'`)\n\n```sql\n-- Create a B-tree index (default)\nCREATE INDEX idx_users_email ON users(email);\n\n-- Composite index — column order matters!\nCREATE INDEX idx_orders_user_date ON orders(user_id, created_at);\n-- Supports: WHERE user_id = ? AND created_at > ?\n-- Also supports: WHERE user_id = ?\n-- But NOT: WHERE created_at > ? alone\n```',
         },
@@ -14712,6 +15040,24 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'N+1 vs batched queries: 101 queries → 2',
+          nodes: [
+            { id: 'n1', position: { x: 0, y: 40 }, label: 'N+1 Pattern\n1 courses query', type: 'input' },
+            { id: 'loop', position: { x: 220, y: 40 }, label: 'Loop: 1 lessons\nquery per course\n× 100 courses', type: 'default' },
+            { id: 'bad', position: { x: 440, y: 40 }, label: '101 DB round-trips\n(very slow)', type: 'output' },
+            { id: 'batch', position: { x: 0, y: 180 }, label: 'Batched Pattern\n1 courses query', type: 'input' },
+            { id: 'in', position: { x: 220, y: 180 }, label: 'WHERE course_id\nIN (1,2,...100)\n1 query total', type: 'default' },
+            { id: 'good', position: { x: 440, y: 180 }, label: '2 DB round-trips\n(fast)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'n1', target: 'loop' },
+            { id: 'e2', source: 'loop', target: 'bad', label: '100 extra queries' },
+            { id: 'e3', source: 'batch', target: 'in', animated: true },
+            { id: 'e4', source: 'in', target: 'good', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: '## The N+1 Query Problem\n\nThe most common ORM performance bug. You fetch N records, then run one query per record to get related data — N+1 total queries instead of 2:\n\n```javascript\n// BAD — N+1 queries\nconst courses = await db.query(\'SELECT * FROM courses\');\nfor (const course of courses) {\n  // Runs one query PER course\n  course.lessons = await db.query(\n    \'SELECT * FROM lessons WHERE courseId = ?\', [course.id]\n  );\n}\n// 1 (courses) + 100 (one per course) = 101 queries\n\n// GOOD — 2 queries + in-memory join\nconst courses = await db.query(\'SELECT * FROM courses\');\nconst courseIds = courses.map(c => c.id);\nconst lessons = await db.query(\n  \'SELECT * FROM lessons WHERE courseId IN (?)\', [courseIds]\n);\nconst lessonsByCourse = groupBy(lessons, \'courseId\');\ncourses.forEach(c => c.lessons = lessonsByCourse[c.id] ?? []);\n// 2 queries total\n```',
         },
@@ -14761,6 +15107,31 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Connection pool: requests share a fixed set of DB connections',
+          nodes: [
+            { id: 'r1', position: { x: 0, y: 40 }, label: 'Request 1', type: 'input' },
+            { id: 'r2', position: { x: 0, y: 120 }, label: 'Request 2', type: 'input' },
+            { id: 'r3', position: { x: 0, y: 200 }, label: 'Request 3', type: 'input' },
+            { id: 'pool', position: { x: 240, y: 120 }, label: 'Connection Pool\n(max: 20)\nborrow / return', type: 'decision' },
+            { id: 'c1', position: { x: 480, y: 40 }, label: 'DB Connection 1', type: 'default' },
+            { id: 'c2', position: { x: 480, y: 120 }, label: 'DB Connection 2', type: 'default' },
+            { id: 'c3', position: { x: 480, y: 200 }, label: 'DB Connection 3', type: 'default' },
+            { id: 'db', position: { x: 700, y: 120 }, label: 'PostgreSQL\n(max_connections: 100)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'r1', target: 'pool' },
+            { id: 'e2', source: 'r2', target: 'pool' },
+            { id: 'e3', source: 'r3', target: 'pool' },
+            { id: 'e4', source: 'pool', target: 'c1', animated: true },
+            { id: 'e5', source: 'pool', target: 'c2', animated: true },
+            { id: 'e6', source: 'pool', target: 'c3', animated: true },
+            { id: 'e7', source: 'c1', target: 'db' },
+            { id: 'e8', source: 'c2', target: 'db' },
+            { id: 'e9', source: 'c3', target: 'db' },
+          ],
+        },
         {
           type: 'text',
           content: '## Connection Pooling\n\nOpening a new database connection is expensive (TCP handshake, auth, session setup: ~5–20ms). Under load, if every request opens its own connection, you quickly exhaust the database\'s connection limit.\n\nA **connection pool** maintains a set of open connections and lends them to requests:\n\n```javascript\n// pg (Node.js) connection pool\nimport { Pool } from \'pg\';\n\nconst pool = new Pool({\n  host: process.env.DB_HOST,\n  port: 5432,\n  database: \'mydb\',\n  max: 20,          // max concurrent connections\n  idleTimeoutMillis: 30000,\n  connectionTimeoutMillis: 2000,\n});\n\n// Pool is reused across all requests\nasync function getUser(id: string) {\n  const { rows } = await pool.query(\n    \'SELECT * FROM users WHERE id = $1\', [id]\n  );\n  return rows[0];\n}\n```\n\n**PgBouncer** is a dedicated connection pooler for PostgreSQL — recommended for serverless environments where each Lambda opens its own pool.',
@@ -14877,6 +15248,26 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Swift structured concurrency: serial vs parallel async tasks',
+          nodes: [
+            { id: 'start', position: { x: 0, y: 100 }, label: '.task { }', type: 'input' },
+            { id: 'serial', position: { x: 220, y: 40 }, label: 'Serial (await)\nfetchUser()\nthen fetchCourses()', type: 'default' },
+            { id: 'parallel', position: { x: 220, y: 160 }, label: 'Parallel (async let)\nboth run at once', type: 'default' },
+            { id: 'u', position: { x: 460, y: 120 }, label: 'await user', type: 'default' },
+            { id: 'c', position: { x: 460, y: 200 }, label: 'await courses', type: 'default' },
+            { id: 'done', position: { x: 660, y: 160 }, label: 'Both results ready\nupdate UI', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'start', target: 'serial', label: 'sequential' },
+            { id: 'e2', source: 'start', target: 'parallel', label: 'concurrent', animated: true },
+            { id: 'e3', source: 'parallel', target: 'u', animated: true },
+            { id: 'e4', source: 'parallel', target: 'c', animated: true },
+            { id: 'e5', source: 'u', target: 'done' },
+            { id: 'e6', source: 'c', target: 'done' },
+          ],
+        },
+        {
           type: 'text',
           content: '## async/await in Swift\n\nSwift\'s structured concurrency makes async code readable and safe:\n\n```swift\n// Async function declaration\nfunc fetchCourses() async throws -> [Course] {\n    let url = URL(string: "https://api.example.com/courses")!\n    let (data, _) = try await URLSession.shared.data(from: url)\n    return try JSONDecoder().decode([Course].self, from: data)\n}\n\n// Calling from a SwiftUI view\n.task {\n    do {\n        courses = try await fetchCourses()\n    } catch {\n        errorMessage = error.localizedDescription\n    }\n}\n\n// Parallel async tasks\nasync let user = fetchUser(id: userId)\nasync let courses = fetchCourses()\nlet (u, c) = try await (user, courses)  // both run concurrently\n```',
         },
@@ -14924,6 +15315,21 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'MVVM data flow in SwiftUI',
+          nodes: [
+            { id: 'svc', position: { x: 0, y: 100 }, label: 'CourseService\n(network / DB)', type: 'input' },
+            { id: 'vm', position: { x: 240, y: 100 }, label: 'ViewModel\n(@Observable)\ncourses: [Course]\nisLoading: Bool', type: 'default' },
+            { id: 'view', position: { x: 480, y: 100 }, label: 'SwiftUI View\nreads @State vm\nauto-redraws', type: 'output' },
+            { id: 'action', position: { x: 480, y: 220 }, label: 'User action\n(tap, swipe)', type: 'input' },
+          ],
+          edges: [
+            { id: 'e1', source: 'svc', target: 'vm', label: 'fetchAll() async' },
+            { id: 'e2', source: 'vm', target: 'view', label: 'publishes state', animated: true },
+            { id: 'e3', source: 'action', target: 'vm', label: 'calls vm.method()' },
+          ],
+        },
         {
           type: 'text',
           content: '## MVVM in SwiftUI\n\nModel-View-ViewModel is the dominant pattern for SwiftUI apps. The ViewModel owns business logic and exposes state the View reads:\n\n```swift\n@Observable\nclass CourseViewModel {\n    var courses: [Course] = []\n    var isLoading = false\n    var errorMessage: String?\n    \n    func loadCourses() async {\n        isLoading = true\n        defer { isLoading = false }\n        do {\n            courses = try await CourseService.shared.fetchAll()\n        } catch {\n            errorMessage = error.localizedDescription\n        }\n    }\n}\n\nstruct CourseListView: View {\n    @State private var vm = CourseViewModel()\n    \n    var body: some View {\n        Group {\n            if vm.isLoading { ProgressView() }\n            else { List(vm.courses, id: \\.id) { Text($0.title) } }\n        }\n        .task { await vm.loadCourses() }\n        .alert("Error", isPresented: .constant(vm.errorMessage != nil)) {\n            Button("OK") { vm.errorMessage = nil }\n        } message: { Text(vm.errorMessage ?? "") }\n    }\n}\n```',
@@ -15041,6 +15447,25 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Android ViewModel + Repository + Room pattern',
+          nodes: [
+            { id: 'ui', position: { x: 0, y: 100 }, label: 'Composable\ncollects StateFlow', type: 'input' },
+            { id: 'vm', position: { x: 220, y: 100 }, label: 'ViewModel\nviewModelScope.launch\nStateFlow<List<Course>>', type: 'default' },
+            { id: 'repo', position: { x: 440, y: 100 }, label: 'Repository\ndecides: network or cache', type: 'decision' },
+            { id: 'retrofit', position: { x: 660, y: 40 }, label: 'Retrofit\n(network)', type: 'default' },
+            { id: 'room', position: { x: 660, y: 160 }, label: 'Room DAO\n(local SQLite)', type: 'default' },
+          ],
+          edges: [
+            { id: 'e1', source: 'ui', target: 'vm', label: 'LaunchedEffect\nloadCourses()' },
+            { id: 'e2', source: 'vm', target: 'repo', animated: true },
+            { id: 'e3', source: 'repo', target: 'retrofit', label: 'network available' },
+            { id: 'e4', source: 'repo', target: 'room', label: 'offline / cache' },
+            { id: 'e5', source: 'retrofit', target: 'vm', label: 'upsert + emit', animated: true },
+            { id: 'e6', source: 'room', target: 'vm', label: 'Flow<List>', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: '## ViewModel — Surviving Configuration Changes\n\nA ViewModel holds UI state and survives screen rotations. It scopes data to the UI lifecycle — not to individual composables:\n\n```kotlin\nclass CourseViewModel : ViewModel() {\n    private val _courses = MutableStateFlow<List<Course>>(emptyList())\n    val courses: StateFlow<List<Course>> = _courses.asStateFlow()\n    \n    var isLoading by mutableStateOf(false)\n        private set\n\n    fun loadCourses() {\n        viewModelScope.launch {  // auto-cancelled when ViewModel is cleared\n            isLoading = true\n            try {\n                _courses.value = repository.getCourses()\n            } finally {\n                isLoading = false\n            }\n        }\n    }\n}\n\n// In a Composable\n@Composable\nfun CourseListScreen(vm: CourseViewModel = viewModel()) {\n    val courses by vm.courses.collectAsState()\n    LaunchedEffect(Unit) { vm.loadCourses() }\n    // ...\n}\n```',
         },
@@ -15088,6 +15513,23 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Jetpack Compose back stack navigation',
+          nodes: [
+            { id: 'home', position: { x: 0, y: 100 }, label: 'HomeScreen\n"home"', type: 'input' },
+            { id: 'list', position: { x: 200, y: 100 }, label: 'CourseListScreen\n"courses"', type: 'default' },
+            { id: 'detail', position: { x: 400, y: 100 }, label: 'CourseDetailScreen\n"course/{id}"', type: 'default' },
+            { id: 'hilt', position: { x: 200, y: 240 }, label: 'Hilt DI\n@HiltViewModel\nauto-injected deps', type: 'default' },
+            { id: 'back', position: { x: 400, y: 240 }, label: 'System back /\nnav.popBackStack()', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'home', target: 'list', label: 'navigate("courses")' },
+            { id: 'e2', source: 'list', target: 'detail', label: 'navigate("course/42")' },
+            { id: 'e3', source: 'detail', target: 'back', label: 'popBackStack()', animated: true },
+            { id: 'e4', source: 'hilt', target: 'list', label: 'injects\nCourseViewModel' },
+          ],
+        },
         {
           type: 'text',
           content: '## Navigation with Compose Navigation\n\n```kotlin\n@Composable\nfun AppNavHost() {\n    val navController = rememberNavController()\n    NavHost(navController, startDestination = "home") {\n        composable("home") {\n            HomeScreen(onCourseClick = { id ->\n                navController.navigate("course/$id")\n            })\n        }\n        composable(\n            "course/{courseId}",\n            arguments = listOf(navArgument("courseId") { type = NavType.StringType })\n        ) { backStackEntry ->\n            val id = backStackEntry.arguments?.getString("courseId")!!\n            CourseDetailScreen(courseId = id)\n        }\n    }\n}\n```\n\nType-safe navigation with the new Navigation 2.8+ destinations:\n```kotlin\n@Serializable data class CourseDetail(val courseId: String)\n// navController.navigate(CourseDetail(courseId = "abc"))\n```',
@@ -15139,6 +15581,25 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'CNN architecture: pixels → features → class prediction',
+          nodes: [
+            { id: 'img', position: { x: 0, y: 100 }, label: 'Input Image\n[3 × 224 × 224]', type: 'input' },
+            { id: 'conv1', position: { x: 180, y: 100 }, label: 'Conv2d + ReLU\nedges & textures', type: 'default' },
+            { id: 'pool1', position: { x: 360, y: 100 }, label: 'MaxPool2d\n÷2 spatial size', type: 'default' },
+            { id: 'conv2', position: { x: 540, y: 100 }, label: 'Conv2d + ReLU\nshapes & parts', type: 'default' },
+            { id: 'flatten', position: { x: 720, y: 100 }, label: 'Flatten\n+ Linear layers', type: 'default' },
+            { id: 'out', position: { x: 900, y: 100 }, label: 'Softmax\nclass probabilities', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'img', target: 'conv1', animated: true },
+            { id: 'e2', source: 'conv1', target: 'pool1' },
+            { id: 'e3', source: 'pool1', target: 'conv2' },
+            { id: 'e4', source: 'conv2', target: 'flatten' },
+            { id: 'e5', source: 'flatten', target: 'out', animated: true },
+          ],
+        },
+        {
           type: 'text',
           content: '## What is Computer Vision?\n\nComputer vision is the field of giving machines the ability to interpret images and video. Core tasks:\n\n- **Classification**: "what object is in this image?" → dog / cat / car\n- **Object detection**: "where are all the objects?" → bounding boxes + labels\n- **Segmentation**: "which pixels belong to which object?" → pixel-level masks\n- **Pose estimation**, **OCR**, **depth estimation**...\n\n## Images as Tensors\n\nA colour image is a 3D tensor: `[Height × Width × Channels]`. A 224×224 RGB image has `224 × 224 × 3 = 150,528` values, each 0–255.\n\n```python\nimport torch\nfrom PIL import Image\nimport torchvision.transforms as T\n\ntransform = T.Compose([\n    T.Resize((224, 224)),\n    T.ToTensor(),           # [H,W,C] uint8 → [C,H,W] float32 [0,1]\n    T.Normalize(mean=[0.485, 0.456, 0.406],\n                std=[0.229, 0.224, 0.225]),  # ImageNet stats\n])\n\nimg = Image.open("dog.jpg")\ntensor = transform(img)   # shape: [3, 224, 224]\nbatch = tensor.unsqueeze(0)  # add batch dim: [1, 3, 224, 224]\n```',
         },
@@ -15187,6 +15648,24 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Transfer learning: freeze base layers, train new head',
+          nodes: [
+            { id: 'pretrained', position: { x: 0, y: 100 }, label: 'ImageNet-pretrained\nResNet-50\n(25M params)', type: 'input' },
+            { id: 'frozen', position: { x: 240, y: 60 }, label: 'Frozen layers\nlearn general features\n(no gradient)', type: 'default' },
+            { id: 'head', position: { x: 240, y: 180 }, label: 'New FC head\ntrained on your data\n(trainable)', type: 'default' },
+            { id: 'finetune', position: { x: 480, y: 120 }, label: 'Fine-tune\nlast N layers\n(optional)', type: 'default' },
+            { id: 'out', position: { x: 680, y: 120 }, label: 'Custom classifier\n(your N classes)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'pretrained', target: 'frozen' },
+            { id: 'e2', source: 'pretrained', target: 'head', label: 'replace fc' },
+            { id: 'e3', source: 'frozen', target: 'finetune', label: 'unfreeze last\nlayers later' },
+            { id: 'e4', source: 'head', target: 'finetune', animated: true },
+            { id: 'e5', source: 'finetune', target: 'out' },
+          ],
+        },
+        {
           type: 'text',
           content: '## Fine-Tuning a Pretrained Model\n\nThe torchvision model zoo provides ImageNet-pretrained architectures. Fine-tune by replacing the final classification head:\n\n```python\nimport torchvision.models as models\nimport torch.nn as nn\n\n# Load pretrained ResNet-50\nmodel = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)\n\n# Freeze all layers except the final classifier\nfor param in model.parameters():\n    param.requires_grad = False\n\n# Replace the final FC layer for our number of classes\nmodel.fc = nn.Linear(model.fc.in_features, num_classes)\n# model.fc params are unfrozen by default\n\noptimizer = torch.optim.Adam(model.fc.parameters(), lr=1e-3)\ncriterion = nn.CrossEntropyLoss()\n\n# Training loop\nfor images, labels in train_loader:\n    outputs = model(images)\n    loss = criterion(outputs, labels)\n    optimizer.zero_grad()\n    loss.backward()\n    optimizer.step()\n```',
         },
@@ -15234,6 +15713,25 @@ await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow()
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Computer vision deployment pipeline',
+          nodes: [
+            { id: 'input', position: { x: 0, y: 100 }, label: 'Image input\n(camera / file)', type: 'input' },
+            { id: 'preproc', position: { x: 200, y: 100 }, label: 'Preprocess\nresize, normalize\nOpenCV / torchvision', type: 'default' },
+            { id: 'model', position: { x: 420, y: 100 }, label: 'PyTorch model\nor ONNX Runtime', type: 'default' },
+            { id: 'post', position: { x: 640, y: 100 }, label: 'Post-process\ndecode boxes\napply NMS', type: 'default' },
+            { id: 'out', position: { x: 840, y: 60 }, label: 'Classification\nprediction + confidence', type: 'output' },
+            { id: 'det', position: { x: 840, y: 160 }, label: 'Detection\nbounding boxes', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'input', target: 'preproc' },
+            { id: 'e2', source: 'preproc', target: 'model', animated: true },
+            { id: 'e3', source: 'model', target: 'post' },
+            { id: 'e4', source: 'post', target: 'out' },
+            { id: 'e5', source: 'post', target: 'det' },
+          ],
+        },
         {
           type: 'text',
           content: '## Semantic vs Instance Segmentation\n\n**Semantic segmentation** assigns a class label to every pixel (all cars are one "car" region). **Instance segmentation** distinguishes individual objects of the same class (car #1 vs car #2).\n\n**SAM (Segment Anything Model)** by Meta can segment any object from a point, bounding box, or text prompt with zero-shot generalisation:\n\n```python\nfrom segment_anything import sam_model_registry, SamPredictor\n\nsam = sam_model_registry["vit_h"](checkpoint="sam_vit_h.pth")\npredictor = SamPredictor(sam)\n\npredictor.set_image(image_rgb)\nmasks, scores, _ = predictor.predict(\n    point_coords=np.array([[500, 375]]),\n    point_labels=np.array([1]),\n)\n```',
@@ -16426,6 +16924,26 @@ docker scout cves my-app:v1.2.0
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'React profiling workflow: measure → identify → optimise → verify',
+          nodes: [
+            { id: 'slow', position: { x: 0, y: 100 }, label: 'App feels slow\nor frame drops', type: 'input' },
+            { id: 'profiler', position: { x: 220, y: 100 }, label: 'React DevTools\nProfiler\n(record interaction)', type: 'default' },
+            { id: 'flame', position: { x: 440, y: 60 }, label: 'Flame chart\nwhat rendered?\nhow long?', type: 'decision' },
+            { id: 'expensive', position: { x: 660, y: 40 }, label: 'Expensive render\nidentified', type: 'default' },
+            { id: 'memo', position: { x: 660, y: 140 }, label: 'Apply memo /\nuseMemo / split', type: 'default' },
+            { id: 'verify', position: { x: 880, y: 100 }, label: 'Re-profile\nverify improvement', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'slow', target: 'profiler' },
+            { id: 'e2', source: 'profiler', target: 'flame' },
+            { id: 'e3', source: 'flame', target: 'expensive', label: 'found slow\ncomponent' },
+            { id: 'e4', source: 'expensive', target: 'memo', animated: true },
+            { id: 'e5', source: 'memo', target: 'verify' },
+            { id: 'e6', source: 'flame', target: 'profiler', label: 'no issue found\n→ check elsewhere' },
+          ],
+        },
+        {
           type: 'text',
           content: `## The golden rule of performance
 
@@ -16575,6 +17093,27 @@ const HeavyComponent = React.memo(function HeavyComponent() {
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'Choosing the right memoization tool',
+          nodes: [
+            { id: 'q', position: { x: 0, y: 140 }, label: 'What are\nyou optimising?', type: 'input' },
+            { id: 'comp', position: { x: 240, y: 60 }, label: 'Component re-renders\nwith same props', type: 'decision' },
+            { id: 'val', position: { x: 240, y: 140 }, label: 'Expensive computed\nvalue from state', type: 'decision' },
+            { id: 'cb', position: { x: 240, y: 220 }, label: 'Callback passed\nto memoised child', type: 'decision' },
+            { id: 'reactmemo', position: { x: 480, y: 60 }, label: 'React.memo(Component)\nshallow props compare', type: 'output' },
+            { id: 'usememo', position: { x: 480, y: 140 }, label: 'useMemo(\n  () => compute(a,b),\n  [a, b]\n)', type: 'output' },
+            { id: 'usecb', position: { x: 480, y: 220 }, label: 'useCallback(\n  fn,\n  [deps]\n)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'q', target: 'comp' },
+            { id: 'e2', source: 'q', target: 'val' },
+            { id: 'e3', source: 'q', target: 'cb' },
+            { id: 'e4', source: 'comp', target: 'reactmemo' },
+            { id: 'e5', source: 'val', target: 'usememo' },
+            { id: 'e6', source: 'cb', target: 'usecb' },
+          ],
+        },
         {
           type: 'text',
           content: `## Three memoization tools
@@ -17229,6 +17768,23 @@ function watchProgress(courseId: string, userId: string) {
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Protobuf schema evolution: safe vs breaking changes',
+          nodes: [
+            { id: 'schema', position: { x: 0, y: 120 }, label: 'Existing .proto\nschema v1', type: 'input' },
+            { id: 'safe', position: { x: 240, y: 60 }, label: 'Safe changes ✅\nAdd new field\nRename field\nAdd enum value', type: 'default' },
+            { id: 'break', position: { x: 240, y: 200 }, label: 'Breaking changes ❌\nRemove field number\nChange field type\nReuse field number', type: 'default' },
+            { id: 'compat', position: { x: 520, y: 60 }, label: 'Old clients ignore\nnew fields\nNew clients get\ndefault for missing', type: 'output' },
+            { id: 'corrupt', position: { x: 520, y: 200 }, label: 'Data corruption\nor decode errors\nin production', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'schema', target: 'safe', label: 'field number\nnot reused' },
+            { id: 'e2', source: 'schema', target: 'break', label: 'dangerous' },
+            { id: 'e3', source: 'safe', target: 'compat', animated: true },
+            { id: 'e4', source: 'break', target: 'corrupt' },
+          ],
+        },
+        {
           type: 'text',
           content: `## Backward-compatible schema evolution
 
@@ -17753,6 +18309,26 @@ groups:
       schemaVersion: '1',
       sections: [
         {
+          type: 'flowDiagram',
+          title: 'Distributed trace: one request spanning multiple services',
+          nodes: [
+            { id: 'client', position: { x: 0, y: 100 }, label: 'Client\nRequest', type: 'input' },
+            { id: 'api', position: { x: 200, y: 100 }, label: 'API Gateway\nSpan A (2ms)', type: 'default' },
+            { id: 'auth', position: { x: 400, y: 40 }, label: 'Auth Service\nSpan B (5ms)', type: 'default' },
+            { id: 'course', position: { x: 400, y: 160 }, label: 'Course Service\nSpan C (18ms)', type: 'default' },
+            { id: 'db', position: { x: 600, y: 160 }, label: 'CosmosDB\nSpan D (15ms)', type: 'default' },
+            { id: 'trace', position: { x: 800, y: 100 }, label: 'Trace total: 25ms\nTrace ID flows\nthrough all spans', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'client', target: 'api', animated: true },
+            { id: 'e2', source: 'api', target: 'auth', label: 'parent: A' },
+            { id: 'e3', source: 'api', target: 'course', label: 'parent: A' },
+            { id: 'e4', source: 'course', target: 'db', label: 'parent: C' },
+            { id: 'e5', source: 'auth', target: 'trace' },
+            { id: 'e6', source: 'db', target: 'trace' },
+          ],
+        },
+        {
           type: 'text',
           content: `## Why distributed tracing?
 
@@ -18024,6 +18600,23 @@ Use **\`wss://\`** (WebSocket Secure, over TLS) in production for the same reaso
     content: {
       schemaVersion: '1',
       sections: [
+        {
+          type: 'flowDiagram',
+          title: 'WebSocket chat server: broadcast to all connected clients',
+          nodes: [
+            { id: 'c1', position: { x: 0, y: 40 }, label: 'Client A\n(ws.send)', type: 'input' },
+            { id: 'c2', position: { x: 0, y: 140 }, label: 'Client B\n(ws.send)', type: 'input' },
+            { id: 'server', position: { x: 280, y: 90 }, label: 'WS Server\nwss.clients.forEach\nbroadcast to all', type: 'decision' },
+            { id: 'r1', position: { x: 560, y: 40 }, label: 'All clients\nreceive message', type: 'output' },
+            { id: 'r2', position: { x: 560, y: 140 }, label: 'Room-based:\nonly filtered clients', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'c1', target: 'server', label: 'message event', animated: true },
+            { id: 'e2', source: 'c2', target: 'server', label: 'message event', animated: true },
+            { id: 'e3', source: 'server', target: 'r1', label: 'broadcast' },
+            { id: 'e4', source: 'server', target: 'r2', label: 'room filter', animated: true },
+          ],
+        },
         {
           type: 'text',
           content: `## The ws library for Node.js
