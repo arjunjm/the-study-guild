@@ -11892,6 +11892,23 @@ class CourseSorter {
 \`\`\``,
         },
         {
+          type: 'flowDiagram',
+          title: 'Observer pattern: event source notifies multiple subscribers',
+          nodes: [
+            { id: 'source', position: { x: 240, y: 240 }, label: 'Event Source\ncourseEmitter.emit("enrolled")', type: 'input' },
+            { id: 'emitter', position: { x: 240, y: 140 }, label: 'EventEmitter\nnotifies all listeners', type: 'default' },
+            { id: 'email', position: { x: 60, y: 40 }, label: 'sendWelcomeEmail\n(subscriber 1)', type: 'output' },
+            { id: 'count', position: { x: 240, y: 40 }, label: 'updateEnrollmentCount\n(subscriber 2)', type: 'output' },
+            { id: 'analytics', position: { x: 420, y: 40 }, label: 'trackAnalyticsEvent\n(subscriber 3)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'source', target: 'emitter', label: 'emit event' },
+            { id: 'e2', source: 'emitter', target: 'email', animated: true },
+            { id: 'e3', source: 'emitter', target: 'count', animated: true },
+            { id: 'e4', source: 'emitter', target: 'analytics', animated: true },
+          ],
+        },
+        {
           type: 'callout',
           variant: 'info',
           title: 'Strategy vs simple function params',
@@ -11965,141 +11982,145 @@ class CommandHistory {
     },
   },
 
-  // ── Design Patterns Lesson 4: Structural Patterns (Adapter, Decorator, Facade) ─
   {
     id: 'lesson-dp-4',
     courseId: 'course-design-patterns',
     order: 3,
-    title: 'Structural Patterns: Adapter, Decorator & Facade',
-    estimatedMinutes: 12,
-    createdAt: '2025-05-18T00:00:00.000Z',
-    updatedAt: '2025-05-18T00:00:00.000Z',
+    title: 'Repository Pattern & Dependency Injection',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-26T00:00:00.000Z',
+    updatedAt: '2025-05-26T00:00:00.000Z',
     content: {
       schemaVersion: '1',
       sections: [
         {
           type: 'text',
-          content: `## Structural patterns: composing objects
+          content: `## The Repository Pattern
 
-Structural patterns are about how classes and objects are composed to form larger structures. Unlike creational patterns (how objects are created) or behavioral (how they communicate), structural patterns focus on relationships.`,
-        },
-        {
-          type: 'callout',
-          variant: 'info',
-          title: 'Adapter — make incompatible interfaces work together',
-          content: 'The Adapter wraps an existing class with a new interface that your code expects. Classic use case: integrating a third-party library whose API doesn\'t match your domain interface. You write an adapter once and the rest of your code never touches the third-party API directly.',
-        },
-        {
-          type: 'codeBlock',
-          language: 'typescript',
-          caption: 'Adapter: wrapping a third-party email library',
-          code: `// Your app's expected interface
-interface EmailService {
-  send(to: string, subject: string, body: string): Promise<void>;
-}
+Repository abstracts data access behind a domain-focused interface. Your business logic talks to \`UserRepository\`, not \`CosmosDbContainer\`. This decouples the domain from the persistence technology.
 
-// Third-party library has a different API
-class SendGridClient {
-  async sendEmail(config: {
-    to: string[];
-    subject: string;
-    text: string;
-    apiKey: string;
-  }): Promise<{ statusCode: number }> { /* ... */ return { statusCode: 202 }; }
-}
-
-// Adapter bridges the gap
-class SendGridAdapter implements EmailService {
-  constructor(
-    private client: SendGridClient,
-    private apiKey: string
-  ) {}
-
-  async send(to: string, subject: string, body: string): Promise<void> {
-    await this.client.sendEmail({
-      to: [to],
-      subject,
-      text: body,
-      apiKey: this.apiKey,
-    });
-  }
-}
-
-// Your app uses EmailService — easy to swap providers later
-const mailer: EmailService = new SendGridAdapter(new SendGridClient(), process.env.SENDGRID_KEY!);
-await mailer.send('alice@example.com', 'Welcome!', 'Hello Alice');`,
-        },
-        {
-          type: 'callout',
-          variant: 'tip',
-          title: 'Decorator — add behaviour without subclassing',
-          content: 'A Decorator wraps an object and adds new behaviour before or after delegating to the wrapped object. Unlike inheritance, decorators can be stacked arbitrarily. Classic examples: logging middleware, caching wrappers, access control checks. In TypeScript, the Decorator pattern is used extensively in NestJS.',
-        },
-        {
-          type: 'codeBlock',
-          language: 'typescript',
-          caption: 'Decorator: adding caching and logging to a repository',
-          code: `interface UserRepository {
+\`\`\`typescript
+// The interface — domain speaks in domain terms
+interface UserRepository {
   findById(id: string): Promise<User | null>;
+  findByEmail(email: string): Promise<User | null>;
+  save(user: User): Promise<void>;
+  delete(id: string): Promise<void>;
 }
 
-// Caching decorator
-class CachingUserRepository implements UserRepository {
-  private cache = new Map<string, User>();
+// Production: CosmosDB implementation
+class CosmosUserRepository implements UserRepository {
+  constructor(private container: Container) {}
 
-  constructor(private inner: UserRepository) {}
+  async findById(id: string) {
+    const { resource } = await this.container.item(id, id).read<User>();
+    return resource ?? null;
+  }
+  async findByEmail(email: string) {
+    const q = { query: 'SELECT * FROM c WHERE c.email = @e', parameters: [{ name: '@e', value: email }] };
+    const { resources } = await this.container.items.query<User>(q).fetchAll();
+    return resources[0] ?? null;
+  }
+  async save(user: User) { await this.container.items.upsert(user); }
+  async delete(id: string) { await this.container.item(id, id).delete(); }
+}
 
-  async findById(id: string): Promise<User | null> {
-    if (this.cache.has(id)) return this.cache.get(id)!;
-    const user = await this.inner.findById(id);
-    if (user) this.cache.set(id, user);
+// Test: in-memory implementation
+class InMemoryUserRepository implements UserRepository {
+  private store = new Map<string, User>();
+
+  async findById(id: string) { return this.store.get(id) ?? null; }
+  async findByEmail(email: string) {
+    return [...this.store.values()].find(u => u.email === email) ?? null;
+  }
+  async save(user: User) { this.store.set(user.id, user); }
+  async delete(id: string) { this.store.delete(id); }
+}
+\`\`\``,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Repository isolates domain logic from storage details',
+          nodes: [
+            { id: 'service', position: { x: 0, y: 80 }, label: 'UserService\n(domain logic)', type: 'input' },
+            { id: 'repo', position: { x: 220, y: 80 }, label: 'UserRepository\n(interface)', type: 'default' },
+            { id: 'cosmos', position: { x: 440, y: 20 }, label: 'CosmosUserRepo\n(production)', type: 'output' },
+            { id: 'memory', position: { x: 440, y: 140 }, label: 'InMemoryUserRepo\n(tests)', type: 'output' },
+          ],
+          edges: [
+            { id: 'e1', source: 'service', target: 'repo', label: 'depends on\ninterface' },
+            { id: 'e2', source: 'repo', target: 'cosmos', label: 'implements' },
+            { id: 'e3', source: 'repo', target: 'memory', label: 'implements' },
+          ],
+        },
+        {
+          type: 'text',
+          content: `## Dependency Injection
+
+Repository only works if you inject the implementation rather than creating it. **Dependency Injection (DI)** means a class declares what it needs (in its constructor) and something else provides it.
+
+\`\`\`typescript
+// Without DI — service creates its own dependency (tightly coupled)
+class UserService {
+  private repo = new CosmosUserRepository(cosmosContainer); // ← hard to test
+}
+
+// With DI — dependency injected at construction time
+class UserService {
+  constructor(private repo: UserRepository) {} // ← accepts the interface
+
+  async registerUser(email: string, name: string) {
+    const existing = await this.repo.findByEmail(email);
+    if (existing) throw new Error('Email already registered');
+    const user = { id: uuid(), email, name, createdAt: new Date() };
+    await this.repo.save(user);
     return user;
   }
 }
 
-// Logging decorator
-class LoggingUserRepository implements UserRepository {
-  constructor(private inner: UserRepository) {}
+// Production wiring
+const service = new UserService(new CosmosUserRepository(container));
 
-  async findById(id: string): Promise<User | null> {
-    console.log(\`findById(\${id})\`);
-    const result = await this.inner.findById(id);
-    console.log(\`findById(\${id}) → \${result ? 'found' : 'not found'}\`);
-    return result;
-  }
-}
-
-// Stack decorators: logging wraps caching wraps CosmosDB repo
-const repo = new LoggingUserRepository(
-  new CachingUserRepository(
-    new CosmosUserRepository(container)
-  )
-);`,
+// Test wiring — no database needed
+const testRepo = new InMemoryUserRepository();
+await testRepo.save({ id: 'existing', email: 'taken@example.com', name: 'Alice', createdAt: new Date() });
+const service = new UserService(testRepo);
+await expect(service.registerUser('taken@example.com', 'Bob')).rejects.toThrow();
+\`\`\``,
         },
         {
           type: 'callout',
-          variant: 'info',
-          title: 'Facade — simplify a complex subsystem',
-          content: 'A Facade provides a simplified interface to a complex subsystem. It doesn\'t add functionality — it reduces complexity. Use it when you have many interacting components and callers need a simple "do the thing" method without needing to understand the steps.',
+          variant: 'tip',
+          title: 'DI without a framework',
+          content: 'You don\'t need NestJS or InversifyJS to do dependency injection. Passing dependencies via the constructor is already DI — it\'s a pattern, not a framework. Frameworks just automate the wiring at scale. Start with manual constructor injection; reach for a DI container only when the wiring becomes complex.',
         },
         {
           type: 'quiz',
-          title: 'Structural Patterns Quiz',
-          passingScore: 75,
+          passingScore: 70,
           questions: [
             {
               id: 'dp4-q1',
-              question: 'You want to switch from SendGrid to AWS SES without changing your application code. Which pattern enables this?',
-              options: ['Decorator — wrap SendGrid to add SES behavior', 'Adapter — write an AWSSESAdapter that implements your EmailService interface', 'Facade — create a unified email API', 'Observer — emit email events'],
+              question: 'What is the main benefit of the Repository pattern over calling the database directly in business logic?',
+              options: [
+                'Repositories run faster because they cache everything',
+                'Business logic is decoupled from the storage technology — you can swap databases or use an in-memory implementation for tests',
+                'Repositories automatically handle transactions',
+                'The database is called less frequently because repositories batch queries',
+              ],
               correctIndex: 1,
-              explanation: 'Adapter is the right choice when you need to make an incompatible interface (AWS SES API) conform to your expected interface (EmailService). Write AWSSESAdapter once, swap it for SendGridAdapter in your DI container — no other code changes needed.',
+              explanation: 'Repository hides persistence details behind a domain interface. UserService calls findByEmail() without knowing whether the answer comes from CosmosDB, PostgreSQL, or an in-memory Map. This means you can test business logic in milliseconds without a database, and swap storage implementations without touching domain code.',
             },
             {
               id: 'dp4-q2',
-              question: 'You need to add rate limiting, request logging, and authentication validation to API calls. You want to add/remove each independently. Which pattern is most appropriate?',
-              options: ['Adapter — adapt each concern', 'Facade — one method that does all three', 'Decorator — stack rate limiter, logger, and auth as independent decorators', 'Strategy — swap between different validation strategies'],
+              question: 'Which of these is NOT a benefit of Dependency Injection?',
+              options: [
+                'Easy to swap implementations (e.g., real vs mock)',
+                'Classes are more testable because dependencies can be injected',
+                'Automatic performance optimization of dependencies',
+                'Looser coupling between components',
+              ],
               correctIndex: 2,
-              explanation: 'Decorators are ideal for stackable, composable cross-cutting concerns. Each Decorator adds one responsibility. You can add/remove/reorder them independently: new LoggingDecorator(new RateLimiterDecorator(new AuthDecorator(apiClient))). Adding a new concern never modifies existing decorators.',
+              explanation: 'DI is about testability and loose coupling — not performance. Injecting a dependency doesn\'t make it run faster. The benefits are: testability (inject a fast in-memory mock), flexibility (swap implementations), and clarity (dependencies are explicit in the constructor rather than hidden inside the class).',
             },
           ],
         },
