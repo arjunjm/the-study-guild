@@ -570,6 +570,25 @@ export const MOCK_COURSES: Course[] = [
     updatedAt: '2025-05-26T00:00:00.000Z',
   },
   {
+    id: 'course-python',
+    title: 'Python Fundamentals',
+    description: 'Learn Python from first principles — data types, control flow, functions, and object-oriented programming. Build real scripts and understand the idioms that make Python code readable and productive.',
+    taxonomy: { l1: 'Engineering', l2: 'Python' },
+    difficulty: 'beginner',
+    authorId: 'teacher-001',
+    authorName: 'The Guild',
+    published: true,
+    publishedAt: '2025-05-27T00:00:00.000Z',
+    tags: ['python', 'programming', 'beginner', 'scripting', 'oop'],
+    lessonIds: ['lesson-py-1', 'lesson-py-2', 'lesson-py-3', 'lesson-py-4'],
+    totalLessons: 4,
+    estimatedMinutes: 55,
+    ratingAverage: 4.9,
+    ratingCount: 12,
+    createdAt: '2025-05-27T00:00:00.000Z',
+    updatedAt: '2025-05-27T00:00:00.000Z',
+  },
+  {
     id: 'course-git',
     title: 'Git Internals & Workflows',
     description: 'Understand how Git actually stores data, why merge and rebase behave the way they do, and how to choose a branching strategy for your team.',
@@ -4225,6 +4244,599 @@ GROUP BY u.id;
               ],
               correctIndex: 2,
               explanation: 'A sequential scan on 10M rows for a point lookup by email is inefficient. An index on email lets the database go directly to the matching rows in O(log n) time instead of scanning every row. This is typically a 100-1000x speedup for selective queries.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── Python Lesson 1: Types, Variables & Control Flow ────────────────────────
+  {
+    id: 'lesson-py-1',
+    courseId: 'course-python',
+    order: 0,
+    title: 'Types, Variables & Control Flow',
+    estimatedMinutes: 13,
+    createdAt: '2025-05-27T00:00:00.000Z',
+    updatedAt: '2025-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Python's type system
+
+Python is **dynamically typed** — variables don't have a fixed type, values do. The type is determined at runtime. Python 3 adds optional **type hints** (enforced by tools like mypy, not the interpreter).
+
+| Type | Examples | Notes |
+|------|---------|-------|
+| \`int\` | 42, -7, 0 | Arbitrary precision |
+| \`float\` | 3.14, -0.5 | IEEE 754 double |
+| \`str\` | "hello", 'world' | Immutable unicode |
+| \`bool\` | True, False | Subclass of int |
+| \`list\` | [1, 2, 3] | Mutable sequence |
+| \`tuple\` | (1, 2, 3) | Immutable sequence |
+| \`dict\` | {"key": "value"} | Hash map |
+| \`set\` | {1, 2, 3} | Unordered unique |
+| \`None\` | None | Null equivalent |`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'python',
+          caption: 'Variables, strings, and type conversion',
+          code: `# Dynamic typing — no declaration needed
+name = "Alice"
+age = 30
+xp = 1500.5
+
+# f-strings (the modern way to format strings)
+message = f"Welcome back, {name}! You have {xp:.0f} XP."
+
+# Type conversion
+age_str = str(age)          # "30"
+xp_int = int(xp)            # 1500 (truncates)
+text_num = float("3.14")    # 3.14
+
+# Type hints (optional, for tooling/readability)
+def greet(name: str, rank: str = "Initiate") -> str:
+    return f"Greetings, {rank} {name}!"`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Python Control Flow',
+          nodes: [
+            { id: 'start', label: 'Script starts', type: 'input', position: { x: 200, y: 20 } },
+            { id: 'if', label: 'if condition:', type: 'decision', position: { x: 200, y: 100 } },
+            { id: 'body', label: 'if body runs', position: { x: 60, y: 190 } },
+            { id: 'else', label: 'else body runs', position: { x: 340, y: 190 } },
+            { id: 'for', label: 'for item in seq:', type: 'decision', position: { x: 200, y: 280 } },
+            { id: 'loop', label: 'loop body\n(break / continue)', position: { x: 60, y: 370 } },
+            { id: 'done', label: 'continue...', type: 'output', position: { x: 340, y: 370 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'start', target: 'if' },
+            { id: 'e2', source: 'if', target: 'body', label: 'True' },
+            { id: 'e3', source: 'if', target: 'else', label: 'False' },
+            { id: 'e4', source: 'body', target: 'for' },
+            { id: 'e5', source: 'else', target: 'for' },
+            { id: 'e6', source: 'for', target: 'loop', label: 'items remain', animated: true },
+            { id: 'e7', source: 'loop', target: 'for', label: 'next iteration' },
+            { id: 'e8', source: 'for', target: 'done', label: 'exhausted' },
+          ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'python',
+          caption: 'Control flow examples',
+          code: `# if / elif / else
+score = 85
+if score >= 90:
+    grade = 'A'
+elif score >= 80:
+    grade = 'B'
+else:
+    grade = 'C'
+
+# for loop + range
+for i in range(5):
+    print(i)  # 0 1 2 3 4
+
+# while loop
+attempts = 0
+while attempts < 3:
+    if check_answer():
+        break
+    attempts += 1
+
+# Ternary (conditional expression)
+status = "pass" if score >= 60 else "fail"
+
+# List comprehension (very Pythonic)
+squares = [x**2 for x in range(10) if x % 2 == 0]
+# [0, 4, 16, 36, 64]`,
+        },
+        {
+          type: 'callout',
+          variant: 'info',
+          title: 'Indentation IS the syntax',
+          content: 'Python uses indentation (4 spaces, no tabs) to define code blocks — there are no curly braces. Inconsistent indentation causes IndentationError. Most editors auto-indent, but mixing spaces and tabs across files will break your program.',
+        },
+        {
+          type: 'quiz',
+          title: 'Python Basics Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'py1-q1',
+              question: 'What does `[x**2 for x in range(5)]` evaluate to?',
+              options: ['[0, 1, 2, 3, 4]', '[0, 1, 4, 9, 16]', '[1, 4, 9, 16, 25]', '[0, 2, 4, 6, 8]'],
+              correctIndex: 1,
+              explanation: 'range(5) produces [0, 1, 2, 3, 4]. x**2 is x to the power 2. So [0²=0, 1²=1, 2²=4, 3²=9, 4²=16] → [0, 1, 4, 9, 16]. List comprehensions are the Pythonic way to transform sequences.',
+            },
+            {
+              id: 'py1-q2',
+              question: 'x = 5; x += 3; print(x) — what prints?',
+              options: ['5', '3', '8', 'None'],
+              correctIndex: 2,
+              explanation: '`x += 3` is shorthand for `x = x + 3`. Starting from 5, 5 + 3 = 8.',
+            },
+            {
+              id: 'py1-q3',
+              question: 'Which Python data type is mutable?',
+              options: ['str', 'tuple', 'list', 'int'],
+              correctIndex: 2,
+              explanation: 'Lists are mutable — you can append, remove, and modify elements in place. Strings and tuples are immutable — operations return new objects. Integers are immutable values.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── Python Lesson 2: Functions, Modules & Packages ──────────────────────────
+  {
+    id: 'lesson-py-2',
+    courseId: 'course-python',
+    order: 1,
+    title: 'Functions, Modules & the Standard Library',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-27T00:00:00.000Z',
+    updatedAt: '2025-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Defining functions
+
+Python functions are defined with \`def\`. They can have **positional arguments**, **keyword arguments**, **default values**, and **type hints**.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'python',
+          caption: 'Function signatures and calling patterns',
+          code: `# Basic function
+def add(a: int, b: int) -> int:
+    return a + b
+
+# Default values
+def greet(name: str, title: str = "Guild Member") -> str:
+    return f"Welcome, {title} {name}!"
+
+# *args and **kwargs — accept any number of arguments
+def log(level: str, *messages, **meta):
+    prefix = f"[{level.upper()}]"
+    print(prefix, *messages, meta)
+
+log("info", "User logged in", userId="u123", xp=50)
+# [INFO] User logged in {'userId': 'u123', 'xp': 50}
+
+# Unpacking
+def add3(a, b, c): return a + b + c
+values = [1, 2, 3]
+add3(*values)   # same as add3(1, 2, 3)
+
+# Lambda — single-expression anonymous function
+double = lambda x: x * 2
+sorted_list = sorted(items, key=lambda item: item.score)`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'First-class functions enable powerful patterns',
+          content: 'Functions in Python are objects — you can pass them as arguments, return them from other functions, and store them in data structures. This enables higher-order functions (map, filter, sorted with key=), decorators, and callbacks.',
+        },
+        {
+          type: 'text',
+          content: `## Modules and packages
+
+Every \`.py\` file is a **module**. A directory with \`__init__.py\` is a **package**. Import with \`import\` or \`from ... import\`.
+
+\`\`\`python
+# Import whole module
+import os
+os.path.join("dir", "file.txt")
+
+# Import specific names
+from pathlib import Path
+p = Path("data") / "config.json"
+
+# Import with alias
+import numpy as np
+arr = np.array([1, 2, 3])
+\`\`\`
+
+**Standard library highlights:**
+
+| Module | Use |
+|--------|-----|
+| \`os\`, \`pathlib\` | File system operations |
+| \`json\` | Parse/serialize JSON |
+| \`datetime\` | Date and time |
+| \`re\` | Regular expressions |
+| \`collections\` | defaultdict, Counter, deque |
+| \`functools\` | partial, lru_cache, reduce |
+| \`itertools\` | chain, islice, groupby |
+| \`typing\` | Type hints (List, Dict, Optional) |`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'python',
+          caption: 'Practical standard library usage',
+          code: `from collections import Counter, defaultdict
+from functools import lru_cache
+import json, datetime
+
+# Counter — count occurrences
+words = ["python", "is", "great", "python", "is"]
+counts = Counter(words)  # Counter({'python': 2, 'is': 2, 'great': 1})
+
+# defaultdict — no KeyError on missing keys
+graph = defaultdict(list)
+graph["A"].append("B")
+
+# lru_cache — memoize expensive functions
+@lru_cache(maxsize=None)
+def fibonacci(n: int) -> int:
+    if n < 2: return n
+    return fibonacci(n-1) + fibonacci(n-2)
+
+# json — serialise/deserialise
+config = json.loads('{"debug": true, "port": 3000}')
+json.dumps(config, indent=2)
+
+# datetime
+now = datetime.datetime.utcnow()
+expiry = now + datetime.timedelta(hours=1)`,
+        },
+        {
+          type: 'quiz',
+          title: 'Functions & Modules Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'py2-q1',
+              question: 'What does `@lru_cache(maxsize=None)` do to a function?',
+              options: [
+                'Makes it run faster by using multiple CPU cores',
+                'Caches the return value for each unique set of arguments',
+                'Limits the function to run at most once',
+                'Automatically retries the function on exceptions',
+              ],
+              correctIndex: 1,
+              explanation: 'lru_cache memoizes (caches) return values. On the first call with a given set of arguments, the function runs and the result is stored. Subsequent calls with the same arguments return the cached result instantly. maxsize=None means the cache can grow without limit.',
+            },
+            {
+              id: 'py2-q2',
+              question: 'What does `sorted(items, key=lambda x: x.score)` do?',
+              options: [
+                'Filters items where score is truthy',
+                'Sorts items ascending by their score attribute',
+                'Sorts items descending by score',
+                'Groups items by score',
+              ],
+              correctIndex: 1,
+              explanation: 'The key= argument to sorted() specifies a function to extract a comparison key from each item. `lambda x: x.score` extracts the score attribute. sorted() returns a new list sorted ascending by that key. Use `reverse=True` for descending.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── Python Lesson 3: Classes & Object-Oriented Python ───────────────────────
+  {
+    id: 'lesson-py-3',
+    courseId: 'course-python',
+    order: 2,
+    title: 'Object-Oriented Python',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-27T00:00:00.000Z',
+    updatedAt: '2025-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Classes and instances
+
+Python classes bundle data (attributes) and behaviour (methods). \`__init__\` is the constructor; \`self\` is the explicit reference to the instance.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'python',
+          caption: 'A well-structured Python class',
+          code: `from dataclasses import dataclass
+from typing import Optional
+from datetime import datetime
+
+@dataclass
+class UserProfile:
+    """Represents a Study Guild user."""
+    id: str
+    display_name: str
+    xp: int = 0
+    rank: str = "Initiate"
+    streak: int = 0
+    created_at: datetime = None
+
+    def __post_init__(self):
+        if self.created_at is None:
+            self.created_at = datetime.utcnow()
+
+    def award_xp(self, amount: int, reason: str) -> None:
+        self.xp += amount
+        self._update_rank()
+        print(f"{self.display_name} earned {amount} XP for {reason}!")
+
+    def _update_rank(self) -> None:
+        thresholds = [
+            (4000, "Grandmaster"), (2000, "Master"), (1000, "Expert"),
+            (600, "Adept"), (300, "Scholar"), (100, "Apprentice"),
+        ]
+        for threshold, rank in thresholds:
+            if self.xp >= threshold:
+                self.rank = rank
+                return
+        self.rank = "Initiate"
+
+    @property
+    def is_advanced(self) -> bool:
+        return self.xp >= 1000
+
+    def __repr__(self) -> str:
+        return f"UserProfile({self.display_name!r}, {self.rank}, {self.xp} XP)"`,
+        },
+        {
+          type: 'flowDiagram',
+          title: 'Class Inheritance in Python',
+          nodes: [
+            { id: 'base', label: 'Animal\n(base class)\n__init__, speak()', type: 'input', position: { x: 200, y: 20 } },
+            { id: 'dog', label: 'Dog(Animal)\nspeak() → "Woof"', position: { x: 60, y: 150 } },
+            { id: 'cat', label: 'Cat(Animal)\nspeak() → "Meow"', position: { x: 200, y: 150 } },
+            { id: 'guide', label: 'GuideDog(Dog)\nguide() method\nsuper().__init__()', position: { x: 60, y: 270 } },
+          ],
+          edges: [
+            { id: 'e1', source: 'base', target: 'dog', label: 'inherits' },
+            { id: 'e2', source: 'base', target: 'cat', label: 'inherits' },
+            { id: 'e3', source: 'dog', target: 'guide', label: 'inherits', animated: true },
+          ],
+        },
+        {
+          type: 'codeBlock',
+          language: 'python',
+          caption: 'Inheritance, super(), and dunder methods',
+          code: `class Animal:
+    def __init__(self, name: str):
+        self.name = name
+
+    def speak(self) -> str:
+        raise NotImplementedError
+
+    def __str__(self) -> str:
+        return f"{type(self).__name__}({self.name!r})"
+
+class Dog(Animal):
+    def speak(self) -> str:
+        return "Woof!"
+
+class GuideDog(Dog):
+    def __init__(self, name: str, owner: str):
+        super().__init__(name)    # call Dog.__init__ → Animal.__init__
+        self.owner = owner
+
+    def guide(self) -> str:
+        return f"{self.name} guides {self.owner} safely."
+
+# Polymorphism — same interface, different behaviour
+animals = [Dog("Rex"), Dog("Buddy"), GuideDog("Lassie", "Alice")]
+for a in animals:
+    print(a.speak())   # Woof! Woof! Woof!`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Prefer dataclasses for data containers',
+          content: '`@dataclass` auto-generates `__init__`, `__repr__`, and `__eq__` from field annotations. For simple data holders (DTOs, configs), dataclasses are much less boilerplate than hand-writing these methods. Use `frozen=True` to make instances immutable.',
+        },
+        {
+          type: 'quiz',
+          title: 'OOP Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'py3-q1',
+              question: 'What does `super().__init__(name)` do inside a subclass constructor?',
+              options: [
+                'Creates a new instance of the parent class',
+                'Calls the parent class\'s __init__ method to initialize inherited attributes',
+                'Copies all attributes from the parent class to this instance',
+                'Checks if the parent class is properly initialized',
+              ],
+              correctIndex: 1,
+              explanation: '`super()` returns a proxy to the parent class. Calling `super().__init__(name)` runs the parent\'s constructor, which sets up any attributes defined there (like `self.name`). Without this, the parent\'s initialization code doesn\'t run and inherited attributes won\'t be set.',
+            },
+            {
+              id: 'py3-q2',
+              question: 'What is the purpose of a `@property` decorator in Python?',
+              options: [
+                'Makes an attribute read-only across the whole class',
+                'Allows a method to be called without parentheses, like an attribute',
+                'Prevents external code from accessing the attribute',
+                'Automatically caches the method\'s return value',
+              ],
+              correctIndex: 1,
+              explanation: '`@property` lets you define a method that\'s accessed as if it were an attribute: `user.is_advanced` (no parentheses). This is useful for computed properties, lazy evaluation, and maintaining a clean API while adding validation or logic behind the scenes.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── Python Lesson 4: Idiomatic Python & Error Handling ──────────────────────
+  {
+    id: 'lesson-py-4',
+    courseId: 'course-python',
+    order: 3,
+    title: 'Idiomatic Python: Error Handling & Common Patterns',
+    estimatedMinutes: 14,
+    createdAt: '2025-05-27T00:00:00.000Z',
+    updatedAt: '2025-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Exception handling
+
+Python uses \`try / except / else / finally\`. Catch specific exceptions — never bare \`except:\`.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'python',
+          caption: 'Exception handling patterns',
+          code: `import json
+from pathlib import Path
+
+# Specific exceptions — always prefer over bare except
+try:
+    data = json.loads(raw_text)
+except json.JSONDecodeError as e:
+    print(f"Invalid JSON at position {e.pos}: {e.msg}")
+    data = {}
+
+# else: runs if no exception was raised
+# finally: always runs (cleanup)
+def read_config(path: str) -> dict:
+    file = None
+    try:
+        file = open(path)
+        return json.load(file)
+    except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Config file is invalid JSON: {e}") from e
+    finally:
+        if file:
+            file.close()   # always close the file
+
+# Context managers — the Pythonic way to handle resources
+def read_config_better(path: str) -> dict:
+    try:
+        with open(path) as f:   # auto-closes even on exception
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+# Custom exception
+class InsufficientXPError(ValueError):
+    def __init__(self, required: int, actual: int):
+        super().__init__(f"Need {required} XP, have {actual}")
+        self.required = required
+        self.actual = actual`,
+        },
+        {
+          type: 'text',
+          content: `## Pythonic patterns
+
+Writing idiomatic Python ("Pythonic" code) means using the language's features naturally rather than writing Python like it's Java or C.`,
+        },
+        {
+          type: 'codeBlock',
+          language: 'python',
+          caption: 'Pythonic patterns vs. non-idiomatic equivalents',
+          code: `# ❌ Non-Pythonic: manual index tracking
+for i in range(len(items)):
+    print(i, items[i])
+
+# ✅ Pythonic: enumerate
+for i, item in enumerate(items):
+    print(i, item)
+
+# ❌ Non-Pythonic: building dicts with loops
+result = {}
+for key, value in pairs:
+    result[key] = value
+
+# ✅ Pythonic: dict comprehension
+result = {key: value for key, value in pairs}
+
+# ❌ Non-Pythonic: checking length for emptiness
+if len(items) > 0:
+    ...
+
+# ✅ Pythonic: truthy/falsy
+if items:
+    ...
+
+# Context manager (with statement)
+with open("file.txt") as f:
+    content = f.read()
+
+# Walrus operator (Python 3.8+) — assign and check
+while chunk := f.read(1024):
+    process(chunk)
+
+# Unpacking
+first, *rest = [1, 2, 3, 4, 5]   # first=1, rest=[2,3,4,5]
+a, b = b, a                        # swap without temp variable`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'The Zen of Python — import this',
+          content: 'Run `import this` in a Python REPL to read the 19 guiding aphorisms. Key ones: "Explicit is better than implicit", "Simple is better than complex", "There should be one obvious way to do it", "Readability counts". Python values clarity and simplicity over cleverness.',
+        },
+        {
+          type: 'quiz',
+          title: 'Idiomatic Python Quiz',
+          passingScore: 67,
+          questions: [
+            {
+              id: 'py4-q1',
+              question: 'Why should you use `with open("file.txt") as f:` instead of manually calling `f.close()`?',
+              options: [
+                'The `with` statement is faster than manual close',
+                'The context manager guarantees the file is closed even if an exception occurs inside the block',
+                'You cannot manually close files in Python 3',
+                'The `with` statement buffers writes automatically',
+              ],
+              correctIndex: 1,
+              explanation: '`with` statements use context managers that guarantee `__exit__` (and therefore file close) runs even if an exception is raised inside the block. Manual `f.close()` after a line that throws means close never runs and the file descriptor leaks.',
+            },
+            {
+              id: 'py4-q2',
+              question: 'What does `except Exception:` catch that `except:` also catches but you should avoid?',
+              options: [
+                'Nothing — they are identical',
+                'SystemExit, KeyboardInterrupt, and GeneratorExit — which should usually propagate up',
+                'Only ValueError and TypeError',
+                'Only exceptions from third-party libraries',
+              ],
+              correctIndex: 1,
+              explanation: 'Bare `except:` catches everything including `KeyboardInterrupt` (Ctrl+C) and `SystemExit` — making your program hard to kill and preventing Python from exiting cleanly. `except Exception:` excludes these base exceptions. Best practice: catch the most specific exception type you can handle.',
             },
           ],
         },
@@ -15426,7 +16038,7 @@ export const MOCK_TAXONOMIES = [
   { l1: 'Mobile', l2: ['iOS', 'Android', 'React Native', 'Flutter'] },
   { l1: 'AI & ML', l2: ['Machine Learning', 'LLMs', 'Computer Vision', 'Data Science'] },
   { l1: 'Systems', l2: ['Linux', 'Networking', 'Performance', 'Architecture'] },
-  { l1: 'Engineering', l2: ['Design Patterns', 'Testing', 'Git', 'Code Quality'] },
+  { l1: 'Engineering', l2: ['Design Patterns', 'Testing', 'Git', 'Code Quality', 'Python'] },
 ];
 
 export interface LeaderboardEntry {

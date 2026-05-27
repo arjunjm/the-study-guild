@@ -130,6 +130,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
       { label: 'Testing',         l2: 'Testing' },
       { label: 'Git & Version Control', l2: 'Git' },
       { label: 'Code Quality',    l2: 'Code Quality' },
+      { label: 'Python',          l2: 'Python' },
     ],
   },
 ];
