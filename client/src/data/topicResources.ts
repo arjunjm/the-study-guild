@@ -133,6 +133,38 @@ const RESOURCES: Record<string, TopicResource[]> = {
     { title: 'Simon Willison\'s Weblog', type: 'blog', description: 'Simon\'s prolific, thoughtful writing on LLMs in practice — the best source for "what\'s new and what does it mean."', url: 'https://simonwillison.net' },
   ],
 
+  // ── AI & ML / Retrieval-Augmented Generation ──────────────────────────────
+  'AI & ML::RAG': [
+    { title: 'Azure AI Search - RAG overview', type: 'docs', description: 'Microsoft\'s overview of classic and agentic RAG patterns, including hybrid search, semantic ranking, grounding, security, and latency trade-offs.', url: 'https://learn.microsoft.com/en-us/azure/search/retrieval-augmented-generation-overview' },
+    { title: 'LlamaIndex Concepts', type: 'docs', description: 'High-level guide to the building blocks behind RAG and agentic applications: indexing, retrieval, workflows, tools, and orchestration.', url: 'https://docs.llamaindex.ai/en/stable/getting_started/concepts/' },
+    { title: 'RAGTruth', type: 'blog', description: 'ACL 2024 paper and benchmark dataset for measuring hallucinations in RAG outputs at both response and word level.', url: 'https://aclanthology.org/2024.acl-long.585/' },
+    { title: 'Ragas', type: 'tool', description: 'Open-source evaluation library for LLM and RAG applications, with metrics for faithfulness, context relevance, and answer quality.', url: 'https://docs.ragas.io/' },
+  ],
+
+  // ── AI & ML / AI Agents ───────────────────────────────────────────────────
+  'AI & ML::AI Agents': [
+    { title: 'Building Effective Agents', type: 'blog', description: 'Anthropic engineering guide on when to use agents, how to keep systems simple, and which workflow/agent patterns work in practice.', url: 'https://www.anthropic.com/engineering/building-effective-agents' },
+    { title: 'Anthropic Tool Use Docs', type: 'docs', description: 'Official guide to connecting Claude to external tools, including client tools, server tools, strict schemas, and the agentic loop.', url: 'https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/overview' },
+    { title: 'ReAct: Synergizing Reasoning and Acting', type: 'blog', description: 'The foundational paper behind many tool-using agent patterns: interleave reasoning traces with concrete actions and observations.', url: 'https://arxiv.org/abs/2210.03629' },
+    { title: 'LlamaIndex Agentic Applications', type: 'docs', description: 'Framework concepts for workflows, tools, memory, routing, orchestration, and reflection in LLM-powered agentic applications.', url: 'https://docs.llamaindex.ai/en/stable/getting_started/concepts/' },
+  ],
+
+  // ── AI & ML / LLM Evaluation ──────────────────────────────────────────────
+  'AI & ML::LLM Evaluation': [
+    { title: 'Ragas', type: 'tool', description: 'Evaluation toolkit for moving from vibe checks to repeatable experiments, metrics, and datasets for LLM and RAG systems.', url: 'https://docs.ragas.io/' },
+    { title: 'RAGTruth', type: 'blog', description: 'ACL 2024 benchmark corpus for trustworthy retrieval-augmented language models and hallucination detection.', url: 'https://aclanthology.org/2024.acl-long.585/' },
+    { title: 'Amazon Bedrock Guardrails', type: 'docs', description: 'AWS documentation for configurable safety, privacy, prompt-attack, and contextual grounding safeguards in generative AI apps.', url: 'https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html' },
+    { title: 'Evidently AI', type: 'tool', description: 'Open-source AI evaluation and monitoring platform for tests, metrics, hallucinations, edge cases, and production quality checks.', url: 'https://www.evidentlyai.com/' },
+  ],
+
+  // ── AI & ML / MLOps ───────────────────────────────────────────────────────
+  'AI & ML::MLOps': [
+    { title: 'Designing Machine Learning Systems', author: 'Chip Huyen', type: 'book', description: 'Practical book on data, evaluation, deployment, monitoring, feedback loops, and system design for ML in production.', url: 'https://www.oreilly.com/library/view/designing-machine-learning/9781098107956/' },
+    { title: 'Google Cloud MLOps Architecture', type: 'docs', description: 'Reference guide to CI/CD/CT, automation, monitoring, and operational practices for production machine learning systems.', url: 'https://cloud.google.com/architecture/mlops-continuous-delivery-and-automation-pipelines-in-machine-learning' },
+    { title: 'MLflow Documentation', type: 'docs', description: 'Open-source platform for experiment tracking, model packaging, model registry, deployment, and GenAI evaluation/tracing workflows.', url: 'https://mlflow.org/docs/latest/index.html' },
+    { title: 'Evidently AI', type: 'tool', description: 'Open-source monitoring and evaluation toolkit for data drift, model quality, AI tests, and production observability.', url: 'https://www.evidentlyai.com/' },
+  ],
+
   // ── Systems / Linux ──────────────────────────────────────────────────────
   'Systems::Linux': [
     { title: 'The Linux Command Line', author: 'William Shotts', type: 'book', description: 'Free online book that covers the command line thoroughly — from navigation to scripting. The best beginner-to-intermediate Linux book.', url: 'https://linuxcommand.org/tlcl.php' },

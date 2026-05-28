@@ -488,6 +488,82 @@ export const MOCK_COURSES: Course[] = [
     updatedAt: '2025-05-26T00:00:00.000Z',
   },
   {
+    id: 'course-rag',
+    title: 'Retrieval-Augmented Generation (RAG) in Practice',
+    description: 'Build grounded LLM applications that retrieve the right context, cite sources, and reduce hallucinations. Learn chunking, embeddings, hybrid search, reranking, evaluation, and production trade-offs.',
+    taxonomy: { l1: 'AI & ML', l2: 'RAG' },
+    difficulty: 'intermediate',
+    authorId: 'teacher-001',
+    authorName: 'The Guild',
+    published: true,
+    publishedAt: '2026-05-27T00:00:00.000Z',
+    tags: ['rag', 'llm', 'embeddings', 'vector-search', 'retrieval', 'ragas'],
+    lessonIds: ['lesson-rag-1', 'lesson-rag-2', 'lesson-rag-3'],
+    totalLessons: 3,
+    estimatedMinutes: 48,
+    ratingAverage: 4.9,
+    ratingCount: 36,
+    createdAt: '2026-05-27T00:00:00.000Z',
+    updatedAt: '2026-05-27T00:00:00.000Z',
+  },
+  {
+    id: 'course-ai-agents',
+    title: 'AI Agents & Tool Use',
+    description: 'Design agentic systems that can plan, call tools, observe results, and recover from failures. Focus on simple workflows, strict schemas, permissions, memory, and when not to use agents.',
+    taxonomy: { l1: 'AI & ML', l2: 'AI Agents' },
+    difficulty: 'intermediate',
+    authorId: 'teacher-001',
+    authorName: 'The Guild',
+    published: true,
+    publishedAt: '2026-05-27T00:00:00.000Z',
+    tags: ['agents', 'tool-use', 'function-calling', 'workflows', 'llm', 'automation'],
+    lessonIds: ['lesson-agents-1', 'lesson-agents-2', 'lesson-agents-3'],
+    totalLessons: 3,
+    estimatedMinutes: 46,
+    ratingAverage: 4.8,
+    ratingCount: 31,
+    createdAt: '2026-05-27T00:00:00.000Z',
+    updatedAt: '2026-05-27T00:00:00.000Z',
+  },
+  {
+    id: 'course-llm-evals',
+    title: 'LLM Evaluation & Guardrails',
+    description: 'Move beyond vibe checks. Learn to design evaluation sets, measure RAG faithfulness, catch hallucinations, add guardrails, and build a continuous quality loop for AI products.',
+    taxonomy: { l1: 'AI & ML', l2: 'LLM Evaluation' },
+    difficulty: 'intermediate',
+    authorId: 'teacher-001',
+    authorName: 'The Guild',
+    published: true,
+    publishedAt: '2026-05-27T00:00:00.000Z',
+    tags: ['llm-evaluation', 'guardrails', 'hallucinations', 'ragas', 'safety', 'quality'],
+    lessonIds: ['lesson-evals-1', 'lesson-evals-2', 'lesson-evals-3'],
+    totalLessons: 3,
+    estimatedMinutes: 45,
+    ratingAverage: 4.8,
+    ratingCount: 28,
+    createdAt: '2026-05-27T00:00:00.000Z',
+    updatedAt: '2026-05-27T00:00:00.000Z',
+  },
+  {
+    id: 'course-mlops-ai',
+    title: 'MLOps for AI Applications',
+    description: 'Learn the production discipline behind ML and GenAI systems: experiment tracking, reproducible pipelines, deployment, monitoring, drift detection, evaluation, and rollback strategies.',
+    taxonomy: { l1: 'AI & ML', l2: 'MLOps' },
+    difficulty: 'intermediate',
+    authorId: 'teacher-001',
+    authorName: 'The Guild',
+    published: true,
+    publishedAt: '2026-05-27T00:00:00.000Z',
+    tags: ['mlops', 'monitoring', 'mlflow', 'deployment', 'drift', 'observability'],
+    lessonIds: ['lesson-mlops-1', 'lesson-mlops-2', 'lesson-mlops-3'],
+    totalLessons: 3,
+    estimatedMinutes: 47,
+    ratingAverage: 4.7,
+    ratingCount: 24,
+    createdAt: '2026-05-27T00:00:00.000Z',
+    updatedAt: '2026-05-27T00:00:00.000Z',
+  },
+  {
     id: 'course-backend',
     title: 'Node.js Backend Development',
     description: 'Build production Node.js servers from scratch. HTTP internals, Express patterns, middleware, async error handling, database integration, and deployment patterns.',
@@ -5433,7 +5509,7 @@ COMMIT;
           type: 'text',
           content: `## Isolation levels: the trade-off between safety and performance
 
-Stricter isolation prevents more anomalies but creates more lock contention. PostgreSQL\'s default is "Read Committed"; MySQL\'s default is "Repeatable Read".`,
+Stricter isolation prevents more anomalies but creates more lock contention. PostgreSQL's default is "Read Committed"; MySQL's default is "Repeatable Read".`,
         },
         {
           type: 'callout',
@@ -20098,6 +20174,380 @@ function connect(url: string) {
     },
   },
 
+  // ── Retrieval-Augmented Generation in Practice ─────────────────────────────
+  {
+    id: 'lesson-rag-1',
+    courseId: 'course-rag',
+    order: 0,
+    title: 'Why RAG exists',
+    estimatedMinutes: 14,
+    createdAt: '2026-05-27T00:00:00.000Z',
+    updatedAt: '2026-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## The problem\n\nLarge language models are fluent, but their answers are only as reliable as the information available in their context. If the model was trained before your docs changed, or if your private knowledge was never in training data, it has to guess.\n\nRetrieval-Augmented Generation fixes that by adding a retrieval step before generation:\n\n1. Convert the user question into a search query.\n2. Retrieve relevant documents or chunks.\n3. Put the best evidence into the model context.\n4. Ask the model to answer from that evidence and cite it.\n\nA good RAG system is not just a vector database. It is a retrieval, ranking, prompting, evaluation, and governance system.`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Rule of thumb',
+          content: 'Use RAG when the answer should be grounded in a changing or private knowledge base. Fine-tuning is better when you need to change style, format, or task behavior rather than inject fresh facts.',
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'rag1-q1',
+              question: 'What is the core purpose of RAG?',
+              options: [
+                'To make the language model bigger',
+                'To ground generation in retrieved evidence at request time',
+                'To permanently store documents inside model weights',
+                'To eliminate the need for evaluation',
+              ],
+              correctIndex: 1,
+              explanation: 'RAG retrieves relevant external context at request time, then asks the model to answer from that context.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-rag-2',
+    courseId: 'course-rag',
+    order: 1,
+    title: 'Chunking, embeddings, and retrieval',
+    estimatedMinutes: 17,
+    createdAt: '2026-05-27T00:00:00.000Z',
+    updatedAt: '2026-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Indexing pipeline\n\nA practical RAG index usually starts with ingestion: collect documents, clean them, split them into chunks, attach metadata, compute embeddings, then store those embeddings with the original text.\n\nChunking is a major quality lever. Chunks that are too small lose context; chunks that are too large waste tokens and dilute relevance. Metadata such as product, version, date, owner, and access control often matters as much as the text.\n\nRetrieval can combine multiple signals:\n\n- Keyword search for exact terms and IDs.\n- Vector search for semantic similarity.\n- Hybrid search for both.\n- Reranking to reorder the top candidates before generation.`,
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'Access control is part of retrieval',
+          content: 'If a user is not allowed to read a source document, that document must not be retrieved into the LLM context. Security filtering belongs before generation, not after.',
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'rag2-q1',
+              question: 'Why is hybrid search useful in RAG?',
+              options: [
+                'It combines exact keyword matching with semantic similarity',
+                'It removes the need for embeddings',
+                'It guarantees perfect citations',
+                'It trains the model during every query',
+              ],
+              correctIndex: 0,
+              explanation: 'Hybrid retrieval can catch exact identifiers and terminology while still finding semantically related passages.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-rag-3',
+    courseId: 'course-rag',
+    order: 2,
+    title: 'Evaluate and ship RAG safely',
+    estimatedMinutes: 17,
+    createdAt: '2026-05-27T00:00:00.000Z',
+    updatedAt: '2026-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## What to measure\n\nRAG quality has multiple failure modes. The retriever can miss the right document. The reranker can bury it. The generator can ignore evidence, over-cite weak evidence, or make unsupported claims.\n\nUseful evaluation dimensions include:\n\n- Retrieval recall: did we fetch the source that contains the answer?\n- Context precision: are the retrieved chunks relevant or noisy?\n- Faithfulness: does the final answer stay supported by the context?\n- Answer correctness: is the answer useful and complete?\n- Refusal quality: does the system say it does not know when evidence is missing?\n\nProduction RAG needs regression tests, logged queries, traceable source IDs, and human review for high-risk domains.`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Start with a golden set',
+          content: 'Collect 30-100 real questions with expected source documents and acceptable answers. This gives you a baseline before tuning chunking, retrieval, reranking, or prompts.',
+        },
+      ],
+    },
+  },
+
+  // ── AI Agents & Tool Use ───────────────────────────────────────────────────
+  {
+    id: 'lesson-agents-1',
+    courseId: 'course-ai-agents',
+    order: 0,
+    title: 'Workflows before agents',
+    estimatedMinutes: 14,
+    createdAt: '2026-05-27T00:00:00.000Z',
+    updatedAt: '2026-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Agentic systems are not magic\n\nA workflow follows a predefined path: classify, retrieve, draft, review, send. An agent decides the path dynamically: inspect the task, choose tools, observe results, and decide the next action.\n\nThe most reliable production systems often start as workflows. You add agentic behavior only where the problem genuinely needs flexible planning or tool choice.\n\nAsk three questions before building an agent:\n\n1. Does the task require multiple uncertain steps?\n2. Can failures be detected and recovered from?\n3. Are the available tools safe, scoped, and observable?`,
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'agents1-q1',
+              question: 'When should you prefer a deterministic workflow over a fully dynamic agent?',
+              options: [
+                'When the task path is known and reliability matters',
+                'When you want more unpredictable behavior',
+                'When there are no tools involved',
+                'When evaluation is impossible',
+              ],
+              correctIndex: 0,
+              explanation: 'If the path is known, a workflow is easier to test, debug, and secure than an open-ended agent.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-agents-2',
+    courseId: 'course-ai-agents',
+    order: 1,
+    title: 'Tool contracts and the agent loop',
+    estimatedMinutes: 16,
+    createdAt: '2026-05-27T00:00:00.000Z',
+    updatedAt: '2026-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## The loop\n\nA tool-using agent usually follows a loop: think about the task, choose a tool, emit a structured tool call, execute it outside the model, feed the result back, then continue or stop.\n\nTool schemas are contracts. Names, descriptions, required fields, enums, and error messages all influence whether the model calls tools correctly.\n\nGood tool design is boring and explicit:\n\n- Narrow permissions.\n- Small focused tools.\n- Clear input schemas.\n- Typed outputs.\n- Errors that explain how to recover.\n- Logs that connect each tool call to a user request.`,
+        },
+        {
+          type: 'callout',
+          variant: 'danger',
+          title: 'Never let the model execute privileged actions unchecked',
+          content: 'The model can propose an action, but your application owns authorization, validation, rate limits, audit logs, and human approval for sensitive operations.',
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-agents-3',
+    courseId: 'course-ai-agents',
+    order: 2,
+    title: 'Memory, observability, and safety',
+    estimatedMinutes: 16,
+    createdAt: '2026-05-27T00:00:00.000Z',
+    updatedAt: '2026-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## What production agents need\n\nMemory should be deliberate. Short-term memory belongs in the current context; long-term memory should be stored, retrieved, and updated through explicit rules.\n\nObservability is the difference between a demo and a product. Trace every prompt, tool call, tool result, decision, retry, and final answer. Without traces, debugging an agent becomes guesswork.\n\nSafety controls include budget limits, tool allowlists, scoped credentials, sandboxing, dry runs, user confirmation, output validation, and escalation to a human when confidence is low.`,
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'agents3-q1',
+              question: 'Why are traces important for agents?',
+              options: [
+                'They make the model deterministic',
+                'They let teams inspect prompts, tool calls, observations, retries, and decisions',
+                'They replace permission checks',
+                'They prevent all hallucinations',
+              ],
+              correctIndex: 1,
+              explanation: 'Agent failures often happen across several steps. Traces make those steps visible and debuggable.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ── LLM Evaluation & Guardrails ────────────────────────────────────────────
+  {
+    id: 'lesson-evals-1',
+    courseId: 'course-llm-evals',
+    order: 0,
+    title: 'From vibe checks to eval sets',
+    estimatedMinutes: 14,
+    createdAt: '2026-05-27T00:00:00.000Z',
+    updatedAt: '2026-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Why evals matter\n\nLLM apps fail differently from traditional software. Outputs are probabilistic, prompts drift, retrieval changes, models update, and edge cases hide in natural language.\n\nAn evaluation set is a curated collection of inputs, expected behavior, and scoring rules. Start with real user questions, known failure cases, adversarial prompts, and representative happy paths.\n\nUseful eval dimensions include task success, factuality, helpfulness, format compliance, refusal behavior, toxicity, privacy leakage, latency, and cost.`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Keep evals small at first',
+          content: 'A 50-case evaluation set that runs on every prompt change is more useful than a 5,000-case benchmark nobody runs.',
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-evals-2',
+    courseId: 'course-llm-evals',
+    order: 1,
+    title: 'Faithfulness, hallucinations, and RAG metrics',
+    estimatedMinutes: 16,
+    createdAt: '2026-05-27T00:00:00.000Z',
+    updatedAt: '2026-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## RAG-specific evaluation\n\nA RAG answer can be fluent and still wrong. It might cite irrelevant context, make unsupported claims, or miss the document that actually answers the question.\n\nSeparate retrieval metrics from generation metrics:\n\n- Did retrieval return the source of truth?\n- Were the retrieved chunks relevant?\n- Did the answer only use supported evidence?\n- Did citations point to the correct chunks?\n- Did the model refuse when evidence was missing?\n\nTools like Ragas and datasets like RAGTruth are useful because they make these failure modes explicit.`,
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'evals2-q1',
+              question: 'What does faithfulness measure in a RAG answer?',
+              options: [
+                'Whether the answer sounds confident',
+                'Whether the answer is supported by the retrieved context',
+                'Whether the answer is short',
+                'Whether the vector database is fast',
+              ],
+              correctIndex: 1,
+              explanation: 'Faithfulness asks whether claims in the generated answer are grounded in the provided evidence.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-evals-3',
+    courseId: 'course-llm-evals',
+    order: 2,
+    title: 'Guardrails and continuous quality',
+    estimatedMinutes: 15,
+    createdAt: '2026-05-27T00:00:00.000Z',
+    updatedAt: '2026-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Guardrails are layered\n\nGuardrails are not one checkbox. They are a set of controls before, during, and after generation.\n\nCommon layers include input validation, prompt-injection detection, PII redaction, retrieval access control, output schema validation, safety filters, grounding checks, and human approval for high-impact actions.\n\nContinuous quality means you log failures, add them to the eval set, compare releases, monitor drift, and roll back when quality drops.`,
+        },
+        {
+          type: 'callout',
+          variant: 'warning',
+          title: 'Guardrails reduce risk; they do not prove safety',
+          content: 'High-risk domains still need domain experts, explicit policies, audits, and human review. Treat automated checks as defense in depth.',
+        },
+      ],
+    },
+  },
+
+  // ── MLOps for AI Applications ──────────────────────────────────────────────
+  {
+    id: 'lesson-mlops-1',
+    courseId: 'course-mlops-ai',
+    order: 0,
+    title: 'Reproducible experiments',
+    estimatedMinutes: 15,
+    createdAt: '2026-05-27T00:00:00.000Z',
+    updatedAt: '2026-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## What to track\n\nMLOps starts with reproducibility. If a model performs well, you need to know exactly which data, code, features, parameters, environment, and evaluation set produced it.\n\nTrack:\n\n- Dataset versions and feature definitions.\n- Training code commit SHA.\n- Hyperparameters and random seeds.\n- Metrics on train, validation, and test sets.\n- Model artifacts and dependencies.\n- Approval status and deployment target.\n\nTools like MLflow exist because spreadsheets and screenshots do not scale.`,
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-mlops-2',
+    courseId: 'course-mlops-ai',
+    order: 1,
+    title: 'Deployment and monitoring',
+    estimatedMinutes: 16,
+    createdAt: '2026-05-27T00:00:00.000Z',
+    updatedAt: '2026-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Shipping is not the finish line\n\nA deployed model is part of a larger product system. You need versioned artifacts, repeatable deployment, health checks, latency budgets, rollback plans, and monitoring.\n\nFor predictive ML, watch input drift, prediction drift, performance on labeled feedback, missing features, and data quality. For LLM apps, also monitor prompt versions, retrieval quality, tool errors, safety events, cost, and user feedback.\n\nCanary deployments and shadow traffic help you compare behavior before exposing a model to everyone.`,
+        },
+        {
+          type: 'quiz',
+          passingScore: 70,
+          questions: [
+            {
+              id: 'mlops2-q1',
+              question: 'Why is monitoring different for ML systems than ordinary web services?',
+              options: [
+                'ML systems never need latency metrics',
+                'Model quality can degrade even when the service is technically healthy',
+                'Models cannot be rolled back',
+                'Monitoring only matters during training',
+              ],
+              correctIndex: 1,
+              explanation: 'The API can return 200s while predictions become worse because data, user behavior, or upstream systems changed.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'lesson-mlops-3',
+    courseId: 'course-mlops-ai',
+    order: 2,
+    title: 'Continuous evaluation for AI products',
+    estimatedMinutes: 16,
+    createdAt: '2026-05-27T00:00:00.000Z',
+    updatedAt: '2026-05-27T00:00:00.000Z',
+    content: {
+      schemaVersion: '1',
+      sections: [
+        {
+          type: 'text',
+          content: `## Closing the loop\n\nProduction AI systems improve through feedback loops. Logs become examples. Examples become evals. Evals gate releases. Release results update dashboards. Failures become new tests.\n\nA mature AI delivery loop includes:\n\n- Offline evaluation before release.\n- Online monitoring after release.\n- Human review for sampled and high-risk cases.\n- Incident review when quality drops.\n- A path from user feedback to training data or prompts.\n\nMLOps is the discipline of making that loop reliable, observable, and repeatable.`,
+        },
+        {
+          type: 'callout',
+          variant: 'tip',
+          title: 'Treat prompts like production code',
+          content: 'Version prompts, test prompts, review prompts, and roll back prompt changes. Prompt changes can be as risky as model or code changes.',
+        },
+      ],
+    },
+  },
+
 ];
 
 export function createMockCourse(data: Partial<Course>): Course {
@@ -20152,7 +20602,7 @@ export const MOCK_TAXONOMIES = [
   { l1: 'Cloud', l2: ['Azure', 'AWS', 'Kubernetes', 'CI/CD', 'Docker'] },
   { l1: 'Databases', l2: ['SQL', 'NoSQL', 'Data Modeling', 'Performance'] },
   { l1: 'Mobile', l2: ['iOS', 'Android', 'React Native', 'Flutter'] },
-  { l1: 'AI & ML', l2: ['Machine Learning', 'LLMs', 'Computer Vision', 'Data Science'] },
+  { l1: 'AI & ML', l2: ['Machine Learning', 'LLMs', 'RAG', 'AI Agents', 'LLM Evaluation', 'MLOps', 'Computer Vision', 'Data Science'] },
   { l1: 'Systems', l2: ['Linux', 'Networking', 'Performance', 'Architecture'] },
   { l1: 'Engineering', l2: ['Design Patterns', 'Testing', 'Git', 'Code Quality', 'Python'] },
 ];
