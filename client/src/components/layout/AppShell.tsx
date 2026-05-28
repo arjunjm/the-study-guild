@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation, Link } from 'react-router-do
 import { useQuery } from '@tanstack/react-query';
 import {
   Home, BookOpen, GraduationCap, Sword, Flame, Trophy,
-  ChevronDown, ChevronRight, LogOut, User, Shield, Search, X, Clock, Keyboard, PenLine, Route,
+  ChevronDown, ChevronRight, LogOut, User, Shield, Search, X, Clock, Keyboard, PenLine, MessageCircleQuestion, Route,
 } from 'lucide-react';
 import { apiClient } from '../../lib/apiClient';
 import { useAuth } from '../../contexts/AuthContext';
@@ -14,6 +14,7 @@ import type { UserProfile, Course } from '@study-guild/shared';
 const NAV = [
   { to: '/',            label: 'Home',        icon: Home,          end: true },
   { to: '/courses',     label: 'Browse',      icon: BookOpen },
+  { to: '/ask',         label: 'Ask Guild',   icon: MessageCircleQuestion },
   { to: '/paths',       label: 'Paths',       icon: Route },
   { to: '/leaderboard', label: 'Leaderboard', icon: Trophy },
   { to: '/teach',       label: 'Teach',       icon: GraduationCap },
@@ -340,6 +341,7 @@ function ProfileDropdown({ user }: { user: UserProfile }) {
 const QUICK_ACTIONS = [
   { label: 'Home', path: '/', icon: Home },
   { label: 'Browse', path: '/courses', icon: BookOpen },
+  { label: 'Ask', path: '/ask', icon: MessageCircleQuestion },
   { label: 'Paths', path: '/paths', icon: Route },
   { label: 'Leaderboard', path: '/leaderboard', icon: Trophy },
   { label: 'Profile', path: '/profile', icon: User },
@@ -627,6 +629,7 @@ function MobileNav() {
   const items = [
     { to: '/',            label: 'Home',    icon: Home,          end: true },
     { to: '/courses',     label: 'Browse',  icon: BookOpen },
+    { to: '/ask',         label: 'Ask',     icon: MessageCircleQuestion },
     { to: '/paths',       label: 'Paths',   icon: Route },
     { to: '/leaderboard', label: 'Ranks',   icon: Trophy },
     { to: '/teach',       label: 'Teach',   icon: GraduationCap },
