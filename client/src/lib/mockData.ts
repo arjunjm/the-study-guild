@@ -1,5 +1,6 @@
 ﻿import { evaluateAchievementIds, getAchievementDefinition, type UserProfile, type Course, type Lesson, type UserCourseProgress } from '@study-guild/shared';
 import { computeRank, XP_REWARDS } from './xpUtils';
+import { applyLessonDepthEnhancements } from './lessonDepthEnhancements';
 
 // ---------------------------------------------------------------------------
 // Mutable mock user state — simulates a real server accumulating XP
@@ -20550,6 +20551,8 @@ function connect(url: string) {
   },
 
 ];
+
+applyLessonDepthEnhancements(MOCK_COURSES, MOCK_LESSONS);
 
 export function createMockCourse(data: Partial<Course>): Course {
   const course: Course = {
