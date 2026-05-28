@@ -37,6 +37,7 @@ jobs:
         run: |
           node server/scripts/prepare-deploy.mjs
           npm install --omit=dev --prefix server/deploy
+          node server/scripts/finalize-deploy.mjs
 
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
