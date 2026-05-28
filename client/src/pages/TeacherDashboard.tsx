@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Eye, Edit, BookOpen, GraduationCap, FileText, BarChart2, Star, ExternalLink } from 'lucide-react';
+import { Plus, Eye, Edit, BookOpen, GraduationCap, FileText, BarChart2, Star, ExternalLink, WandSparkles, ArrowRight } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import type { Course } from '@study-guild/shared';
 
@@ -120,13 +120,21 @@ function MyCoursesDashboard({
 
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-bold text-slate-900">My Courses</h1>
-        <button
-          onClick={onCreate}
-          disabled={creating}
-          className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60 transition"
-        >
-          <Plus className="h-4 w-4" /> {creating ? 'Creating…' : 'New course'}
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/teach/assistant"
+            className="flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-700 transition hover:bg-violet-100"
+          >
+            <WandSparkles className="h-4 w-4" /> Plan with assistant
+          </Link>
+          <button
+            onClick={onCreate}
+            disabled={creating}
+            className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60 transition"
+          >
+            <Plus className="h-4 w-4" /> {creating ? 'Creating…' : 'New course'}
+          </button>
+        </div>
       </div>
 
       {isLoading && <p className="text-slate-400">Loading courses…</p>}
@@ -136,12 +144,21 @@ function MyCoursesDashboard({
           <BookOpen className="mx-auto mb-3 h-8 w-8 text-slate-300" />
           <p className="mb-1 font-medium text-slate-600">No courses yet</p>
           <p className="mb-6 text-sm text-slate-400">Create your first course and start sharing your knowledge with the Guild.</p>
-          <button
-            onClick={onCreate}
-            className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-semibold text-white hover:bg-violet-500 transition"
-          >
-            Create first course
-          </button>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link
+              to="/teach/assistant"
+              className="inline-flex items-center gap-2 rounded-lg border border-violet-200 bg-white px-5 py-2 text-sm font-semibold text-violet-700 transition hover:bg-violet-50"
+            >
+              Plan with assistant
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <button
+              onClick={onCreate}
+              className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-semibold text-white hover:bg-violet-500 transition"
+            >
+              Create blank course
+            </button>
+          </div>
         </div>
       )}
 
