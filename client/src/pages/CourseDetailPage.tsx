@@ -2,12 +2,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Share2, Star, Clock, CheckCircle, Circle, ChevronLeft, BookOpen, ArrowRight, Code2, HelpCircle, GitFork, Award, Download, X, ExternalLink, Bookmark } from 'lucide-react';
+import { Share2, Star, Clock, CheckCircle, Circle, ChevronLeft, BookOpen, ArrowRight, Code2, HelpCircle, GitFork, Award, Download, X, ExternalLink, Bookmark, Flag, Sparkles, Zap } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { TAXONOMY } from '../data/taxonomy';
 import { cn } from '../lib/utils';
 import { useToast } from '../contexts/ToastContext';
 import { getTopicResources, RESOURCE_TYPE_LABELS, RESOURCE_TYPE_COLORS } from '../data/topicResources';
+import { XP_REWARDS } from '../lib/xpUtils';
 import type { Course, Lesson, UserCourseProgress, UserProfile } from '@study-guild/shared';
 
 export default function CourseDetailPage() {
@@ -87,7 +88,7 @@ export default function CourseDetailPage() {
       const next = [{ id: course.id, title: course.title, l1: course.taxonomy.l1, l2: course.taxonomy.l2, difficulty: course.difficulty }, ...prev.filter(c => c.id !== course.id)].slice(0, 6);
       localStorage.setItem(key, JSON.stringify(next));
     } catch { /* ignore */ }
-  }, [course?.id]);
+  }, [course]);
 
   if (!course) return <CourseDetailSkeleton />;
 
@@ -288,6 +289,15 @@ export default function CourseDetailPage() {
           </div>
         )}
 
+        {lessons && lessons.length > 0 && (
+          <CourseQuestMap
+            lessons={lessons}
+            courseId={courseId!}
+            completedLessonIds={progress?.completedLessonIds ?? []}
+            currentLessonId={firstIncomplete?.id}
+          />
+        )}
+ 
         {/* What you'll learn */}
         {lessons && lessons.length >= 4 && (
           <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -546,6 +556,108 @@ export default function CourseDetailPage() {
       </div>
     )}
     </>
+  );
+}
+
+function CourseQuestMap({ lessons, courseId, completedLessonIds, currentLessonId }: {
+  lessons: Lesson[];
+  courseId: string;
+  completedLessonIds: string[];
+  currentLessonId?: string;
+}) {
+  const completed = new Set(completedLessonIds);
+  const sortedLessons = [...lessons].sort((a, b) => a.order - b.order);
+  const completedCount = sortedLessons.filter(lesson => completed.has(lesson.id)).length;
+  const totalMinutes = sortedLessons.reduce((sum, lesson) => sum + lesson.estimatedMinutes, 0);
+
+  return (
+    <section className="mb-8 overflow-hidden rounded-3xl border border-violet-200 bg-gradient-to-br from-slate-950 via-slate-900 to-violet-950 p-5 text-white shadow-xl shadow-violet-100">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="mb-1 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-violet-200">
+            <Flag className="h-3.5 w-3.5 text-amber-300" />
+            Quest route
+          </p>
+          <h2 className="font-display text-2xl font-bold">Your learning path</h2>
+          <p className="mt-1 text-sm text-slate-400">
+            {completedCount}/{sortedLessons.length} checkpoints cleared · {totalMinutes} min route · +{sortedLessons.length * XP_REWARDS.lesson_completed} base XP
+          </p>
+        </div>
+        <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-right backdrop-blur">
+          <p className="text-2xl font-bold text-white">{Math.round((completedCount / sortedLessons.length) * 100)}%</p>
+          <p className="text-xs text-slate-400">route complete</p>
+        </div>
+      </div>
+
+      <div className="relative space-y-3">
+        <div className="absolute bottom-8 left-5 top-8 w-px bg-gradient-to-b from-amber-300 via-violet-400 to-slate-700" />
+        {sortedLessons.map((lesson, index) => {
+          const done = completed.has(lesson.id);
+          const current = currentLessonId === lesson.id;
+          const hasQuiz = lesson.content.sections.some(s => s.type === 'quiz');
+          const hasCode = lesson.content.sections.some(s => s.type === 'codeBlock');
+          const hasDiagram = lesson.content.sections.some(s => s.type === 'flowDiagram');
+          const state = done ? 'Cleared' : current ? 'Current quest' : 'Unlocked';
+
+          return (
+            <Link
+              key={lesson.id}
+              to={`/courses/${courseId}/lessons/${lesson.id}`}
+              className={cn(
+                'group relative flex gap-4 rounded-2xl border p-4 transition-all duration-200',
+                done
+                  ? 'border-emerald-400/25 bg-emerald-400/10 hover:border-emerald-300/50'
+                  : current
+                  ? 'border-amber-300/40 bg-amber-300/10 shadow-lg shadow-amber-950/20 hover:border-amber-200/70'
+                  : 'border-white/10 bg-white/[0.06] hover:border-violet-300/40 hover:bg-white/[0.09]'
+              )}
+            >
+              <span className={cn(
+                'relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-sm font-bold',
+                done
+                  ? 'border-emerald-300 bg-emerald-400 text-slate-950'
+                  : current
+                  ? 'border-amber-200 bg-amber-300 text-slate-950 animate-rank-glow'
+                  : 'border-white/15 bg-slate-950 text-slate-400'
+              )}>
+                {done ? <CheckCircle className="h-5 w-5" /> : current ? <Sparkles className="h-5 w-5" /> : String(index + 1).padStart(2, '0')}
+              </span>
+
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <span className={cn(
+                    'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+                    done ? 'bg-emerald-300/15 text-emerald-200' : current ? 'bg-amber-300/15 text-amber-200' : 'bg-white/10 text-slate-400'
+                  )}>
+                    {state}
+                  </span>
+                  <span className="text-xs text-slate-500">Checkpoint {index + 1}</span>
+                </div>
+                <h3 className="truncate text-sm font-semibold text-white transition group-hover:text-amber-100">{lesson.title}</h3>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                  <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {lesson.estimatedMinutes} min</span>
+                  <span className="flex items-center gap-1 text-amber-200"><Zap className="h-3 w-3" /> +{XP_REWARDS.lesson_completed} XP</span>
+                  {hasQuiz && <RouteBadge icon={HelpCircle} label="Quiz" />}
+                  {hasCode && <RouteBadge icon={Code2} label="Code" />}
+                  {hasDiagram && <RouteBadge icon={GitFork} label="Diagram" />}
+                </div>
+              </div>
+
+              <ArrowRight className="mt-3 h-4 w-4 shrink-0 text-slate-600 opacity-0 transition group-hover:text-amber-200 group-hover:opacity-100" />
+            </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function RouteBadge({ icon: Icon, label }: { icon: typeof HelpCircle; label: string }) {
+  return (
+    <span className="flex items-center gap-1 rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-slate-300">
+      <Icon className="h-3 w-3" />
+      {label}
+    </span>
   );
 }
 
