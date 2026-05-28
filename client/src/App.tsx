@@ -8,6 +8,7 @@ const LoginPage        = lazy(() => import('./pages/LoginPage'));
 const HomePage         = lazy(() => import('./pages/HomePage'));
 const CoursesPage      = lazy(() => import('./pages/CoursesPage'));
 const CourseDetailPage = lazy(() => import('./pages/CourseDetailPage'));
+const AskGuildPage     = lazy(() => import('./pages/AskGuildPage'));
 const LessonPage       = lazy(() => import('./pages/LessonPage'));
 const ProfilePage      = lazy(() => import('./pages/ProfilePage'));
 const TeacherDashboard = lazy(() => import('./pages/TeacherDashboard'));
@@ -39,6 +40,7 @@ export default function App() {
           <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
             <Route index element={<HomePage />} />
             <Route path="courses" element={<CoursesPage />} />
+            <Route path="ask" element={<AskGuildPage />} />
             <Route path="courses/:courseId" element={<CourseDetailPage />} />
             <Route path="courses/:courseId/lessons/:lessonId" element={<LessonPage />} />
             <Route path="profile" element={<ProfilePage />} />
