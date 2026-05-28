@@ -9,7 +9,6 @@ This document tracks major product work that has landed and larger ideas parked 
 | Product identity | Guild Hall dashboard with rank, XP, daily contract, recommendations, achievements, leaderboard, and topic panels | Merged |
 | Course discovery | Quest Board course browser with contract-style cards, stronger filters, XP potential, progress, and CTAs | Merged |
 | Rewards | Polished lesson-completion reward moments with richer XP ledger, confetti, and achievement display | Merged |
-| Course pages | Course quest route map showing lesson checkpoints, locked/current/cleared states, lesson features, and XP estimates | Merged |
 | Content | Additional AI & ML courses for RAG, AI Agents, LLM Evaluation, and MLOps | Merged |
 | Content resources | Further reading groups for new AI & ML topics | Merged |
 | Learning paths | Skill-tree style paths for AI Engineer, Backend Engineer, Cloud Developer, and Security Foundations | Merged |
@@ -23,6 +22,7 @@ This document tracks major product work that has landed and larger ideas parked 
 | Idea | Why it matters | Notes |
 |---|---|---|
 | Floating Guild Guide assistant avatar | High-engagement companion that can answer questions, suggest next steps, explain lessons, and celebrate progress | Start with local deterministic answers, then add server-side RAG and Azure OpenAI later |
+| Course-level quest route | Could be useful if it adds real progression mechanics beyond the lesson list | Removed for now because it duplicated the course content table; revisit only with milestone gates, boss checks, side quests, locked states, or rewards |
 | Real-time assistant streaming | Makes the Guild Guide feel alive and responsive | Prefer Server-Sent Events before WebSockets unless bidirectional tasks are needed |
 | Assistant memory and preferences | Personalizes guidance around goals, weak areas, and current path | Needs user controls for viewing and forgetting memory |
 | Course review/moderation workflow | Important before teacher-generated content scales | Add draft/review/published states, admin approval, version history, and moderation |
