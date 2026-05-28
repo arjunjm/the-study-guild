@@ -1,11 +1,28 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Search, Star, Clock, X, BookOpen, ChevronRight, Bookmark, History } from 'lucide-react';
+import {
+  BookOpen,
+  Bookmark,
+  ChevronRight,
+  Clock,
+  Compass,
+  Flame,
+  History,
+  ScrollText,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  Sword,
+  X,
+  Zap,
+} from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
 import { cn } from '../lib/utils';
 import { TAXONOMY } from '../data/taxonomy';
 import { useAuth } from '../contexts/AuthContext';
+import { XP_REWARDS } from '../lib/xpUtils';
 import type { Course, UserCourseProgress } from '@study-guild/shared';
 
 const DIFFICULTY_STYLES = {
@@ -93,7 +110,7 @@ export default function CoursesPage() {
       }, { replace: true });
     }, 350);
     return () => clearTimeout(t);
-  }, [search]);
+  }, [search, setSearchParams]);
 
   function setDifficulty(d: string) {
     setSearchParams(prev => {
@@ -202,6 +219,19 @@ export default function CoursesPage() {
   const totalHours = allCourses
     ? Math.round(allCourses.reduce((s, c) => s + (c.estimatedMinutes ?? 0), 0) / 60)
     : 0;
+  const activeQuestCount = allCourses
+    ? allCourses.filter(c => {
+        const p = progressMap.get(c.id);
+        return p && p.completed > 0 && p.completed < c.totalLessons;
+      }).length
+    : 0;
+  const masteredQuestCount = allCourses
+    ? allCourses.filter(c => {
+        const p = progressMap.get(c.id);
+        return p && c.totalLessons > 0 && p.completed >= c.totalLessons;
+      }).length
+    : 0;
+  const hotQuestCount = allCourses?.filter(c => c.ratingAverage >= 4.5 && c.ratingCount >= 30).length ?? 0;
 
   const sortedCourses = courses ? [...courses].sort((a, b) => {
     if (sortBy === 'rating') return (b.ratingAverage ?? 0) - (a.ratingAverage ?? 0);
@@ -219,22 +249,57 @@ export default function CoursesPage() {
   })();
 
   return (
-    <div className="min-h-full px-4 py-8 lg:px-10 lg:py-10">
-      {/* Header */}
-      <div className="mb-7">
-        <h1 className="mb-1 text-2xl font-bold text-slate-900 lg:text-3xl">Browse courses</h1>
-        <p className="text-sm text-slate-500">
-          {displayCourses
-            ? `${displayCourses.length} course${displayCourses.length !== 1 ? 's' : ''} available`
-            : 'Loading…'}
-          {!hasFilters && totalHours > 0 && (
-            <span className="ml-2 text-slate-400">· {totalHours}+ hours of content</span>
-          )}
-        </p>
-      </div>
+    <div className="min-h-full bg-slate-50">
+      <section className="relative overflow-hidden border-b border-slate-900 bg-slate-950 px-4 py-9 text-white lg:px-10 lg:py-12">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.35),transparent_34%),radial-gradient(circle_at_top_right,rgba(245,158,11,0.22),transparent_28%),linear-gradient(135deg,#020617_0%,#111827_58%,#1e1b4b_100%)]" />
+        <div className="absolute inset-0 opacity-25 dot-pattern" />
+        <div className="relative grid gap-8 xl:grid-cols-[minmax(0,1fr)_440px] xl:items-end">
+          <div>
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.22em] text-violet-100 backdrop-blur">
+              <ScrollText className="h-3.5 w-3.5 text-amber-300" />
+              Quest Board
+            </div>
+            <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-white lg:text-6xl">
+              Choose your next contract.
+            </h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
+              Search the guild board by discipline, difficulty, popularity, and progress. Every course is a contract with lessons, time, rating, and XP potential clearly surfaced.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <BoardMetric icon={BookOpen} label="Open contracts" value={allCourses?.length ?? '...'} />
+            <BoardMetric icon={Clock} label="Library depth" value={totalHours > 0 ? `${totalHours}h` : '...'} />
+            <BoardMetric icon={Flame} label="Hot quests" value={hotQuestCount} />
+            <BoardMetric icon={ShieldCheck} label="Mastered" value={masteredQuestCount} />
+          </div>
+        </div>
+      </section>
+
+      <div className="px-4 py-8 lg:px-10 lg:py-10">
+        <div className="-mt-16 mb-6 rounded-3xl border border-slate-200 bg-white/95 p-4 shadow-xl shadow-slate-200/70 backdrop-blur">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet-500">Board filters</p>
+              <p className="mt-1 text-sm text-slate-500">
+                {displayCourses
+                  ? `${displayCourses.length} contract${displayCourses.length !== 1 ? 's' : ''} posted`
+                  : 'Loading contracts...'}
+                {!hasFilters && totalHours > 0 && (
+                  <span className="ml-2 text-slate-400">· {totalHours}+ hours of learning</span>
+                )}
+              </p>
+            </div>
+            {activeQuestCount > 0 && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700">
+                <Sparkles className="h-3.5 w-3.5" />
+                {activeQuestCount} active
+              </span>
+            )}
+          </div>
 
       {/* Search bar */}
-      <div className="mb-4 relative max-w-2xl">
+      <div className="relative max-w-3xl">
         <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
         <input
           ref={searchInputRef}
@@ -334,6 +399,7 @@ export default function CoursesPage() {
           </div>
         )}
       </div>
+        </div>
 
       {/* Popular tags strip */}
       {!hasFilters && popularTags.length > 0 && (
@@ -668,7 +734,7 @@ export default function CoursesPage() {
 
       {/* Loading skeletons */}
       {isLoading && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="h-52 rounded-2xl bg-slate-100 border border-slate-200 animate-pulse" />
           ))}
@@ -766,6 +832,17 @@ export default function CoursesPage() {
           })}
         </div>
       )}
+      </div>
+    </div>
+  );
+}
+
+function BoardMetric({ icon: Icon, label, value }: { icon: typeof BookOpen; label: string; value: string | number }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-4 shadow-lg shadow-slate-950/10 backdrop-blur">
+      <Icon className="mb-4 h-5 w-5 text-amber-200" />
+      <p className="text-2xl font-bold text-white">{value}</p>
+      <p className="mt-1 text-xs font-medium text-slate-400">{label}</p>
     </div>
   );
 }
@@ -824,129 +901,147 @@ function CourseCard({ course, progressPct, lastAccessedAt, nextLessonId, onTagCl
 }) {
   const diff = DIFFICULTY_STYLES[course.difficulty];
   const cat = TAXONOMY.find(c => c.l1 === course.taxonomy.l1);
-  const isNew = course.publishedAt
-    ? (Date.now() - new Date(course.publishedAt).getTime()) < 30 * 24 * 60 * 60 * 1000
-    : false;
+  const CatIcon = cat?.icon ?? Compass;
   const isHot = course.ratingAverage >= 4.5 && course.ratingCount >= 40;
-
+  const hasProgress = progressPct !== undefined && progressPct > 0;
+  const xpPotential = course.totalLessons * XP_REWARDS.lesson_completed;
+  const contractCode = `${course.taxonomy.l1.slice(0, 3).toUpperCase()}-${course.id.slice(-4).toUpperCase()}`;
+ 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:border-violet-300 hover:shadow-lg hover:shadow-violet-100 hover:-translate-y-1 shadow-sm">
-    <Link
-      to={`/courses/${course.id}`}
-      className="relative flex flex-col p-5"
-    >
-      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-gradient-to-br from-violet-50/50 to-transparent rounded-2xl" />
+    <div className="group relative flex flex-col overflow-hidden rounded-[1.75rem] border border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-amber-300 hover:shadow-xl hover:shadow-amber-100">
+      <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-amber-300 via-violet-400 to-cyan-300" />
+      <div className="absolute -right-14 -top-14 h-32 w-32 rounded-full bg-amber-200/30 blur-2xl transition group-hover:bg-amber-300/40" />
 
-      {(isHot || isNew) && !bookmarked && (
-        <div className={cn(
-          'absolute right-3 top-3 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1',
-          isHot
-            ? 'bg-orange-50 border-orange-200 text-orange-600'
-            : 'bg-emerald-50 border-emerald-200 text-emerald-700'
-        )}>
-          {isHot ? '🔥 Hot' : 'New'}
-        </div>
-      )}
-      {onBookmark && (
-        <button
-          onClick={onBookmark}
-          title={bookmarked ? 'Remove bookmark' : 'Save course'}
-          className={cn(
-            'absolute right-3 top-3 z-10 rounded-lg p-1.5 transition-all',
-            bookmarked
-              ? 'text-amber-600 bg-amber-50 opacity-100'
-              : 'text-slate-400 opacity-0 group-hover:opacity-100 hover:text-slate-600 hover:bg-slate-100'
-          )}
-        >
-          <Bookmark className={cn('h-4 w-4', bookmarked && 'fill-amber-500 text-amber-500')} />
-        </button>
-      )}
-
-      <div className="relative flex-1 flex flex-col">
-        <div className="mb-3 flex items-center gap-1.5 text-xs">
-          {cat ? (
-            <span className={cn('flex items-center gap-1 rounded-lg px-2 py-1 font-medium', cat.bgColor, cat.color)}>
-              <cat.icon className="h-3 w-3" />
-              {course.taxonomy.l1}
-            </span>
-          ) : (
-            <span className="rounded-lg bg-slate-100 px-2 py-1 font-medium text-slate-600">{course.taxonomy.l1}</span>
-          )}
-          <span className="text-slate-300">›</span>
-          <span className="text-slate-400">{course.taxonomy.l2}</span>
+      <Link to={`/courses/${course.id}`} className="relative flex flex-1 flex-col p-5">
+        <div className="mb-5 flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-amber-600">{contractCode}</p>
+            <p className="mt-1 text-xs text-slate-400">Issued by {course.authorName}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {isHot && !bookmarked && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-orange-600">
+                <Flame className="h-3 w-3" />
+                Hot
+              </span>
+            )}
+            {onBookmark && (
+              <button
+                onClick={onBookmark}
+                title={bookmarked ? 'Remove bookmark' : 'Save course'}
+                className={cn(
+                  'z-10 rounded-xl p-1.5 transition-all',
+                  bookmarked
+                    ? 'bg-amber-100 text-amber-600 opacity-100'
+                    : 'text-slate-400 opacity-0 group-hover:opacity-100 hover:bg-slate-100 hover:text-slate-600'
+                )}
+              >
+                <Bookmark className={cn('h-4 w-4', bookmarked && 'fill-amber-500 text-amber-500')} />
+              </button>
+            )}
+          </div>
         </div>
 
-        <h2 className="mb-2 text-base font-semibold text-slate-900 transition-colors group-hover:text-violet-700 leading-snug">
+        <div className="mb-4 flex items-center gap-3">
+          <span className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ring-1 ring-slate-900/5', cat?.bgColor ?? 'bg-slate-100')}>
+            <CatIcon className={cn('h-6 w-6', cat?.color ?? 'text-slate-400')} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-slate-500">{course.taxonomy.l1}</p>
+            <p className="truncate text-sm font-bold text-slate-900">{course.taxonomy.l2}</p>
+          </div>
+        </div>
+
+        <h2 className="text-lg font-bold leading-snug text-slate-950 transition-colors group-hover:text-amber-700">
           {course.title}
         </h2>
-
-        <p className="mb-3 flex-1 text-xs text-slate-500 line-clamp-2 leading-relaxed">{course.description}</p>
+        <p className="mt-2 line-clamp-3 flex-1 text-sm leading-6 text-slate-500">{course.description}</p>
 
         {course.tags && course.tags.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-1">
+          <div className="mt-4 flex flex-wrap gap-1.5">
             {course.tags.slice(0, 3).map(tag => (
               <button
                 key={tag}
                 onClick={e => { e.preventDefault(); e.stopPropagation(); onTagClick?.(tag); }}
-                className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-medium text-slate-500 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
               >
                 #{tag}
               </button>
             ))}
             {course.tags.length > 3 && (
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-400">
+              <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] text-slate-400">
                 +{course.tags.length - 3}
               </span>
             )}
           </div>
         )}
 
-        <div className="mb-3 flex items-center justify-between text-xs text-slate-500">
-          <span>by {course.authorName}</span>
-          <div className="flex items-center gap-2">
-            {lastAccessedAt && progressPct !== undefined && progressPct > 0 && (
-              <span className="text-slate-400 italic">studied {relativeTime(lastAccessedAt)}</span>
-            )}
-            <span className="flex items-center gap-1">
-              <BookOpen className="h-3 w-3" />
-              {course.totalLessons} lesson{course.totalLessons !== 1 ? 's' : ''}
-            </span>
-          </div>
+        <div className="mt-5 grid grid-cols-3 gap-2 border-t border-amber-100 pt-4">
+          <ContractStat icon={BookOpen} value={course.totalLessons} label="lessons" />
+          <ContractStat icon={Clock} value={`${course.estimatedMinutes}m`} label="time" />
+          <ContractStat icon={Zap} value={`+${xpPotential}`} label="base XP" />
         </div>
 
-        <div className="flex items-center justify-between">
-          <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${diff.classes}`}>
-            {diff.label}
-          </span>
-          <div className="flex items-center gap-3 text-xs text-slate-500">
-            {course.ratingCount > 0 && (
-              <span className="flex items-center gap-1 text-amber-600 font-medium">
-                <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
-                {course.ratingAverage.toFixed(1)}
-                <span className="text-slate-400 font-normal">({course.ratingCount})</span>
-              </span>
-            )}
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {course.estimatedMinutes}m
-            </span>
-            {progressPct !== undefined && progressPct > 0 && (
+        {hasProgress && (
+          <div className="mt-4 rounded-2xl border border-violet-100 bg-violet-50 p-3">
+            <div className="mb-2 flex items-center justify-between text-xs">
+              <span className="font-semibold text-violet-700">Contract progress</span>
+              <span className="text-violet-500">{progressPct}%</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-white">
+                <div className="h-full rounded-full bg-gradient-to-r from-violet-600 to-amber-400" style={{ width: `${progressPct}%` }} />
+              </div>
               <ProgressRing pct={progressPct} />
+            </div>
+            {lastAccessedAt && (
+              <p className="mt-2 text-[11px] text-violet-500">studied {relativeTime(lastAccessedAt)}</p>
             )}
           </div>
+        )}
+
+        <div className="mt-4 flex items-center justify-between">
+          <span className={`rounded-full border px-2.5 py-1 text-xs font-bold capitalize ${diff.classes}`}>
+            {diff.label}
+          </span>
+          {course.ratingCount > 0 && (
+            <span className="flex items-center gap-1 text-xs font-bold text-amber-600">
+              <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+              {course.ratingAverage.toFixed(1)}
+              <span className="font-normal text-slate-400">({course.ratingCount})</span>
+            </span>
+          )}
         </div>
-      </div>
-    </Link>
-    {nextLessonId && (
-      <Link
-        to={`/courses/${course.id}/lessons/${nextLessonId}`}
-        onClick={e => e.stopPropagation()}
-        className="flex items-center justify-between border-t border-violet-100 bg-violet-50 px-5 py-2.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-100"
-      >
-        <span>Resume where you left off</span>
-        <ChevronRight className="h-3.5 w-3.5" />
       </Link>
-    )}
+
+      {nextLessonId ? (
+        <Link
+          to={`/courses/${course.id}/lessons/${nextLessonId}`}
+          onClick={e => e.stopPropagation()}
+          className="relative flex items-center justify-between border-t border-violet-100 bg-violet-50 px-5 py-3 text-xs font-bold text-violet-700 transition hover:bg-violet-100"
+        >
+          <span className="flex items-center gap-1.5"><Sword className="h-3.5 w-3.5" /> Resume contract</span>
+          <ChevronRight className="h-3.5 w-3.5" />
+        </Link>
+      ) : (
+        <Link
+          to={`/courses/${course.id}`}
+          className="relative flex items-center justify-between border-t border-amber-100 bg-amber-50/70 px-5 py-3 text-xs font-bold text-amber-700 transition hover:bg-amber-100"
+        >
+          <span className="flex items-center gap-1.5"><ScrollText className="h-3.5 w-3.5" /> Inspect contract</span>
+          <ChevronRight className="h-3.5 w-3.5" />
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function ContractStat({ icon: Icon, value, label }: { icon: typeof BookOpen; value: string | number; label: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-white px-2.5 py-2 text-center">
+      <Icon className="mx-auto mb-1 h-3.5 w-3.5 text-slate-400" />
+      <p className="text-xs font-bold text-slate-900">{value}</p>
+      <p className="text-[10px] text-slate-400">{label}</p>
     </div>
   );
 }
