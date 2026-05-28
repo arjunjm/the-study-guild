@@ -115,11 +115,15 @@ resource apiApp 'Microsoft.Web/sites@2023-12-01' = {
     siteConfig: {
       linuxFxVersion: 'NODE|22-lts'
       nodeVersion: '~22'
+      appCommandLine: 'npm start'
       appSettings: [
         { name: 'NODE_ENV',           value: 'production' }
         { name: 'PORT',               value: '8080' }
         { name: 'COSMOS_ENDPOINT',    value: cosmosAccount.properties.documentEndpoint }
         { name: 'COSMOS_DATABASE',    value: dbName }
+        { name: 'CLIENT_ORIGIN',      value: 'https://${staticWebApp.properties.defaultHostname}' }
+        { name: 'SCM_DO_BUILD_DURING_DEPLOYMENT', value: 'false' }
+        { name: 'WEBSITE_NODE_DEFAULT_VERSION', value: '~22' }
         // Secrets added manually or via Key Vault reference:
         // COSMOS_KEY, AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET
       ]
@@ -154,5 +158,5 @@ resource staticWebApp 'Microsoft.Web/staticSites@2023-12-01' = {
 output cosmosEndpoint string = cosmosAccount.properties.documentEndpoint
 output cosmosAccountName string = cosmosAccount.name
 output apiUrl string = 'https://${apiApp.properties.defaultHostName}'
+output staticWebAppName string = staticWebApp.name
 output staticWebAppUrl string = 'https://${staticWebApp.properties.defaultHostname}'
-output staticWebAppDeploymentToken string = staticWebApp.listSecrets().properties.apiKey

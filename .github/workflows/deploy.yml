@@ -15,7 +15,7 @@ jobs:
   deploy-api:
     name: Deploy API
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    if: github.event_name == 'push'
 
     steps:
       - uses: actions/checkout@v4
@@ -28,15 +28,22 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Build server
-        run: npm run build --workspace=server
+      - name: Build API
+        run: |
+          npm run build --workspace=shared
+          npm run build --workspace=server
+
+      - name: Prepare API deployment package
+        run: |
+          node server/scripts/prepare-deploy.mjs
+          npm install --omit=dev --prefix server/deploy
 
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_API_APP_NAME }}
           publish-profile: ${{ secrets.AZURE_API_PUBLISH_PROFILE }}
-          package: server/dist
+          package: server/deploy
 
   # ── Client (Static Web App) ───────────────────────────────────────────────
   deploy-client:
@@ -60,6 +67,7 @@ jobs:
         run: npm run build --workspace=client
         env:
           VITE_AZURE_CLIENT_ID: ${{ secrets.VITE_AZURE_CLIENT_ID }}
+          VITE_AZURE_API_CLIENT_ID: ${{ secrets.VITE_AZURE_API_CLIENT_ID }}
           VITE_AZURE_TENANT_ID: ${{ secrets.VITE_AZURE_TENANT_ID }}
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 

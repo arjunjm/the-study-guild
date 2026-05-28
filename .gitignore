@@ -12,6 +12,7 @@ local.settings.json
 # Deployment artifacts
 deploy-tmp/
 deploy.zip
+server/deploy/
 server/scripts/mock-seed-data.json
 
 # Claude Code

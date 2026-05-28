@@ -25,14 +25,21 @@ OUTPUTS=$(az deployment group create \
 COSMOS_ENDPOINT=$(echo "$OUTPUTS" | jq -r '.cosmosEndpoint.value')
 COSMOS_ACCOUNT=$(echo "$OUTPUTS" | jq -r '.cosmosAccountName.value')
 API_URL=$(echo "$OUTPUTS" | jq -r '.apiUrl.value')
+STATIC_NAME=$(echo "$OUTPUTS" | jq -r '.staticWebAppName.value')
 STATIC_URL=$(echo "$OUTPUTS" | jq -r '.staticWebAppUrl.value')
-DEPLOY_TOKEN=$(echo "$OUTPUTS" | jq -r '.staticWebAppDeploymentToken.value')
 
 echo "▶ Fetching CosmosDB key…"
 COSMOS_KEY=$(az cosmosdb keys list \
   --resource-group "$RG" \
   --name "$COSMOS_ACCOUNT" \
   --query "primaryMasterKey" \
+  --output tsv)
+
+echo "▶ Fetching Static Web Apps deployment token…"
+DEPLOY_TOKEN=$(az staticwebapp secrets list \
+  --resource-group "$RG" \
+  --name "$STATIC_NAME" \
+  --query "properties.apiKey" \
   --output tsv)
 
 echo ""
@@ -48,8 +55,8 @@ echo "PORT=8080"
 echo "# Add manually: AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET"
 echo ""
 echo "# client/.env.local"
-echo "VITE_API_BASE_URL=https://$API_URL/api"
-echo "# Add manually: VITE_AZURE_CLIENT_ID, VITE_AZURE_TENANT_ID"
+echo "VITE_API_BASE_URL=$API_URL/api"
+echo "# Add manually: VITE_AZURE_CLIENT_ID, VITE_AZURE_API_CLIENT_ID, VITE_AZURE_TENANT_ID"
 echo ""
 echo "# Static Web App deploy token (CI secret: AZURE_STATIC_WEB_APPS_API_TOKEN)"
 echo "DEPLOY_TOKEN=$DEPLOY_TOKEN"
