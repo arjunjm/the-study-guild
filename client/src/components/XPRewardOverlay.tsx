@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import { CheckCircle, Trophy, Star, X } from 'lucide-react';
+import { Award, CheckCircle, Crown, Sparkles, Star, Trophy, X, Zap } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { rankProgressInfo } from '../lib/xpUtils';
 import type { GuildRank } from '@study-guild/shared';
@@ -44,15 +44,18 @@ export default function XPRewardOverlay({ xpGained, breakdown, newXP, courseComp
   const [xpPopped, setXpPopped] = useState(false);
   const [countdown, setCountdown] = useState(AUTO_DISMISS_SECONDS);
 
-  // Confetti burst on course complete or rank-up
   useEffect(() => {
+    const timers: number[] = [];
     if (courseComplete) {
       confetti({ particleCount: 120, spread: 80, origin: { y: 0.55 }, colors: ['#7c3aed', '#8b5cf6', '#a78bfa', '#34d399', '#6ee7b7'] });
     } else if (rankUp) {
       confetti({ particleCount: 150, spread: 100, origin: { y: 0.55 }, colors: ['#f59e0b', '#fbbf24', '#fcd34d', '#7c3aed', '#ffffff'] });
-      setTimeout(() => confetti({ particleCount: 50, spread: 60, origin: { y: 0.4 }, angle: 60, colors: ['#f59e0b', '#fbbf24'] }), 300);
-      setTimeout(() => confetti({ particleCount: 50, spread: 60, origin: { y: 0.4 }, angle: 120, colors: ['#f59e0b', '#fbbf24'] }), 300);
+      timers.push(window.setTimeout(() => confetti({ particleCount: 50, spread: 60, origin: { y: 0.4 }, angle: 60, colors: ['#f59e0b', '#fbbf24'] }), 300));
+      timers.push(window.setTimeout(() => confetti({ particleCount: 50, spread: 60, origin: { y: 0.4 }, angle: 120, colors: ['#f59e0b', '#fbbf24'] }), 300));
+    } else if (xpGained > 0) {
+      confetti({ particleCount: 72, spread: 62, origin: { y: 0.58 }, colors: ['#7c3aed', '#a78bfa', '#f59e0b', '#34d399'] });
     }
+    return () => timers.forEach(timer => window.clearTimeout(timer));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -100,10 +103,10 @@ export default function XPRewardOverlay({ xpGained, breakdown, newXP, courseComp
   const isCourseComplete = courseComplete && !isRankUp;
 
   const theme = isRankUp
-    ? { border: 'border-amber-500/40', bg: 'from-amber-900/30 to-slate-900', shadow: 'shadow-amber-500/20', iconBg: 'bg-amber-500/15 animate-rank-glow', iconColor: 'text-amber-400', accentText: 'text-amber-400', xpBorder: 'border-amber-500/20', xpBg: 'bg-amber-500/8' }
+    ? { border: 'border-amber-500/40', bg: 'from-amber-900/35 via-slate-950 to-slate-900', shadow: 'shadow-amber-500/20', iconBg: 'bg-amber-500/15 animate-rank-glow', iconColor: 'text-amber-400', accentText: 'text-amber-400', xpBorder: 'border-amber-500/25', xpBg: 'bg-amber-500/10', particle: 'bg-amber-300/50', ribbon: 'bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-500', cta: 'from-amber-600 to-amber-500 shadow-amber-500/20 hover:from-amber-500 hover:to-amber-400' }
     : isCourseComplete
-    ? { border: 'border-emerald-500/30', bg: 'from-emerald-900/20 to-slate-900', shadow: 'shadow-emerald-500/15', iconBg: 'bg-emerald-500/15', iconColor: 'text-emerald-400', accentText: 'text-emerald-400', xpBorder: 'border-emerald-500/20', xpBg: 'bg-emerald-500/8' }
-    : { border: 'border-violet-500/30', bg: 'from-violet-900/20 to-slate-900', shadow: 'shadow-violet-500/15', iconBg: 'bg-violet-500/15', iconColor: 'text-violet-400', accentText: 'text-violet-400', xpBorder: 'border-violet-500/20', xpBg: 'bg-violet-500/8' };
+    ? { border: 'border-emerald-500/30', bg: 'from-emerald-900/25 via-slate-950 to-slate-900', shadow: 'shadow-emerald-500/15', iconBg: 'bg-emerald-500/15', iconColor: 'text-emerald-400', accentText: 'text-emerald-400', xpBorder: 'border-emerald-500/25', xpBg: 'bg-emerald-500/10', particle: 'bg-emerald-300/45', ribbon: 'bg-gradient-to-r from-emerald-500 via-cyan-300 to-violet-500', cta: 'from-emerald-600 to-violet-600 shadow-emerald-500/20 hover:from-emerald-500 hover:to-violet-500' }
+    : { border: 'border-violet-500/30', bg: 'from-violet-900/25 via-slate-950 to-slate-900', shadow: 'shadow-violet-500/15', iconBg: 'bg-violet-500/15', iconColor: 'text-violet-400', accentText: 'text-violet-400', xpBorder: 'border-violet-500/25', xpBg: 'bg-violet-500/10', particle: 'bg-violet-300/45', ribbon: 'bg-gradient-to-r from-violet-600 via-fuchsia-400 to-amber-400', cta: 'from-violet-600 to-violet-500 shadow-violet-500/20 hover:from-violet-500 hover:to-violet-400' };
 
   return (
     <div
@@ -111,42 +114,42 @@ export default function XPRewardOverlay({ xpGained, breakdown, newXP, courseComp
       onClick={e => { if (e.target === e.currentTarget) onDismiss(); }}
     >
       <div className={cn(
-        'animate-scale-in relative w-full max-w-sm rounded-3xl border bg-gradient-to-b p-8 text-center shadow-2xl',
+        'animate-scale-in relative w-full max-w-md overflow-hidden rounded-3xl border bg-gradient-to-b p-7 text-center shadow-2xl sm:p-8',
         theme.border, theme.bg, theme.shadow
       )}>
+        <div className={cn('absolute left-1/2 top-0 h-1.5 w-32 -translate-x-1/2 rounded-b-full', theme.ribbon)} />
+
         {/* Dismiss button */}
         <button
           onClick={onDismiss}
-          className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-600 transition hover:text-slate-400"
+          className="absolute right-4 top-4 z-10 rounded-lg p-1.5 text-slate-600 transition hover:text-slate-400"
         >
           <X className="h-4 w-4" />
         </button>
 
-        {/* Ambient particles for rank-up */}
-        {isRankUp && (
-          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
-            {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute h-1.5 w-1.5 rounded-full bg-amber-400/40 animate-float"
-                style={{
-                  left: `${15 + i * 14}%`,
-                  top: `${10 + (i % 3) * 25}%`,
-                  animationDelay: `${i * 0.4}s`,
-                  animationDuration: `${3 + i * 0.5}s`,
-                }}
-              />
-            ))}
-          </div>
-        )}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+          {Array.from({ length: isRankUp ? 10 : 7 }).map((_, i) => (
+            <div
+              key={i}
+              className={cn('absolute h-1.5 w-1.5 rounded-full animate-float', theme.particle)}
+              style={{
+                left: `${10 + i * 10}%`,
+                top: `${9 + (i % 4) * 20}%`,
+                animationDelay: `${i * 0.35}s`,
+                animationDuration: `${3 + i * 0.35}s`,
+              }}
+            />
+          ))}
+        </div>
 
         {/* Icon */}
-        <div className={cn('mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full', theme.iconBg)}>
+        <div className={cn('relative mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full ring-1 ring-white/10', theme.iconBg)}>
           {isRankUp
-            ? <Trophy className={cn('h-9 w-9', theme.iconColor)} />
+            ? <Crown className={cn('h-9 w-9', theme.iconColor)} />
             : isCourseComplete
             ? <Star className={cn('h-9 w-9 fill-current', theme.iconColor)} />
             : <CheckCircle className={cn('h-9 w-9', theme.iconColor)} />}
+          <Sparkles className="absolute -right-1 -top-1 h-5 w-5 text-amber-300" />
         </div>
 
         {/* Title */}
@@ -168,8 +171,14 @@ export default function XPRewardOverlay({ xpGained, breakdown, newXP, courseComp
           </>
         )}
 
+        <div className="mb-4 grid grid-cols-3 gap-2 text-left">
+          <RewardPill icon={Zap} label="Earned" value={xpGained > 0 ? `+${xpGained}` : '0'} />
+          <RewardPill icon={Award} label="Rank" value={rank} />
+          <RewardPill icon={Trophy} label={nextRank ? 'Next' : 'Standing'} value={nextRank ?? 'Max'} />
+        </div>
+ 
         {/* XP gained */}
-        {xpGained > 0 && (
+        {xpGained > 0 ? (
           <div className={cn('mb-4 rounded-2xl border py-4', theme.xpBorder, theme.xpBg)}>
             <p className={cn(
               'font-display text-5xl font-bold text-gradient leading-none transition-transform',
@@ -179,11 +188,17 @@ export default function XPRewardOverlay({ xpGained, breakdown, newXP, courseComp
             </p>
             <p className="mt-1.5 text-xs text-slate-500">XP earned</p>
           </div>
+        ) : (
+          <div className={cn('mb-4 rounded-2xl border px-4 py-3 text-sm', theme.xpBorder, theme.xpBg)}>
+            <p className="font-semibold text-slate-300">Reward already claimed</p>
+            <p className="mt-1 text-xs text-slate-500">Replay the lesson any time to review the material.</p>
+          </div>
         )}
-
+ 
         {/* Breakdown */}
-        {breakdown.length > 1 && (
-          <div className="mb-4 space-y-1.5 rounded-xl bg-slate-900/60 px-4 py-3 text-xs">
+        {breakdown.length > 0 && (
+          <div className="mb-4 space-y-1.5 rounded-2xl border border-white/5 bg-slate-950/55 px-4 py-3 text-xs">
+            <p className="mb-2 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">Reward ledger</p>
             {breakdown.map(item => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className="text-slate-400">{item.label}</span>
@@ -195,8 +210,8 @@ export default function XPRewardOverlay({ xpGained, breakdown, newXP, courseComp
 
         {/* New achievements */}
         {newAchievements && newAchievements.length > 0 && (
-          <div className="mb-4 rounded-xl border border-amber-500/25 bg-amber-500/8 px-4 py-3">
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-amber-500/70">Achievement{newAchievements.length > 1 ? 's' : ''} Unlocked</p>
+          <div className="mb-4 rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-3">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-amber-400/80">Guild seal{newAchievements.length > 1 ? 's' : ''} unlocked</p>
             <div className="flex flex-wrap gap-2 justify-center">
               {newAchievements.map(id => {
                 const cfg = ACHIEVEMENT_LABELS[id] ?? { label: id, icon: '🏅' };
@@ -212,9 +227,9 @@ export default function XPRewardOverlay({ xpGained, breakdown, newXP, courseComp
         )}
 
         {/* Rank progress bar */}
-        <div className="mb-6">
+        <div className="mb-6 rounded-2xl border border-white/5 bg-slate-950/45 p-4">
           <div className="mb-1.5 flex items-center justify-between text-xs">
-            <span className="font-medium text-amber-400/90">{rank}</span>
+            <span className="font-medium text-amber-400/90">Total XP: {newXP.toLocaleString()}</span>
             {nextRank
               ? <span className="text-slate-500">{pct}% → {nextRank}</span>
               : <span className="text-amber-400/70">Max rank!</span>}
@@ -242,15 +257,26 @@ export default function XPRewardOverlay({ xpGained, breakdown, newXP, courseComp
           onClick={onDismiss}
           className={cn(
             'w-full rounded-xl py-3 text-sm font-semibold text-white shadow-lg transition-all',
-            isRankUp
-              ? 'bg-gradient-to-r from-amber-600 to-amber-500 shadow-amber-500/20 hover:from-amber-500 hover:to-amber-400'
-              : 'bg-gradient-to-r from-violet-600 to-violet-500 shadow-violet-500/20 hover:from-violet-500 hover:to-violet-400'
+            'bg-gradient-to-r',
+            theme.cta
           )}
         >
-          Continue
+          Continue quest
           <span className="ml-2 text-xs opacity-60">({countdown}s)</span>
         </button>
       </div>
+    </div>
+  );
+}
+
+function RewardPill({ icon: Icon, label, value }: { icon: typeof Zap; label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/5 bg-slate-950/45 px-3 py-2.5">
+      <div className="mb-1.5 flex items-center gap-1.5 text-slate-500">
+        <Icon className="h-3.5 w-3.5" />
+        <span className="text-[10px] font-bold uppercase tracking-wider">{label}</span>
+      </div>
+      <p className="truncate text-sm font-semibold text-slate-200" title={value}>{value}</p>
     </div>
   );
 }
