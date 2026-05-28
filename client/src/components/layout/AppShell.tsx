@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation, Link } from 'react-router-do
 import { useQuery } from '@tanstack/react-query';
 import {
   Home, BookOpen, GraduationCap, Sword, Flame, Trophy,
-  ChevronDown, ChevronRight, LogOut, User, Shield, Search, X, Clock, Keyboard, PenLine,
+  ChevronDown, ChevronRight, LogOut, User, Shield, Search, X, Clock, Keyboard, PenLine, Route,
 } from 'lucide-react';
 import { apiClient } from '../../lib/apiClient';
 import { useAuth } from '../../contexts/AuthContext';
@@ -14,6 +14,7 @@ import type { UserProfile, Course } from '@study-guild/shared';
 const NAV = [
   { to: '/',            label: 'Home',        icon: Home,          end: true },
   { to: '/courses',     label: 'Browse',      icon: BookOpen },
+  { to: '/paths',       label: 'Paths',       icon: Route },
   { to: '/leaderboard', label: 'Leaderboard', icon: Trophy },
   { to: '/teach',       label: 'Teach',       icon: GraduationCap },
 ];
@@ -68,17 +69,13 @@ export default function AppShell() {
 }
 
 function Sidebar() {
-  const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const activeL1 = searchParams.get('l1') ?? '';
   const activeL2 = searchParams.get('l2') ?? '';
   const isCoursesPage = location.pathname === '/courses';
-
-  useEffect(() => {
-    if (activeL1) setOpenSections(prev => new Set([...prev, activeL1]));
-  }, [activeL1]);
+  const [openSections, setOpenSections] = useState<Set<string>>(() => activeL1 ? new Set([activeL1]) : new Set());
 
   function toggleSection(l1: string) {
     setOpenSections(prev => {
@@ -343,6 +340,7 @@ function ProfileDropdown({ user }: { user: UserProfile }) {
 const QUICK_ACTIONS = [
   { label: 'Home', path: '/', icon: Home },
   { label: 'Browse', path: '/courses', icon: BookOpen },
+  { label: 'Paths', path: '/paths', icon: Route },
   { label: 'Leaderboard', path: '/leaderboard', icon: Trophy },
   { label: 'Profile', path: '/profile', icon: User },
   { label: 'Notes', path: '/notes', icon: PenLine },
@@ -395,8 +393,6 @@ function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate:
       ).slice(0, 8)
     : recentCourses.length > 0 ? recentCourses : (courses?.slice(0, 5) ?? []);
 
-  useEffect(() => { setSelectedIndex(-1); }, [filtered.length, query]);
-
   function navigateToCourse(courseId: string) {
     if (query.trim()) {
       addSearchHistory(query.trim());
@@ -433,7 +429,7 @@ function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate:
             type="text"
             placeholder="Search courses…"
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={e => { setQuery(e.target.value); setSelectedIndex(-1); }}
             onKeyDown={handleKey}
             className="flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder-slate-400"
           />
@@ -453,7 +449,7 @@ function SearchModal({ onClose, onNavigate }: { onClose: () => void; onNavigate:
           {!hasQuery && (
             <>
               <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">Quick navigation</p>
-              <div className="mb-2 grid grid-cols-5 gap-1">
+              <div className="mb-2 grid grid-cols-3 gap-1 sm:grid-cols-6">
                 {QUICK_ACTIONS.map(action => {
                   const Icon = action.icon;
                   return (
@@ -631,6 +627,7 @@ function MobileNav() {
   const items = [
     { to: '/',            label: 'Home',    icon: Home,          end: true },
     { to: '/courses',     label: 'Browse',  icon: BookOpen },
+    { to: '/paths',       label: 'Paths',   icon: Route },
     { to: '/leaderboard', label: 'Ranks',   icon: Trophy },
     { to: '/teach',       label: 'Teach',   icon: GraduationCap },
     { to: '/profile',     label: 'Profile', icon: User },
