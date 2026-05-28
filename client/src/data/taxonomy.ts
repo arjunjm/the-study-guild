@@ -101,6 +101,10 @@ export const TAXONOMY: TaxonomyCategory[] = [
     items: [
       { label: 'Machine Learning', l2: 'Machine Learning' },
       { label: 'LLMs & Prompting', l2: 'LLMs' },
+      { label: 'Retrieval-Augmented Generation', l2: 'RAG' },
+      { label: 'AI Agents', l2: 'AI Agents' },
+      { label: 'LLM Evaluation', l2: 'LLM Evaluation' },
+      { label: 'MLOps', l2: 'MLOps' },
       { label: 'Computer Vision',  l2: 'Computer Vision' },
       { label: 'Data Science',     l2: 'Data Science' },
     ],
