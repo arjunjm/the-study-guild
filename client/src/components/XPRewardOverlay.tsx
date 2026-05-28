@@ -3,28 +3,12 @@ import confetti from 'canvas-confetti';
 import { Award, CheckCircle, Crown, Sparkles, Star, Trophy, X, Zap } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { rankProgressInfo } from '../lib/xpUtils';
-import type { GuildRank } from '@study-guild/shared';
+import { getAchievementDefinition, type GuildRank } from '@study-guild/shared';
 
 interface XPBreakdownItem {
   label: string;
   amount: number;
 }
-
-const ACHIEVEMENT_LABELS: Record<string, { label: string; icon: string }> = {
-  'first-lesson':    { label: 'First Step',        icon: '📚' },
-  'ten-lessons':     { label: 'Dedicated Learner',  icon: '📖' },
-  'fifty-lessons':   { label: 'Knowledge Seeker',   icon: '🎯' },
-  'first-course':    { label: 'Course Complete',    icon: '🎓' },
-  'five-courses':    { label: 'Guild Scholar',      icon: '🏫' },
-  'quiz-perfect':    { label: 'Perfect Score',      icon: '⭐' },
-  'quiz-master':     { label: 'Quiz Master',        icon: '🧠' },
-  'rank-apprentice': { label: 'Apprentice',         icon: '🟢' },
-  'rank-scholar':    { label: 'Scholar',            icon: '🔵' },
-  'rank-expert':     { label: 'Expert',             icon: '🟡' },
-  'streak-3':        { label: '3-Day Streak',       icon: '🔥' },
-  'streak-7':        { label: 'Week Warrior',       icon: '🔥' },
-  'streak-30':       { label: 'Monthly Champion',   icon: '👑' },
-};
 
 interface Props {
   xpGained: number;
@@ -214,11 +198,11 @@ export default function XPRewardOverlay({ xpGained, breakdown, newXP, courseComp
             <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-amber-400/80">Guild seal{newAchievements.length > 1 ? 's' : ''} unlocked</p>
             <div className="flex flex-wrap gap-2 justify-center">
               {newAchievements.map(id => {
-                const cfg = ACHIEVEMENT_LABELS[id] ?? { label: id, icon: '🏅' };
+                const cfg = getAchievementDefinition(id) ?? { name: id, icon: '🏅' };
                 return (
                   <div key={id} className="flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 px-2.5 py-1.5">
                     <span className="text-base leading-none">{cfg.icon}</span>
-                    <span className="text-xs font-medium text-amber-200">{cfg.label}</span>
+                    <span className="text-xs font-medium text-amber-200">{cfg.name}</span>
                   </div>
                 );
               })}

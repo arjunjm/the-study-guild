@@ -1,4 +1,4 @@
-﻿import type { UserProfile, Course, Lesson, UserCourseProgress } from '@study-guild/shared';
+﻿import { evaluateAchievementIds, getAchievementDefinition, type UserProfile, type Course, type Lesson, type UserCourseProgress } from '@study-guild/shared';
 import { computeRank, XP_REWARDS } from './xpUtils';
 
 // ---------------------------------------------------------------------------
@@ -11,7 +11,8 @@ let _displayName = 'Dev Guildmate';
 let _bio: string | undefined = undefined;
 let _role: UserProfile['role'] = 'learner';
 const _completedLessons = new Set<string>();
-const _achievements = new Set<string>(['first-lesson', 'seven-day-streak']);
+let _perfectQuizCount = 0;
+const _achievements = new Set<string>(['first-lesson', 'streak-7']);
 const _lessonOverrides = new Map<string, Partial<Lesson>>();
 
 const BASE_USER = {
@@ -57,6 +58,7 @@ export function completeMockLesson(lessonId: string, quizScore?: number, passing
       if (quizScore === 100) {
         breakdown.push({ label: 'Perfect quiz!', amount: XP_REWARDS.quiz_perfect });
         _xp += XP_REWARDS.quiz_perfect;
+        _perfectQuizCount += 1;
       } else {
         breakdown.push({ label: 'Quiz passed', amount: XP_REWARDS.quiz_passed });
         _xp += XP_REWARDS.quiz_passed;
@@ -67,26 +69,25 @@ export function completeMockLesson(lessonId: string, quizScore?: number, passing
   const newRank = computeRank(_xp);
   const totalLessons = _completedLessons.size;
 
-  // Evaluate achievements
   const newAchievements: string[] = [];
   if (!alreadyCompleted) {
-    const rankList = ['Apprentice','Scholar','Adept','Expert','Master','Grandmaster'];
-    const checks: Array<{ id: string; check: () => boolean; label: string }> = [
-      { id: 'ten-lessons',     label: 'Dedicated Learner', check: () => totalLessons >= 10 },
-      { id: 'fifty-lessons',   label: 'Knowledge Seeker',  check: () => totalLessons >= 50 },
-      { id: 'quiz-perfect',    label: 'Perfect Score',     check: () => quizScore === 100 },
-      { id: 'quiz-master',     label: 'Quiz Master',       check: () => false },
-      { id: 'rank-apprentice', label: 'Apprentice',        check: () => rankList.includes(newRank) },
-      { id: 'rank-scholar',    label: 'Scholar',           check: () => ['Scholar','Adept','Expert','Master','Grandmaster'].includes(newRank) },
-      { id: 'rank-expert',     label: 'Expert',            check: () => ['Expert','Master','Grandmaster'].includes(newRank) },
-    ];
-    for (const ach of checks) {
-      if (!_achievements.has(ach.id) && ach.check()) {
-        _achievements.add(ach.id);
-        newAchievements.push(ach.id);
-        _xp += XP_REWARDS.achievement_unlocked;
-        breakdown.push({ label: `Achievement: ${ach.label}`, amount: XP_REWARDS.achievement_unlocked });
-      }
+    const completedCourses = MOCK_COURSES.filter(course => course.lessonIds.length > 0 && course.lessonIds.every(id => _completedLessons.has(id))).length;
+    const unlocked = evaluateAchievementIds({
+      lessonsCompleted: totalLessons,
+      coursesCompleted: completedCourses,
+      quizScores: quizScore !== undefined ? [quizScore] : [],
+      perfectQuizzes: _perfectQuizCount,
+      streakDays: BASE_USER.streak,
+      rank: newRank,
+      coursesRated: 0,
+    }, _achievements);
+
+    for (const achievementId of unlocked) {
+      _achievements.add(achievementId);
+      newAchievements.push(achievementId);
+      _xp += XP_REWARDS.achievement_unlocked;
+      const definition = getAchievementDefinition(achievementId);
+      breakdown.push({ label: `Achievement: ${definition?.name ?? achievementId}`, amount: XP_REWARDS.achievement_unlocked });
     }
   }
 

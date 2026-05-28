@@ -47,6 +47,7 @@ export type AchievementCriteria =
   | { type: 'lessons_completed'; count: number }
   | { type: 'courses_completed'; count: number }
   | { type: 'quiz_score'; minScore: number }
+  | { type: 'perfect_quizzes'; count: number }
   | { type: 'streak_days'; days: number }
   | { type: 'rank_reached'; rank: GuildRank }
   | { type: 'courses_rated'; count: number };
