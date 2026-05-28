@@ -5,28 +5,9 @@ import { Zap, Flame, Trophy, BookOpen, CheckCircle2, Star, Pencil, Check, X } fr
 import { apiClient } from '../lib/apiClient';
 import { TAXONOMY } from '../data/taxonomy';
 import { cn } from '../lib/utils';
-import type { UserProfile, Course } from '@study-guild/shared';
-import { RANK_XP_THRESHOLDS } from '@study-guild/shared';
+import { ACHIEVEMENT_DEFINITIONS, getAchievementDefinition, RANK_XP_THRESHOLDS, type UserProfile, type Course } from '@study-guild/shared';
 
 const RANK_ORDER = Object.keys(RANK_XP_THRESHOLDS) as (keyof typeof RANK_XP_THRESHOLDS)[];
-
-const ACHIEVEMENT_CONFIG: Record<string, { label: string; icon: string }> = {
-  'first-lesson':    { label: 'First Step',        icon: '📚' },
-  'ten-lessons':     { label: 'Dedicated Learner',  icon: '📖' },
-  'fifty-lessons':   { label: 'Knowledge Seeker',   icon: '🎯' },
-  'first-course':    { label: 'Course Complete',    icon: '🎓' },
-  'five-courses':    { label: 'Guild Scholar',      icon: '🏫' },
-  'quiz-perfect':    { label: 'Perfect Score',      icon: '⭐' },
-  'quiz-master':     { label: 'Quiz Master',        icon: '🧠' },
-  'rank-apprentice': { label: 'Apprentice',         icon: '🟢' },
-  'rank-scholar':    { label: 'Scholar',            icon: '🔵' },
-  'rank-expert':     { label: 'Expert',             icon: '🟡' },
-  'streak-3':        { label: '3-Day Streak',       icon: '🔥' },
-  'streak-7':        { label: 'Week Warrior',       icon: '🔥' },
-  'streak-30':       { label: 'Monthly Champion',   icon: '👑' },
-  'seven-day-streak': { label: '7-Day Streak',      icon: '🔥' },
-  'course-complete':  { label: 'Course Complete',   icon: '🎓' },
-};
 
 const RANK_ICONS = ['⚪', '🟢', '🔵', '🟣', '🟡', '🟠', '🔴'];
 
@@ -270,27 +251,26 @@ export default function ProfilePage() {
           <div className="mb-3 flex items-center justify-between">
             <h2 className="font-semibold text-slate-900">Achievements</h2>
             <span className="text-xs text-slate-400">
-              {user.achievements?.length ?? 0} / {Object.keys(ACHIEVEMENT_CONFIG).filter(k => !['seven-day-streak','course-complete'].includes(k)).length} unlocked
+              {user.achievements?.length ?? 0} / {ACHIEVEMENT_DEFINITIONS.length} unlocked
             </span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {Object.entries(ACHIEVEMENT_CONFIG)
-              .filter(([id]) => !['seven-day-streak', 'course-complete'].includes(id))
-              .map(([id, cfg]) => {
-                const earned = user.achievements?.includes(id) ?? false;
+            {ACHIEVEMENT_DEFINITIONS
+              .map((achievement) => {
+                const earned = user.achievements?.includes(achievement.id) ?? false;
                 return (
                   <div
-                    key={id}
+                    key={achievement.id}
                     className={cn(
                       'flex items-center gap-2 rounded-xl border px-3 py-2 transition',
                       earned
                         ? 'border-amber-200 bg-amber-50 text-amber-700'
                         : 'border-slate-200 bg-slate-50 text-slate-400 grayscale opacity-50'
                     )}
-                    title={earned ? `Earned: ${cfg.label}` : `Locked: ${cfg.label}`}
+                    title={earned ? `Earned: ${achievement.description}` : `Locked: ${achievement.description}`}
                   >
-                    <span className="text-lg">{cfg.icon}</span>
-                    <span className="text-xs font-medium">{cfg.label}</span>
+                    <span className="text-lg">{achievement.icon}</span>
+                    <span className="text-xs font-medium">{achievement.name}</span>
                   </div>
                 );
               })}
@@ -302,11 +282,11 @@ export default function ProfilePage() {
           <h2 className="mb-3 font-semibold text-slate-900">Achievements</h2>
           <div className="flex flex-wrap gap-2">
             {user.achievements.map(id => {
-              const cfg = ACHIEVEMENT_CONFIG[id] ?? { label: id, icon: '🏅' };
+              const cfg = getAchievementDefinition(id) ?? { name: id, icon: '🏅' };
               return (
                 <div key={id} className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
                   <span className="text-lg">{cfg.icon}</span>
-                  <span className="text-xs font-medium text-amber-700">{cfg.label}</span>
+                  <span className="text-xs font-medium text-amber-700">{cfg.name}</span>
                 </div>
               );
             })}

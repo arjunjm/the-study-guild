@@ -5,6 +5,7 @@ import { getContainer, CONTAINERS } from '../config/cosmos';
 import {
   UserCourseProgress, UserProfile, GuildRank, RANK_XP_THRESHOLDS,
   XPEvent, XPReason, Course, Lesson,
+  evaluateAchievementIds, getAchievementDefinition,
 } from '@study-guild/shared';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -170,7 +171,7 @@ router.post('/lesson-complete', authenticate, async (req: AuthenticatedRequest, 
     })
     .fetchAll();
   const updatedUser = updatedArr[0];
-  const newRank = updatedUser?.rank ?? prevRank;
+  let newRank = updatedUser?.rank ?? prevRank;
 
   // Achievement evaluation — evaluate after XP updates so rank is current
   const newAchievements: string[] = [];
@@ -189,32 +190,32 @@ router.post('/lesson-complete', authenticate, async (req: AuthenticatedRequest, 
     const totalCoursesCompleted = allUserProgress.filter(p => !!p.completedAt).length;
     const totalPerfectQuizzes = Object.values(Object.assign({}, ...allUserProgress.map(p => p.quizScores))).filter((s) => s === 100).length;
 
-    const ACHIEVEMENTS: Array<{ id: string; label: string; check: () => boolean }> = [
-      { id: 'first-lesson',   label: 'First Step',      check: () => totalLessonsCompleted >= 1 },
-      { id: 'ten-lessons',    label: 'Dedicated Learner', check: () => totalLessonsCompleted >= 10 },
-      { id: 'fifty-lessons',  label: 'Knowledge Seeker', check: () => totalLessonsCompleted >= 50 },
-      { id: 'first-course',   label: 'Course Complete',  check: () => totalCoursesCompleted >= 1 },
-      { id: 'five-courses',   label: 'Guild Scholar',    check: () => totalCoursesCompleted >= 5 },
-      { id: 'quiz-perfect',   label: 'Perfect Score',    check: () => totalPerfectQuizzes >= 1 },
-      { id: 'quiz-master',    label: 'Quiz Master',      check: () => totalPerfectQuizzes >= 5 },
-      { id: 'rank-apprentice',label: 'Apprentice',       check: () => ['Apprentice','Scholar','Adept','Expert','Master','Grandmaster'].includes(newRank) },
-      { id: 'rank-scholar',   label: 'Scholar',          check: () => ['Scholar','Adept','Expert','Master','Grandmaster'].includes(newRank) },
-      { id: 'rank-expert',    label: 'Expert',           check: () => ['Expert','Master','Grandmaster'].includes(newRank) },
-    ];
+    const unlockedAchievementIds = evaluateAchievementIds({
+      lessonsCompleted: totalLessonsCompleted,
+      coursesCompleted: totalCoursesCompleted,
+      quizScores: Object.values(Object.assign({}, ...allUserProgress.map(p => p.quizScores))),
+      perfectQuizzes: totalPerfectQuizzes,
+      streakDays: updatedUser.streak,
+      rank: newRank,
+      coursesRated: 0,
+    }, earned);
 
-    for (const ach of ACHIEVEMENTS) {
-      if (!earned.has(ach.id) && ach.check()) {
-        earned.add(ach.id);
-        newAchievements.push(ach.id);
-        await awardXP(user.id, 'achievement_unlocked', ach.id);
-        xpGained += XP_REWARDS.achievement_unlocked;
-        breakdown.push({ label: `Achievement: ${ach.label}`, amount: XP_REWARDS.achievement_unlocked });
-      }
+    for (const achievementId of unlockedAchievementIds) {
+      earned.add(achievementId);
+      newAchievements.push(achievementId);
+      await awardXP(user.id, 'achievement_unlocked', achievementId);
+      xpGained += XP_REWARDS.achievement_unlocked;
+      const definition = getAchievementDefinition(achievementId);
+      breakdown.push({ label: `Achievement: ${definition?.name ?? achievementId}`, amount: XP_REWARDS.achievement_unlocked });
     }
 
     if (newAchievements.length > 0) {
-      updatedUser.achievements = [...earned];
-      await usersContainer.item(user.id, user.id).replace(updatedUser);
+      const { resource: latestUser } = await usersContainer.item(user.id, user.id).read<UserProfile & { id: string }>();
+      const userToSave = latestUser ?? updatedUser;
+      userToSave.achievements = [...earned];
+      userToSave.rank = computeRank(userToSave.xp);
+      await usersContainer.item(user.id, user.id).replace(userToSave);
+      newRank = userToSave.rank;
     }
   }
 
@@ -283,21 +284,24 @@ router.post('/daily-login', authenticate, async (req: AuthenticatedRequest, res)
   user.streak = user.lastLoginDate === yesterday ? user.streak + 1 : 1;
   user.lastLoginDate = today;
 
-  // Streak achievements
   const earned = new Set(user.achievements ?? []);
-  const streakAchs = [
-    { id: 'streak-3',  days: 3,  label: '3-Day Streak' },
-    { id: 'streak-7',  days: 7,  label: 'Week Warrior' },
-    { id: 'streak-30', days: 30, label: 'Monthly Champion' },
-  ];
+  const streakAchievements = evaluateAchievementIds({
+    lessonsCompleted: 0,
+    coursesCompleted: 0,
+    quizScores: [],
+    perfectQuizzes: 0,
+    streakDays: user.streak,
+    rank: user.rank,
+    coursesRated: 0,
+  }, earned).filter(id => getAchievementDefinition(id)?.category === 'streak');
   let bonusXP = 0;
-  for (const s of streakAchs) {
-    if (!earned.has(s.id) && user.streak >= s.days) {
-      earned.add(s.id);
-      await awardXP(user.id, 'achievement_unlocked', s.id);
-      bonusXP += XP_REWARDS.achievement_unlocked;
-    }
+  for (const achievementId of streakAchievements) {
+    earned.add(achievementId);
+    await awardXP(user.id, 'achievement_unlocked', achievementId);
+    bonusXP += XP_REWARDS.achievement_unlocked;
   }
+  user.xp += bonusXP;
+  user.rank = computeRank(user.xp);
   user.achievements = [...earned];
   await usersContainer.item(user.id, user.id).replace(user);
 
