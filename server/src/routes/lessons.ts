@@ -50,11 +50,11 @@ router.get('/', async (req: Request<LessonParams>, res) => {
   const container = await getContainer(CONTAINERS.LESSONS);
   const { resources } = await container.items
     .query<Lesson>({
-      query: 'SELECT * FROM c WHERE c.courseId = @cid ORDER BY c.order',
+      query: 'SELECT * FROM c WHERE c.courseId = @cid',
       parameters: [{ name: '@cid', value: courseId }],
     })
     .fetchAll();
-  res.json({ data: resources });
+  res.json({ data: resources.sort((a, b) => a.order - b.order) });
 });
 
 // GET /api/courses/:courseId/lessons/:lessonId
