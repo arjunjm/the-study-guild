@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useMsal } from '@azure/msal-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,8 +8,36 @@ import { Sword, FlaskConical, ArrowRight } from 'lucide-react';
 export default function LoginPage() {
   const { isAuthenticated, isDevMode, devLogin } = useAuth();
   const { instance } = useMsal();
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   if (isAuthenticated) return <Navigate to="/" replace />;
+
+  async function signInWithMicrosoft() {
+    setAuthError(null);
+    setIsSigningIn(true);
+    try {
+      if (shouldUseRedirectLogin()) {
+        await instance.loginRedirect(loginRequest);
+        return;
+      }
+      await instance.loginPopup(loginRequest);
+    } catch (error) {
+      const message = getAuthErrorMessage(error);
+      if (isPopupFailure(error)) {
+        try {
+          await instance.loginRedirect(loginRequest);
+          return;
+        } catch (redirectError) {
+          setAuthError(getAuthErrorMessage(redirectError));
+        }
+      } else {
+        setAuthError(message);
+      }
+    } finally {
+      setIsSigningIn(false);
+    }
+  }
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-slate-50">
@@ -70,13 +99,24 @@ export default function LoginPage() {
               </p>
             </div>
           ) : (
-            <button
-              onClick={() => instance.loginPopup(loginRequest)}
-              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-violet-500 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-violet-200 transition hover:from-violet-500 hover:to-violet-400"
-            >
-              Sign in with Microsoft
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </button>
+            <div className="space-y-3">
+              <button
+                onClick={signInWithMicrosoft}
+                disabled={isSigningIn}
+                className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-violet-500 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-violet-200 transition hover:from-violet-500 hover:to-violet-400 disabled:cursor-wait disabled:opacity-70"
+              >
+                {isSigningIn ? 'Opening Microsoft sign-in...' : 'Sign in with Microsoft'}
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </button>
+              {authError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-700">
+                  {authError}
+                </div>
+              )}
+              <p className="text-center text-xs text-slate-400">
+                Mobile devices use a full-page redirect because pop-ups are often blocked.
+              </p>
+            </div>
           )}
         </div>
 
@@ -86,4 +126,31 @@ export default function LoginPage() {
       </div>
     </div>
   );
+}
+
+function shouldUseRedirectLogin() {
+  const coarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+  const narrowScreen = window.matchMedia?.('(max-width: 768px)').matches ?? false;
+  return coarsePointer || narrowScreen;
+}
+
+function isPopupFailure(error: unknown) {
+  const code = getAuthErrorCode(error);
+  return code.includes('popup') || code.includes('window') || code.includes('monitor_window_timeout');
+}
+
+function getAuthErrorCode(error: unknown) {
+  if (typeof error === 'object' && error && 'errorCode' in error) {
+    return String((error as { errorCode?: unknown }).errorCode ?? '').toLowerCase();
+  }
+  return '';
+}
+
+function getAuthErrorMessage(error: unknown) {
+  if (typeof error === 'object' && error) {
+    const maybeError = error as { errorMessage?: unknown; message?: unknown; errorCode?: unknown };
+    const details = maybeError.errorMessage ?? maybeError.message ?? maybeError.errorCode;
+    if (details) return String(details);
+  }
+  return 'Microsoft sign-in failed. Please try again.';
 }
