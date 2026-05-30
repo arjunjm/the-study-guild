@@ -8,7 +8,7 @@ export default function TeacherDashboard() {
   const qc = useQueryClient();
   const navigate = useNavigate();
 
-  const { data: me } = useQuery<{ id: string; role: string }>({
+  const { data: me, isError: meError, refetch: refetchMe } = useQuery<{ id: string; role: string }>({
     queryKey: ['me'],
     queryFn: async () => (await apiClient.get<{ data: { id: string; role: string } }>('/users/me')).data.data,
   });
@@ -38,10 +38,37 @@ export default function TeacherDashboard() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['my-courses'] }),
   });
 
+  if (meError) {
+    return (
+      <PageError
+        title="Teacher tools could not load"
+        message="Your sign-in succeeded, but the API could not load your profile. Refresh the page or sign in again."
+        onRetry={() => refetchMe()}
+      />
+    );
+  }
+
   if (!me) {
     return (
       <div className="flex min-h-full items-center justify-center py-20">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-700 border-t-violet-500" />
+      </div>
+    );
+  }
+
+  function PageError({ title, message, onRetry }: { title: string; message: string; onRetry: () => void }) {
+    return (
+      <div className="flex min-h-full items-center justify-center p-6 text-center">
+        <div className="max-w-sm rounded-2xl border border-red-200 bg-red-50 p-6">
+          <p className="font-semibold text-red-800">{title}</p>
+          <p className="mt-2 text-sm leading-6 text-red-700">{message}</p>
+          <button
+            onClick={onRetry}
+            className="mt-4 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
