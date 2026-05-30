@@ -1,5 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { InteractionStatus } from '@azure/msal-browser';
+import { useMsal } from '@azure/msal-react';
 import { useAuth } from './contexts/AuthContext';
 import AppShell from './components/layout/AppShell';
 
@@ -29,7 +31,9 @@ function PageLoader() {
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isDevMode } = useAuth();
+  const { inProgress } = useMsal();
+  if (!isDevMode && inProgress !== InteractionStatus.None) return <PageLoader />;
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 }
 

@@ -5,10 +5,11 @@ export const msalConfig: Configuration = {
     clientId: import.meta.env.VITE_AZURE_CLIENT_ID ?? '',
     authority: `https://login.microsoftonline.com/${import.meta.env.VITE_AZURE_TENANT_ID ?? 'common'}`,
     redirectUri: window.location.origin,
+    navigateToLoginRequestUrl: false,
   },
   cache: {
-    cacheLocation: 'sessionStorage',
-    storeAuthStateInCookie: false,
+    cacheLocation: 'localStorage',
+    storeAuthStateInCookie: true,
   },
   system: {
     loggerOptions: {
