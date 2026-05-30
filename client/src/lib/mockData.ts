@@ -1,5 +1,6 @@
 ﻿import { evaluateAchievementIds, getAchievementDefinition, type UserProfile, type Course, type Lesson, type UserCourseProgress } from '@study-guild/shared';
 import { computeRank, XP_REWARDS } from './xpUtils';
+import { applyHandsOnTutorials } from './handsOnTutorials';
 import { applyLessonDepthEnhancements } from './lessonDepthEnhancements';
 
 // ---------------------------------------------------------------------------
@@ -20553,6 +20554,7 @@ function connect(url: string) {
 ];
 
 applyLessonDepthEnhancements(MOCK_COURSES, MOCK_LESSONS);
+applyHandsOnTutorials(MOCK_COURSES, MOCK_LESSONS);
 
 export function createMockCourse(data: Partial<Course>): Course {
   const course: Course = {
