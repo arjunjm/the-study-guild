@@ -1,4 +1,5 @@
 ﻿import { evaluateAchievementIds, getAchievementDefinition, type UserProfile, type Course, type Lesson, type UserCourseProgress } from '@study-guild/shared';
+import { CONTEMPORARY_COURSES, CONTEMPORARY_LESSONS } from './contemporaryCatalog';
 import { computeRank, XP_REWARDS } from './xpUtils';
 import { applyHandsOnTutorials } from './handsOnTutorials';
 import { applyLessonDepthEnhancements } from './lessonDepthEnhancements';
@@ -20553,6 +20554,9 @@ function connect(url: string) {
 
 ];
 
+MOCK_COURSES.push(...CONTEMPORARY_COURSES);
+MOCK_LESSONS.push(...CONTEMPORARY_LESSONS);
+
 applyLessonDepthEnhancements(MOCK_COURSES, MOCK_LESSONS);
 applyHandsOnTutorials(MOCK_COURSES, MOCK_LESSONS);
 
@@ -20603,13 +20607,13 @@ export function getMockCourseProgress(): Array<{ course: Course; completedCount:
 }
 
 export const MOCK_TAXONOMIES = [
-  { l1: 'Security', l2: ['Authentication', 'Authorization', 'Network', 'Cryptography'] },
-  { l1: 'Web Development', l2: ['Frontend', 'Backend', 'APIs', 'GraphQL'] },
-  { l1: 'Cloud', l2: ['Azure', 'AWS', 'Kubernetes', 'CI/CD', 'Docker'] },
-  { l1: 'Databases', l2: ['SQL', 'NoSQL', 'Data Modeling', 'Performance'] },
+  { l1: 'Security', l2: ['Authentication', 'Authorization', 'Network', 'Cryptography', 'AI Security', 'Supply Chain'] },
+  { l1: 'Web Development', l2: ['Frontend', 'Backend', 'APIs', 'GraphQL', 'WebAssembly'] },
+  { l1: 'Cloud', l2: ['Azure', 'AWS', 'Kubernetes', 'CI/CD', 'Docker', 'Platform Engineering', 'Serverless', 'FinOps'] },
+  { l1: 'Databases', l2: ['SQL', 'NoSQL', 'Data Modeling', 'Performance', 'Data Engineering'] },
   { l1: 'Mobile', l2: ['iOS', 'Android', 'React Native', 'Flutter'] },
-  { l1: 'AI & ML', l2: ['Machine Learning', 'LLMs', 'RAG', 'AI Agents', 'LLM Evaluation', 'MLOps', 'Computer Vision', 'Data Science'] },
-  { l1: 'Systems', l2: ['Linux', 'Networking', 'Performance', 'Architecture'] },
+  { l1: 'AI & ML', l2: ['Machine Learning', 'LLMs', 'RAG', 'AI Agents', 'LLM Evaluation', 'MLOps', 'MCP', 'Computer Vision', 'Data Science'] },
+  { l1: 'Systems', l2: ['Linux', 'Networking', 'Performance', 'Architecture', 'Observability'] },
   { l1: 'Engineering', l2: ['Design Patterns', 'Testing', 'Git', 'Code Quality', 'Python'] },
 ];
 

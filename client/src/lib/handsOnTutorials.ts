@@ -428,6 +428,60 @@ const COURSE_TUTORIALS: Record<string, Partial<TutorialBlueprint>> = {
     deliverable: 'A WebSocket protocol note with message types, reconnect policy, and backpressure plan.',
     missions: ['Connect socket', 'Send message', 'Simulate disconnect', 'Add heartbeat'],
   },
+  'course-mcp': {
+    labTitle: 'MCP toolsmith workshop',
+    scenario: 'Design a safe MCP server for a study assistant, including tool schemas, resources, and approval gates.',
+    deliverable: 'An MCP capability card with tools, resources, permissions, and abuse cases.',
+    missions: ['Choose capabilities', 'Write tool schema', 'Add permission gate', 'Threat-model a malicious prompt'],
+  },
+  'course-llm-security': {
+    labTitle: 'Prompt-injection escape room',
+    scenario: 'Attack and defend a small LLM workflow that reads untrusted content and can call tools.',
+    deliverable: 'A red-team/blue-team note with attack prompt, expected defense, and eval case.',
+    missions: ['Write attack', 'Limit tool scope', 'Add refusal rule', 'Capture eval case'],
+  },
+  'course-supply-chain-security': {
+    labTitle: 'Build provenance checkpoint',
+    scenario: 'Trace a release from dependency install to artifact signing and deployment approval.',
+    deliverable: 'A supply-chain checklist with SBOM, provenance, signature, and policy gate.',
+    missions: ['Map pipeline', 'Generate inventory', 'Sign artifact', 'Block risky dependency'],
+  },
+  'course-platform-engineering': {
+    labTitle: 'Golden path design studio',
+    scenario: 'Create a paved road for launching a new backend service with templates, CI, deploy, docs, and ownership.',
+    deliverable: 'A golden-path one-pager with user journey, automation, guardrails, and success metrics.',
+    missions: ['Interview developer', 'Design template', 'Add guardrail', 'Measure adoption'],
+  },
+  'course-serverless-events': {
+    labTitle: 'Event pipeline pinball',
+    scenario: 'Send an event through producers, queues, consumers, retries, dead letters, and observability.',
+    deliverable: 'An event-flow diagram with idempotency key, retry policy, and failure dashboard.',
+    missions: ['Define event', 'Add queue', 'Handle duplicate', 'Create dead-letter runbook'],
+  },
+  'course-finops': {
+    labTitle: 'Cloud bill treasure hunt',
+    scenario: 'Hunt for waste in a fictional cloud bill, then choose one optimization with a reliability-safe rollback.',
+    deliverable: 'A cost-optimization recommendation with unit-cost metric and risk note.',
+    missions: ['Allocate spend', 'Find anomaly', 'Rightsize resource', 'Set budget alert'],
+  },
+  'course-streaming-data': {
+    labTitle: 'Streaming leaderboard forge',
+    scenario: 'Turn learning events into a real-time leaderboard while handling partitions, lag, replay, and late events.',
+    deliverable: 'A stream-processing design with topic, partition key, consumer group, window, and replay strategy.',
+    missions: ['Define topic', 'Pick partition key', 'Track offset', 'Handle late event'],
+  },
+  'course-wasm-webgpu': {
+    labTitle: 'Browser performance arcade',
+    scenario: 'Move one compute-heavy task toward WASM or WebGPU and measure whether the boundary cost is worth it.',
+    deliverable: 'A performance experiment note comparing JS baseline, accelerated path, and fallback.',
+    missions: ['Benchmark baseline', 'Move compute', 'Measure transfer cost', 'Add fallback'],
+  },
+  'course-ebpf-observability': {
+    labTitle: 'Kernel signal expedition',
+    scenario: 'Trace a service symptom through process, socket, network, and kernel-level signals.',
+    deliverable: 'An eBPF observability map with probe point, metric, owner, and incident question.',
+    missions: ['Pick symptom', 'Choose probe', 'Collect signal', 'Map to service owner'],
+  },
 };
 
 export function applyHandsOnTutorials(courses: Course[], lessons: Lesson[]) {
