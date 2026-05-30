@@ -482,6 +482,60 @@ const COURSE_TUTORIALS: Record<string, Partial<TutorialBlueprint>> = {
     deliverable: 'An eBPF observability map with probe point, metric, owner, and incident question.',
     missions: ['Pick symptom', 'Choose probe', 'Collect signal', 'Map to service owner'],
   },
+  'course-passkeys-webauthn': {
+    labTitle: 'Passkey ceremony simulator',
+    scenario: 'Trace a fake WebAuthn registration and login ceremony from challenge to signature verification.',
+    deliverable: 'A passkey ceremony diagram with client, authenticator, relying party, challenge, origin, and public key labeled.',
+    missions: ['Map registration', 'Map login', 'Check origin', 'Plan recovery'],
+  },
+  'course-zero-trust': {
+    labTitle: 'Trust boundary redesign',
+    scenario: 'Replace implicit network trust with explicit identity, device, policy, and service-to-service checks.',
+    deliverable: 'A zero-trust access matrix with actor, resource, policy, signal, and audit event.',
+    missions: ['List assets', 'Add identity checks', 'Segment services', 'Log policy decisions'],
+  },
+  'course-privacy-engineering': {
+    labTitle: 'Data minimization workshop',
+    scenario: 'Turn a data-hungry feature into a privacy-aware design with purpose, retention, and deletion paths.',
+    deliverable: 'A data inventory with purpose, retention, deletion, and re-identification risk notes.',
+    missions: ['Inventory fields', 'Cut unnecessary data', 'Plan deletion', 'Reduce analytics risk'],
+  },
+  'course-iac-terraform-opentofu': {
+    labTitle: 'Terraform plan review',
+    scenario: 'Review a proposed infrastructure change before apply and catch state, secret, and policy risks.',
+    deliverable: 'An IaC plan checklist with module, state, drift, policy, and rollback notes.',
+    missions: ['Write resource graph', 'Review plan', 'Add policy gate', 'Document rollback'],
+  },
+  'course-service-mesh': {
+    labTitle: 'Mesh traffic lab',
+    scenario: 'Route traffic between services with mTLS, retries, timeouts, and a canary rollout.',
+    deliverable: 'A mesh decision record with traffic policy, security posture, and operational cost.',
+    missions: ['Draw sidecars', 'Split traffic', 'Set timeout', 'Evaluate mesh cost'],
+  },
+  'course-edge-computing': {
+    labTitle: 'Edge cache puzzle',
+    scenario: 'Move part of an app to the edge and design cache keys, invalidation, and fallback behavior.',
+    deliverable: 'An edge architecture note with runtime placement, cache policy, and failure mode.',
+    missions: ['Choose edge logic', 'Design cache key', 'Protect private data', 'Add fallback'],
+  },
+  'course-vector-databases': {
+    labTitle: 'Semantic search tuning lab',
+    scenario: 'Build a tiny semantic search plan with embeddings, metadata filters, hybrid retrieval, and reranking.',
+    deliverable: 'A retrieval test sheet with query, expected source, retrieved chunks, score, and failure note.',
+    missions: ['Create chunks', 'Add metadata filter', 'Compare hybrid search', 'Evaluate retrieval'],
+  },
+  'course-web-accessibility': {
+    labTitle: 'Accessibility quest check',
+    scenario: 'Audit a screen with keyboard, screen reader, contrast, labels, focus, and zoom checks.',
+    deliverable: 'An accessibility bug report with issue, user impact, fix, and retest step.',
+    missions: ['Keyboard test', 'Check labels', 'Fix focus', 'Verify contrast'],
+  },
+  'course-feature-flags-experimentation': {
+    labTitle: 'Safe rollout control room',
+    scenario: 'Ship a feature behind a flag, roll it out gradually, monitor guardrails, and clean it up.',
+    deliverable: 'A flag registry entry with owner, purpose, rollout, metrics, kill switch, and deletion date.',
+    missions: ['Define flag', 'Plan rollout', 'Add guardrails', 'Schedule cleanup'],
+  },
 };
 
 export function applyHandsOnTutorials(courses: Course[], lessons: Lesson[]) {
