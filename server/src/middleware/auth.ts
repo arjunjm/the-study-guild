@@ -9,6 +9,18 @@ const client = jwksClient({
   rateLimit: true,
 });
 
+function acceptedAudiences(): jwt.VerifyOptions['audience'] {
+  if (!env.azure.clientId) return undefined;
+  return [env.azure.clientId, `api://${env.azure.clientId}`] as [string, ...string[]];
+}
+
+function acceptedIssuers(): jwt.VerifyOptions['issuer'] {
+  return [
+    `https://login.microsoftonline.com/${env.azure.tenantId}/v2.0`,
+    `https://sts.windows.net/${env.azure.tenantId}/`,
+  ] as [string, ...string[]];
+}
+
 function getKey(header: jwt.JwtHeader, callback: jwt.SigningKeyCallback) {
   client.getSigningKey(header.kid, (err, key) => {
     if (err || !key) return callback(err ?? new Error('No signing key found'));
@@ -54,10 +66,10 @@ export function authenticate(req: AuthenticatedRequest, res: Response, next: Nex
     token,
     getKey,
     {
-      audience: env.azure.clientId,
-      issuer: `https://login.microsoftonline.com/${env.azure.tenantId}/v2.0`,
+      audience: acceptedAudiences(),
+      issuer: acceptedIssuers(),
     },
-    (err, decoded) => {
+    (err: jwt.VerifyErrors | null, decoded: string | jwt.JwtPayload | undefined) => {
       if (err || !decoded || typeof decoded === 'string') {
         res.status(401).json({ error: 'Unauthorized', message: 'Invalid token', statusCode: 401 });
         return;
