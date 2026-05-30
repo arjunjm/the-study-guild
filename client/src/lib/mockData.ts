@@ -20607,14 +20607,14 @@ export function getMockCourseProgress(): Array<{ course: Course; completedCount:
 }
 
 export const MOCK_TAXONOMIES = [
-  { l1: 'Security', l2: ['Authentication', 'Authorization', 'Network', 'Cryptography', 'AI Security', 'Supply Chain'] },
-  { l1: 'Web Development', l2: ['Frontend', 'Backend', 'APIs', 'GraphQL', 'WebAssembly'] },
-  { l1: 'Cloud', l2: ['Azure', 'AWS', 'Kubernetes', 'CI/CD', 'Docker', 'Platform Engineering', 'Serverless', 'FinOps'] },
-  { l1: 'Databases', l2: ['SQL', 'NoSQL', 'Data Modeling', 'Performance', 'Data Engineering'] },
+  { l1: 'Security', l2: ['Authentication', 'Passkeys', 'Authorization', 'Zero Trust', 'Privacy', 'Network', 'Cryptography', 'AI Security', 'Supply Chain'] },
+  { l1: 'Web Development', l2: ['Frontend', 'Accessibility', 'Backend', 'APIs', 'GraphQL', 'WebAssembly'] },
+  { l1: 'Cloud', l2: ['Azure', 'AWS', 'Kubernetes', 'CI/CD', 'Docker', 'Infrastructure as Code', 'Platform Engineering', 'Serverless', 'FinOps', 'Service Mesh', 'Edge Computing'] },
+  { l1: 'Databases', l2: ['SQL', 'NoSQL', 'Data Modeling', 'Performance', 'Vector Databases', 'Data Engineering'] },
   { l1: 'Mobile', l2: ['iOS', 'Android', 'React Native', 'Flutter'] },
   { l1: 'AI & ML', l2: ['Machine Learning', 'LLMs', 'RAG', 'AI Agents', 'LLM Evaluation', 'MLOps', 'MCP', 'Computer Vision', 'Data Science'] },
   { l1: 'Systems', l2: ['Linux', 'Networking', 'Performance', 'Architecture', 'Observability'] },
-  { l1: 'Engineering', l2: ['Design Patterns', 'Testing', 'Git', 'Code Quality', 'Python'] },
+  { l1: 'Engineering', l2: ['Design Patterns', 'Testing', 'Git', 'Code Quality', 'Python', 'Experimentation'] },
 ];
 
 export interface LeaderboardEntry {

@@ -368,6 +368,60 @@ const RESOURCES: Record<string, TopicResource[]> = {
     { title: 'Learning eBPF', author: 'Liz Rice', type: 'book', description: 'Practical O\'Reilly book that explains eBPF programs, maps, tracing, networking, and real-world observability examples.', url: 'https://www.oreilly.com/library/view/learning-ebpf/9781098135119/' },
     { title: 'Cilium eBPF Documentation', type: 'docs', description: 'Cilium\'s docs show how eBPF powers Kubernetes networking, observability, service mesh, and security.', url: 'https://docs.cilium.io/en/stable/bpf/' },
   ],
+
+  'Security::Passkeys': [
+    { title: 'passkeys.dev', type: 'docs', description: 'Vendor-neutral passkey and WebAuthn education hub from the FIDO community with practical UX, implementation, and rollout guidance.', url: 'https://passkeys.dev' },
+    { title: 'WebAuthn Guide', type: 'docs', description: 'Clear, implementation-focused explanation of WebAuthn registration and authentication ceremonies.', url: 'https://webauthn.guide' },
+    { title: 'FIDO Alliance Passkeys', type: 'docs', description: 'Official FIDO Alliance resources explaining passkeys, FIDO2, authenticators, and phishing-resistant authentication.', url: 'https://fidoalliance.org/passkeys/' },
+  ],
+
+  'Security::Zero Trust': [
+    { title: 'NIST SP 800-207 Zero Trust Architecture', type: 'docs', description: 'The canonical zero-trust architecture publication covering principles, components, deployment models, and trust algorithms.', url: 'https://csrc.nist.gov/publications/detail/sp/800-207/final' },
+    { title: 'Microsoft Zero Trust Guidance', type: 'docs', description: 'Microsoft guidance for identity, endpoints, apps, infrastructure, data, and network zero-trust adoption.', url: 'https://learn.microsoft.com/en-us/security/zero-trust/' },
+    { title: 'Google BeyondCorp', type: 'blog', description: 'Google\'s influential BeyondCorp model for moving access control from network perimeter to identity and context.', url: 'https://cloud.google.com/beyondcorp' },
+  ],
+
+  'Security::Privacy': [
+    { title: 'NIST Privacy Framework', type: 'docs', description: 'A practical framework for identifying, governing, controlling, communicating, and protecting privacy risks.', url: 'https://www.nist.gov/privacy-framework' },
+    { title: 'Privacy by Design', type: 'docs', description: 'Foundational privacy engineering principles for proactive, user-centric, embedded privacy controls.', url: 'https://www.ipc.on.ca/wp-content/uploads/resources/7foundationalprinciples.pdf' },
+    { title: 'Google Differential Privacy', type: 'tool', description: 'Open-source libraries and explanations for adding privacy-preserving noise to aggregate data analysis.', url: 'https://github.com/google/differential-privacy' },
+  ],
+
+  'Cloud::Infrastructure as Code': [
+    { title: 'Terraform Documentation', type: 'docs', description: 'Official Terraform docs for configuration language, state, modules, providers, plans, and workflow patterns.', url: 'https://developer.hashicorp.com/terraform/docs' },
+    { title: 'OpenTofu Documentation', type: 'docs', description: 'Open-source Terraform-compatible IaC documentation covering language, workflows, state, and providers.', url: 'https://opentofu.org/docs/' },
+    { title: 'Checkov', type: 'tool', description: 'Open-source static analysis tool for IaC misconfigurations across Terraform, Kubernetes, CloudFormation, and more.', url: 'https://www.checkov.io' },
+  ],
+
+  'Cloud::Service Mesh': [
+    { title: 'Istio Documentation', type: 'docs', description: 'Official Istio docs for traffic management, security, observability, gateways, and progressive delivery.', url: 'https://istio.io/latest/docs/' },
+    { title: 'Linkerd Documentation', type: 'docs', description: 'Official docs for a lightweight Kubernetes service mesh focused on simplicity, mTLS, traffic, and observability.', url: 'https://linkerd.io/2-edge/tasks/' },
+    { title: 'Service Mesh Patterns', type: 'book', description: 'Practical patterns for service mesh adoption, traffic control, security, observability, and operations.', url: 'https://www.manning.com/books/service-mesh-patterns' },
+  ],
+
+  'Cloud::Edge Computing': [
+    { title: 'Cloudflare Workers Docs', type: 'docs', description: 'Official docs for edge functions, caching, routing, KV/Durable Objects, and deployment on Cloudflare\'s edge network.', url: 'https://developers.cloudflare.com/workers/' },
+    { title: 'MDN CDN Guide', type: 'docs', description: 'MDN overview of content delivery networks, caching behavior, latency, and web performance implications.', url: 'https://developer.mozilla.org/en-US/docs/Glossary/CDN' },
+    { title: 'Vercel Edge Functions', type: 'docs', description: 'Guidance for running low-latency server-side logic at the edge with practical constraints and examples.', url: 'https://vercel.com/docs/functions/edge-functions' },
+  ],
+
+  'Databases::Vector Databases': [
+    { title: 'Pinecone Learning Center', type: 'docs', description: 'Educational guides on vector search, embeddings, hybrid search, metadata filtering, and RAG retrieval patterns.', url: 'https://www.pinecone.io/learn/' },
+    { title: 'Qdrant Documentation', type: 'docs', description: 'Open-source vector database docs covering collections, payload filters, indexes, hybrid search, and operations.', url: 'https://qdrant.tech/documentation/' },
+    { title: 'Weaviate Academy', type: 'course', description: 'Hands-on learning resources for vector databases, hybrid search, generative search, and production retrieval systems.', url: 'https://weaviate.io/developers/academy' },
+  ],
+
+  'Web Development::Accessibility': [
+    { title: 'WCAG 2.2', type: 'docs', description: 'The W3C Web Content Accessibility Guidelines used as the global standard for accessible web experiences.', url: 'https://www.w3.org/TR/WCAG22/' },
+    { title: 'web.dev Learn Accessibility', type: 'course', description: 'Google\'s practical, structured accessibility course covering semantics, keyboard, focus, ARIA, forms, and testing.', url: 'https://web.dev/learn/accessibility/' },
+    { title: 'Deque axe DevTools', type: 'tool', description: 'Popular accessibility testing tools and browser extension for finding common accessibility issues during development.', url: 'https://www.deque.com/axe/devtools/' },
+  ],
+
+  'Engineering::Experimentation': [
+    { title: 'Feature Toggles', author: 'Martin Fowler', type: 'blog', description: 'Classic article on feature toggle categories, implementation patterns, and long-term maintenance trade-offs.', url: 'https://martinfowler.com/articles/feature-toggles.html' },
+    { title: 'LaunchDarkly Guides', type: 'docs', description: 'Practical guides for feature management, progressive delivery, experimentation, targeting, and operational flag hygiene.', url: 'https://docs.launchdarkly.com/guides' },
+    { title: 'Trustworthy Online Controlled Experiments', type: 'book', description: 'The definitive experimentation book by Kohavi, Tang, and Xu, covering statistics, metrics, guardrails, and pitfalls.', url: 'https://www.cambridge.org/core/books/trustworthy-online-controlled-experiments/73BEA13E7E2A6A6FC9F8C7BAE3A9437A' },
+  ],
 };
 
 export function getTopicResources(l1: string, l2: string): TopicResource[] {

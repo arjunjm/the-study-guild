@@ -29,7 +29,10 @@ export const TAXONOMY: TaxonomyCategory[] = [
     activeColor: 'text-violet-300 bg-violet-500/15 border-r-2 border-violet-400',
     items: [
       { label: 'Authentication', l2: 'Authentication' },
+      { label: 'Passkeys',       l2: 'Passkeys' },
       { label: 'Authorization',  l2: 'Authorization' },
+      { label: 'Zero Trust',     l2: 'Zero Trust' },
+      { label: 'Privacy',        l2: 'Privacy' },
       { label: 'AI Security',    l2: 'AI Security' },
       { label: 'Supply Chain',   l2: 'Supply Chain' },
       { label: 'Network Security', l2: 'Network' },
@@ -45,6 +48,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
     activeColor: 'text-cyan-300 bg-cyan-500/15 border-r-2 border-cyan-400',
     items: [
       { label: 'Frontend',    l2: 'Frontend' },
+      { label: 'Accessibility', l2: 'Accessibility' },
       { label: 'Backend',     l2: 'Backend' },
       { label: 'APIs & REST', l2: 'APIs' },
       { label: 'GraphQL',     l2: 'GraphQL' },
@@ -64,9 +68,12 @@ export const TAXONOMY: TaxonomyCategory[] = [
       { label: 'Kubernetes', l2: 'Kubernetes' },
       { label: 'Docker',     l2: 'Docker' },
       { label: 'CI/CD',      l2: 'CI/CD' },
+      { label: 'Infrastructure as Code', l2: 'Infrastructure as Code' },
       { label: 'Platform Engineering', l2: 'Platform Engineering' },
       { label: 'Serverless', l2: 'Serverless' },
       { label: 'FinOps',     l2: 'FinOps' },
+      { label: 'Service Mesh', l2: 'Service Mesh' },
+      { label: 'Edge Computing', l2: 'Edge Computing' },
     ],
   },
   {
@@ -81,6 +88,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
       { label: 'NoSQL',          l2: 'NoSQL' },
       { label: 'Data Modeling',  l2: 'Data Modeling' },
       { label: 'Performance',    l2: 'Performance' },
+      { label: 'Vector Databases', l2: 'Vector Databases' },
       { label: 'Data Engineering', l2: 'Data Engineering' },
     ],
   },
@@ -145,6 +153,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
       { label: 'Git & Version Control', l2: 'Git' },
       { label: 'Code Quality',    l2: 'Code Quality' },
       { label: 'Python',          l2: 'Python' },
+      { label: 'Experimentation', l2: 'Experimentation' },
     ],
   },
 ];
