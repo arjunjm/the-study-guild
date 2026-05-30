@@ -1,11 +1,12 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { PublicClientApplication } from '@azure/msal-browser';
+import { EventType, PublicClientApplication } from '@azure/msal-browser';
 import { MsalProvider } from '@azure/msal-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { msalConfig } from './lib/msalConfig';
 import { apiClient, setupTokenInterceptor } from './lib/apiClient';
 import { installMockInterceptors } from './lib/mockInterceptors';
+import { clearAuthError, storeAuthError } from './lib/authDiagnostics';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import App from './App';
@@ -20,6 +21,14 @@ if (IS_DEV_MODE) {
   installMockInterceptors(apiClient);
 } else {
   await msalInstance.initialize();
+  msalInstance.addEventCallback((event) => {
+    if (event.eventType === EventType.LOGIN_FAILURE) {
+      storeAuthError(event.error);
+    }
+    if (event.eventType === EventType.LOGIN_SUCCESS) {
+      clearAuthError();
+    }
+  });
   setupTokenInterceptor(msalInstance);
 }
 
