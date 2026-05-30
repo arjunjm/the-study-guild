@@ -25,13 +25,21 @@ export default function ProfilePage() {
   const [draftName, setDraftName] = useState('');
   const [draftBio, setDraftBio] = useState('');
 
-  const { data: me } = useQuery<UserProfile>({
+  const {
+    data: me,
+    isError: meError,
+    refetch: refetchMe,
+  } = useQuery<UserProfile>({
     queryKey: ['me'],
     queryFn: async () => (await apiClient.get<{ data: UserProfile }>('/users/me')).data.data,
     enabled: !userId,
   });
 
-  const { data: publicProfile } = useQuery<Partial<UserProfile>>({
+  const {
+    data: publicProfile,
+    isError: publicProfileError,
+    refetch: refetchPublicProfile,
+  } = useQuery<Partial<UserProfile>>({
     queryKey: ['profile', userId],
     queryFn: async () => (await apiClient.get<{ data: Partial<UserProfile> }>(`/users/${userId}/profile`)).data.data,
     enabled: !!userId,
@@ -53,12 +61,39 @@ export default function ProfilePage() {
   });
 
   const user = userId ? publicProfile : me;
+  const userLoadError = userId ? publicProfileError : meError;
+  if (userLoadError) {
+    return (
+      <PageError
+        title="Profile could not load"
+        message={userId ? 'This public profile could not be loaded.' : 'Your sign-in succeeded, but the API could not load your profile. Refresh the page or sign in again.'}
+        onRetry={() => { if (userId) refetchPublicProfile(); else refetchMe(); }}
+      />
+    );
+  }
   if (!user) return <div className="p-10 text-slate-400">Loading profile…</div>;
 
   function startEdit() {
     setDraftName((user as UserProfile).displayName ?? '');
     setDraftBio((user as UserProfile).bio ?? '');
     setEditing(true);
+  }
+
+  function PageError({ title, message, onRetry }: { title: string; message: string; onRetry: () => void }) {
+    return (
+      <div className="p-6 lg:p-10">
+        <div className="max-w-md rounded-2xl border border-red-200 bg-red-50 p-6">
+          <p className="font-semibold text-red-800">{title}</p>
+          <p className="mt-2 text-sm leading-6 text-red-700">{message}</p>
+          <button
+            onClick={onRetry}
+            className="mt-4 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const rankIndex = RANK_ORDER.indexOf(user.rank as keyof typeof RANK_XP_THRESHOLDS);
