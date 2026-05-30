@@ -30,6 +30,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
     items: [
       { label: 'Authentication', l2: 'Authentication' },
       { label: 'Authorization',  l2: 'Authorization' },
+      { label: 'AI Security',    l2: 'AI Security' },
+      { label: 'Supply Chain',   l2: 'Supply Chain' },
       { label: 'Network Security', l2: 'Network' },
       { label: 'Cryptography',   l2: 'Cryptography' },
     ],
@@ -46,6 +48,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
       { label: 'Backend',     l2: 'Backend' },
       { label: 'APIs & REST', l2: 'APIs' },
       { label: 'GraphQL',     l2: 'GraphQL' },
+      { label: 'WebAssembly', l2: 'WebAssembly' },
     ],
   },
   {
@@ -61,6 +64,9 @@ export const TAXONOMY: TaxonomyCategory[] = [
       { label: 'Kubernetes', l2: 'Kubernetes' },
       { label: 'Docker',     l2: 'Docker' },
       { label: 'CI/CD',      l2: 'CI/CD' },
+      { label: 'Platform Engineering', l2: 'Platform Engineering' },
+      { label: 'Serverless', l2: 'Serverless' },
+      { label: 'FinOps',     l2: 'FinOps' },
     ],
   },
   {
@@ -75,6 +81,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
       { label: 'NoSQL',          l2: 'NoSQL' },
       { label: 'Data Modeling',  l2: 'Data Modeling' },
       { label: 'Performance',    l2: 'Performance' },
+      { label: 'Data Engineering', l2: 'Data Engineering' },
     ],
   },
   {
@@ -105,6 +112,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
       { label: 'AI Agents', l2: 'AI Agents' },
       { label: 'LLM Evaluation', l2: 'LLM Evaluation' },
       { label: 'MLOps', l2: 'MLOps' },
+      { label: 'Model Context Protocol', l2: 'MCP' },
       { label: 'Computer Vision',  l2: 'Computer Vision' },
       { label: 'Data Science',     l2: 'Data Science' },
     ],
@@ -121,6 +129,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
       { label: 'Networking',     l2: 'Networking' },
       { label: 'Performance',    l2: 'Performance' },
       { label: 'Architecture',   l2: 'Architecture' },
+      { label: 'Observability',  l2: 'Observability' },
     ],
   },
   {

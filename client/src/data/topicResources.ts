@@ -314,6 +314,60 @@ const RESOURCES: Record<string, TopicResource[]> = {
     { title: 'TypeScript Deep Dive', type: 'book', description: 'Basarat\'s free online book covering TypeScript internals, common mistakes, and advanced patterns. Community-favorite reference.', url: 'https://basarat.gitbook.io/typescript/' },
     { title: 'tRPC', type: 'tool', description: 'End-to-end typesafe APIs without code generation. Best demonstration of advanced TypeScript type inference in practice.', url: 'https://trpc.io' },
   ],
+
+  'AI & ML::MCP': [
+    { title: 'Model Context Protocol Specification', type: 'docs', description: 'The official MCP specification and concepts for servers, clients, tools, resources, prompts, and transports.', url: 'https://modelcontextprotocol.io' },
+    { title: 'Anthropic MCP Announcement', type: 'blog', description: 'The original announcement explaining why MCP exists and how it standardizes context/tool connections for AI assistants.', url: 'https://www.anthropic.com/news/model-context-protocol' },
+    { title: 'MCP Servers Repository', type: 'tool', description: 'Community and reference MCP servers that show real integration patterns for files, GitHub, databases, search, and more.', url: 'https://github.com/modelcontextprotocol/servers' },
+  ],
+
+  'Security::AI Security': [
+    { title: 'OWASP Top 10 for LLM Applications', type: 'docs', description: 'The most practical risk taxonomy for LLM apps: prompt injection, sensitive information disclosure, tool misuse, and supply-chain risks.', url: 'https://owasp.org/www-project-top-10-for-large-language-model-applications/' },
+    { title: 'Microsoft AI Security Risk Management', type: 'docs', description: 'Microsoft guidance for securing generative AI apps, including threat modeling, controls, and responsible AI operations.', url: 'https://learn.microsoft.com/en-us/security/ai-red-team/' },
+    { title: 'Google Secure AI Framework', type: 'docs', description: 'Google SAIF guidance for securing AI systems across model, data, application, infrastructure, and governance layers.', url: 'https://safety.google/cybersecurity-advancements/saif/' },
+  ],
+
+  'Security::Supply Chain': [
+    { title: 'SLSA Framework', type: 'docs', description: 'Supply-chain Levels for Software Artifacts: a practical framework for build integrity, provenance, and tamper resistance.', url: 'https://slsa.dev' },
+    { title: 'OpenSSF Scorecard', type: 'tool', description: 'Automated checks that score open-source projects for supply-chain security practices such as branch protection and pinned dependencies.', url: 'https://github.com/ossf/scorecard' },
+    { title: 'CycloneDX SBOM Standard', type: 'docs', description: 'A widely used SBOM standard for inventorying components, services, vulnerabilities, and dependency relationships.', url: 'https://cyclonedx.org' },
+  ],
+
+  'Cloud::Platform Engineering': [
+    { title: 'platformengineering.org', type: 'blog', description: 'Community hub for platform engineering practices, internal developer platforms, golden paths, and developer experience.', url: 'https://platformengineering.org' },
+    { title: 'Backstage Documentation', type: 'docs', description: 'Spotify-backed open-source developer portal used for software catalogs, templates, docs, ownership, and golden paths.', url: 'https://backstage.io/docs' },
+    { title: 'Team Topologies', type: 'book', description: 'A foundational book for understanding platform teams, stream-aligned teams, cognitive load, and interaction modes.', url: 'https://teamtopologies.com/book' },
+  ],
+
+  'Cloud::Serverless': [
+    { title: 'Azure Functions Best Practices', type: 'docs', description: 'Official Azure guidance for reliable serverless apps, including hosting plans, scaling, bindings, and durable workflows.', url: 'https://learn.microsoft.com/en-us/azure/azure-functions/functions-best-practices' },
+    { title: 'AWS Serverless Lens', type: 'docs', description: 'AWS Well-Architected guidance for serverless workloads covering operations, security, reliability, performance, and cost.', url: 'https://docs.aws.amazon.com/wellarchitected/latest/serverless-applications-lens/welcome.html' },
+    { title: 'Enterprise Integration Patterns', type: 'book', description: 'The classic catalog of messaging patterns behind modern event-driven systems, queues, topics, routing, and transformations.', url: 'https://www.enterpriseintegrationpatterns.com' },
+  ],
+
+  'Cloud::FinOps': [
+    { title: 'FinOps Foundation Framework', type: 'docs', description: 'The canonical framework for cloud financial management, including inform/optimize/operate phases and capability models.', url: 'https://www.finops.org/framework/' },
+    { title: 'Azure Cost Management Documentation', type: 'docs', description: 'Official Azure docs for budgets, cost analysis, exports, alerts, reservations, and optimization recommendations.', url: 'https://learn.microsoft.com/en-us/azure/cost-management-billing/costs/' },
+    { title: 'Cloud FinOps', type: 'book', description: 'O\'Reilly book on collaborative cloud cost management, unit economics, optimization, and operating models.', url: 'https://www.oreilly.com/library/view/cloud-finops/9781492054610/' },
+  ],
+
+  'Databases::Data Engineering': [
+    { title: 'Kafka Documentation', type: 'docs', description: 'Official Apache Kafka docs covering topics, partitions, producers, consumers, transactions, and operations.', url: 'https://kafka.apache.org/documentation/' },
+    { title: 'Flink Documentation', type: 'docs', description: 'Official Apache Flink docs for event-time processing, windows, state, checkpoints, and streaming pipelines.', url: 'https://nightlies.apache.org/flink/flink-docs-stable/' },
+    { title: 'Designing Data-Intensive Applications', author: 'Martin Kleppmann', type: 'book', description: 'Essential background for logs, streams, batch/stream processing, consistency, and distributed data systems.', url: 'https://dataintensive.net' },
+  ],
+
+  'Web Development::WebAssembly': [
+    { title: 'MDN WebAssembly Guide', type: 'docs', description: 'MDN\'s practical WebAssembly guide covering concepts, JavaScript integration, modules, memory, and toolchains.', url: 'https://developer.mozilla.org/en-US/docs/WebAssembly' },
+    { title: 'WebGPU Fundamentals', type: 'course', description: 'Hands-on explanations of WebGPU concepts, buffers, shaders, pipelines, and compute/graphics workflows.', url: 'https://webgpufundamentals.org' },
+    { title: 'WebGPU Specification', type: 'docs', description: 'The official W3C specification for WebGPU for deeper reference on the browser GPU programming model.', url: 'https://www.w3.org/TR/webgpu/' },
+  ],
+
+  'Systems::Observability': [
+    { title: 'ebpf.io', type: 'docs', description: 'Community site explaining eBPF concepts, use cases, projects, verifier safety, networking, observability, and security.', url: 'https://ebpf.io' },
+    { title: 'Learning eBPF', author: 'Liz Rice', type: 'book', description: 'Practical O\'Reilly book that explains eBPF programs, maps, tracing, networking, and real-world observability examples.', url: 'https://www.oreilly.com/library/view/learning-ebpf/9781098135119/' },
+    { title: 'Cilium eBPF Documentation', type: 'docs', description: 'Cilium\'s docs show how eBPF powers Kubernetes networking, observability, service mesh, and security.', url: 'https://docs.cilium.io/en/stable/bpf/' },
+  ],
 };
 
 export function getTopicResources(l1: string, l2: string): TopicResource[] {
