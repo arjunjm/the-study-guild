@@ -77,6 +77,7 @@ function Sidebar() {
   const activeL2 = searchParams.get('l2') ?? '';
   const isCoursesPage = location.pathname === '/courses';
   const [openSections, setOpenSections] = useState<Set<string>>(() => activeL1 ? new Set([activeL1]) : new Set());
+  const visibleOpenSections = activeL1 ? new Set([...openSections, activeL1]) : openSections;
 
   function toggleSection(l1: string) {
     setOpenSections(prev => {
@@ -136,7 +137,7 @@ function Sidebar() {
         <div className="flex flex-col gap-0.5 px-2 pb-3">
           {TAXONOMY.map(cat => {
             const Icon = cat.icon;
-            const isOpen = openSections.has(cat.l1);
+            const isOpen = visibleOpenSections.has(cat.l1);
             const isCatActive = isCoursesPage && activeL1 === cat.l1;
 
             return (

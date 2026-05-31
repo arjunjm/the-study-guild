@@ -41,9 +41,9 @@ export default function CoursesPage() {
   const filterL2 = searchParams.get('l2') ?? '';
   const filterDiff = searchParams.get('difficulty') ?? '';
   const filterTag = searchParams.get('tag') ?? '';
+  const searchParam = searchParams.get('search') ?? '';
   const sortBy = (searchParams.get('sort') ?? 'newest') as 'newest' | 'rating' | 'popular';
 
-  const [search, setSearch] = useState(searchParams.get('search') ?? '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestionIdx, setSuggestionIdx] = useState(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -100,17 +100,15 @@ export default function CoursesPage() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setSearchParams(prev => {
-        const next = new URLSearchParams(prev);
-        if (search.trim()) next.set('search', search.trim());
-        else next.delete('search');
-        return next;
-      }, { replace: true });
-    }, 350);
-    return () => clearTimeout(t);
-  }, [search, setSearchParams]);
+  function setSearchTerm(value: string) {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      const trimmed = value.trim();
+      if (trimmed) next.set('search', trimmed);
+      else next.delete('search');
+      return next;
+    }, { replace: true });
+  }
 
   function setDifficulty(d: string) {
     setSearchParams(prev => {
@@ -149,22 +147,21 @@ export default function CoursesPage() {
   }
 
   function clearAll() {
-    setSearch('');
     setSearchParams({});
   }
 
   const activeCat = TAXONOMY.find(c => c.l1 === filterL1);
   const activeItem = activeCat?.items.find(i => i.l2 === filterL2);
-  const hasFilters = !!(filterL1 || filterL2 || filterDiff || search.trim() || filterTag);
+  const hasFilters = !!(filterL1 || filterL2 || filterDiff || searchParam || filterTag);
 
-  const { data: courses, isLoading } = useQuery<Course[]>({
-    queryKey: ['courses', filterL1, filterL2, filterDiff, search],
+  const { data: courses, isLoading, isError, refetch } = useQuery<Course[]>({
+    queryKey: ['courses', filterL1, filterL2, filterDiff, searchParam],
     queryFn: async () => {
       const p = new URLSearchParams();
       if (filterL1) p.set('l1', filterL1);
       if (filterL2) p.set('l2', filterL2);
       if (filterDiff) p.set('difficulty', filterDiff);
-      if (search.trim()) p.set('search', search.trim());
+      if (searchParam) p.set('search', searchParam);
       return (await apiClient.get<{ data: Course[] }>(`/courses?${p}`)).data.data;
     },
   });
@@ -201,9 +198,9 @@ export default function CoursesPage() {
       }, {} as Record<string, number>)
     : {};
 
-  const suggestions = search.trim().length >= 2 && allCourses
+  const suggestions = searchParam.length >= 2 && allCourses
     ? allCourses
-        .filter(c => c.title.toLowerCase().includes(search.toLowerCase().trim()))
+        .filter(c => c.title.toLowerCase().includes(searchParam.toLowerCase()))
         .slice(0, 6)
     : [];
 
@@ -305,12 +302,12 @@ export default function CoursesPage() {
           ref={searchInputRef}
           type="search"
           placeholder="Search courses… (press / to focus)"
-          value={search}
-          onChange={e => { setSearch(e.target.value); setShowSuggestions(true); setSuggestionIdx(-1); }}
+          value={searchParam}
+          onChange={e => { setSearchTerm(e.target.value); setShowSuggestions(true); setSuggestionIdx(-1); }}
           onFocus={() => setShowSuggestions(true)}
           onBlur={() => setTimeout(() => { setShowSuggestions(false); setSuggestionIdx(-1); }, 150)}
           onKeyDown={e => {
-            const listLen = search.trim().length >= 2 ? suggestions.length : searchHistory.length;
+            const listLen = searchParam.length >= 2 ? suggestions.length : searchHistory.length;
             if (e.key === 'ArrowDown') {
               e.preventDefault();
               setSuggestionIdx(i => Math.min(i + 1, listLen - 1));
@@ -318,17 +315,17 @@ export default function CoursesPage() {
               e.preventDefault();
               setSuggestionIdx(i => Math.max(i - 1, -1));
             } else if (e.key === 'Enter') {
-              if (search.trim().length >= 2 && suggestionIdx >= 0) {
+              if (searchParam.length >= 2 && suggestionIdx >= 0) {
                 e.preventDefault();
-                saveSearch(search.trim());
+                saveSearch(searchParam);
                 navigate(`/courses/${suggestions[suggestionIdx].id}`);
                 setShowSuggestions(false);
-              } else if (search.trim().length >= 2) {
-                saveSearch(search.trim());
+              } else if (searchParam.length >= 2) {
+                saveSearch(searchParam);
                 setShowSuggestions(false);
               } else if (suggestionIdx >= 0 && searchHistory[suggestionIdx]) {
                 e.preventDefault();
-                setSearch(searchHistory[suggestionIdx]);
+                setSearchTerm(searchHistory[suggestionIdx]);
                 setSuggestionIdx(-1);
               }
             } else if (e.key === 'Escape') {
@@ -338,23 +335,23 @@ export default function CoursesPage() {
           }}
           className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100 shadow-sm"
         />
-        {search && (
+        {searchParam && (
           <button
-            onClick={() => setSearch('')}
+            onClick={() => setSearchTerm('')}
             className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-slate-400 hover:text-slate-600 transition z-10"
           >
             <X className="h-4 w-4" />
           </button>
         )}
         {/* Autocomplete / history dropdown */}
-        {showSuggestions && search.trim().length >= 2 && suggestions.length > 0 && (
+        {showSuggestions && searchParam.length >= 2 && suggestions.length > 0 && (
           <div className="absolute top-full left-0 right-0 z-30 mt-1.5 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg shadow-slate-200/60">
             {suggestions.map((c, idx) => {
               const cat = TAXONOMY.find(t => t.l1 === c.taxonomy.l1);
               return (
                 <button
                   key={c.id}
-                  onMouseDown={() => { saveSearch(search.trim()); navigate(`/courses/${c.id}`); }}
+                  onMouseDown={() => { saveSearch(searchParam); navigate(`/courses/${c.id}`); }}
                   className={cn(
                     'flex w-full items-center gap-3 px-4 py-2.5 text-left transition',
                     idx === suggestionIdx ? 'bg-slate-50' : 'hover:bg-slate-50'
@@ -372,7 +369,7 @@ export default function CoursesPage() {
             })}
           </div>
         )}
-        {showSuggestions && !search.trim() && searchHistory.length > 0 && (
+        {showSuggestions && !searchParam && searchHistory.length > 0 && (
           <div className="absolute top-full left-0 right-0 z-30 mt-1.5 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg shadow-slate-200/60">
             <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100">
               <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wide">Recent searches</span>
@@ -386,7 +383,7 @@ export default function CoursesPage() {
             {searchHistory.map((term, idx) => (
               <button
                 key={term}
-                onMouseDown={() => { setSearch(term); setSuggestionIdx(-1); setShowSuggestions(false); }}
+                onMouseDown={() => { setSearchTerm(term); setSuggestionIdx(-1); setShowSuggestions(false); }}
                 className={cn(
                   'flex w-full items-center gap-3 px-4 py-2.5 text-left transition',
                   idx === suggestionIdx ? 'bg-slate-50' : 'hover:bg-slate-50'
@@ -741,9 +738,32 @@ export default function CoursesPage() {
         </div>
       )}
 
+      {isError && (
+        <div className="mb-6 rounded-3xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
+          <p className="font-semibold text-red-800">Courses did not load</p>
+          <p className="mt-2 text-sm text-red-700">
+            The selected topic could not be loaded. Retry the request or clear filters.
+          </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <button
+              onClick={() => refetch()}
+              className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500"
+            >
+              Retry
+            </button>
+            <button
+              onClick={clearAll}
+              className="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+            >
+              Clear filters
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Empty state */}
-      {!isLoading && (displayCourses?.length === 0) && (() => {
-        const queryWords = search.trim().toLowerCase().split(/\s+/).filter(w => w.length >= 3);
+      {!isError && !isLoading && (displayCourses?.length === 0) && (() => {
+        const queryWords = searchParam.toLowerCase().split(/\s+/).filter(w => w.length >= 3);
         const suggestions = allCourses
           ? allCourses
               .filter(c => {
@@ -765,7 +785,7 @@ export default function CoursesPage() {
             </div>
             <p className="font-medium text-slate-700">No courses found</p>
             <p className="mt-1 text-sm text-slate-500">
-              {search.trim() ? `No matches for "${search.trim()}"` : 'Try adjusting your filters'}
+              {searchParam ? `No matches for "${searchParam}"` : 'Try adjusting your filters'}
             </p>
             {suggestions.length > 0 && (
               <div className="mt-8 text-left max-w-xl mx-auto">
@@ -809,7 +829,7 @@ export default function CoursesPage() {
       })()}
 
       {/* Course grid */}
-      {!isLoading && displayCourses && displayCourses.length > 0 && (
+      {!isError && !isLoading && displayCourses && displayCourses.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {displayCourses.map(course => {
             const p = progressMap.get(course.id);
